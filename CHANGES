@@ -1,3 +1,7 @@
+2001-06-22  Thomas E. Dickey  <dickey@clark.net>
+
+	* install-sh: RCS_BASE
+
 1999-02-07  Thomas E. Dickey  <dickey@clark.net>
 
 	* HISTORY: nit
