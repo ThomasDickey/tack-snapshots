@@ -1,3 +1,7 @@
+1997-11-03  Daniel.Weaver
+
+	* scan.c, color.c, modules: ncurses-4.1-971220
+
 1997-10-29  Daniel.Weaver
 
 	* control.c, fun.c: ncurses-4.1-971101

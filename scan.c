@@ -23,9 +23,8 @@
 #include <curses.h>
 #include <string.h>
 #include <stdlib.h>
+#include "term.h"
 #include "tack.h"
-
-extern char *getenv();
 
 int scan_max;			/* length of longest scan code */
 char **scan_up, **scan_down, **scan_name;
