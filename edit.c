@@ -25,16 +25,7 @@
 #include <curses.h>
 #include <ctype.h>
 #include <string.h>
-
-#if     GCC_PRINTF
-#define GCC_PRINTFLIKE(fmt,var) __attribute__((format(printf,fmt,var)))
-#else
-#define GCC_PRINTFLIKE(fmt,var) /*nothing*/
-#endif
-#ifndef GCC_NORETURN
-#define GCC_NORETURN /* nothing */
-#endif
-
+#include "term.h"
 #include "tic.h"
 #include "tack.h"
 
@@ -69,8 +60,8 @@ struct test_list change_pad_list[MAX_CHANGES] = {
 	{MENU_LAST, 0, 0, 0, 0, 0, 0}
 };
 
-extern void build_change_menu(struct test_menu *);
-extern void change_one_entry(struct test_list *, int *, int *);
+static void build_change_menu(struct test_menu *);
+static void change_one_entry(struct test_list *, int *, int *);
 
 struct test_menu change_pad_menu = {
 	0, 'q', 0,
@@ -85,6 +76,8 @@ static TERMTYPE	original_term;		/* terminal type description */
 static char flag_boolean[BOOLCOUNT];	/* flags for booleans */
 static char flag_numerics[NUMCOUNT];	/* flags for numerics */
 static char flag_strings[STRCOUNT];	/* flags for strings */
+static int xon_index;			/* Subscript for (xon) */
+int xon_shadow;
 
 static int start_display;		/* the display has just started */
 static int display_lines;		/* number of lines displayed */
@@ -149,181 +142,6 @@ file_expand(char *srcp)
     	return(buffer);
 }
 
-
-static char *bufptr;		/* otherwise, the input buffer pointer */
-static char *bufstart;		/* start of buffer so we can compute offsets */
-static char separator;		/* capability separator */
-
-/*
- *	_nc_reset_input()
- *
- *	Resets the input-reading routines.  Used on initialization,
- *	or after a seek has been done.  Exactly one argument must be
- *	non-null.
- */
-
-static void
-_tak_reset_input(FILE *fp, char *buf)
-{
-	bufstart = bufptr = buf;
-}
-
-/*
- *	int next_char()
- *
- *	Returns the next character in the input stream.  Comments and leading
- *	white space are stripped.
- *
- *	The global state variable 'firstcolumn' is set TRUE if the character
- *	returned is from the first column of the input line.
- *
- *	The global variable _nc_curr_line is incremented for each new line.
- *	The global variable _nc_curr_file_pos is set to the file offset of the
- *	beginning of each line.
- */
-
-static int
-next_char(void)
-{
-	if (*bufptr == '\0')
-	    return(EOF);
-    return(*bufptr++);
-}
-
-static void push_back(char c)
-/* push a character back onto the input stream */
-{
-    if (bufptr == bufstart)
-	    _nc_syserr_abort("Can't backspace off beginning of line");
-    *--bufptr = c;
-}
-
-/*
- *	char
- *	trans_string(ptr)
- *
- *	Reads characters using next_char() until encountering a separator, nl,
- *	or end-of-file.  The returned value is the character which caused
- *	reading to stop.  The following translations are done on the input:
- *
- *		^X  goes to  ctrl-X (i.e. X & 037)
- *		{\E,\n,\r,\b,\t,\f}  go to
- *			{ESCAPE,newline,carriage-return,backspace,tab,formfeed}
- *		{\^,\\}  go to  {carat,backslash}
- *		\ddd (for ddd = up to three octal digits)  goes to the character ddd
- *
- *		\e == \E
- *		\0 == \200
- *
- */
-
-static char
-_nc_trans_string(char *ptr)
-{
-	int	count = 0;
-	int	number;
-	int	i, c;
-	chtype	ch, last_ch = '\0';
-
-	while ((ch = c = next_char()) != (chtype)separator && c != EOF) {
-	    if ((_nc_syntax == SYN_TERMCAP) && c == '\n')
-		break;
-	    if (ch == '^' && last_ch != '%') {
-		ch = c = next_char();
-		if (c == EOF)
-		    _nc_err_abort("Premature EOF");
-
-#ifdef THIS_IS_NOT_NEEDED
-		if (! (is7bits(ch) && isprint(ch))) {
-		    _nc_warning("Illegal ^ character - %s",
-			_tracechar((unsigned char)ch));
-		}
-#endif
-		if (ch == '?')
-		    *(ptr++) = '\177';
-		else
-		    *(ptr++) = (char)(ch & 037);
-	    }
-	    else if (ch == '\\') {
-		ch = c = next_char();
-		if (c == EOF)
-		    _nc_err_abort("Premature EOF");
-
-		if (ch >= '0'  &&  ch <= '7') {
-		    number = ch - '0';
-		    for (i=0; i < 2; i++) {
-			ch = c = next_char();
-			if (c == EOF)
-			    _nc_err_abort("Premature EOF");
-
-			if (c < '0'  ||  c > '7') {
-			    if (isdigit(c)) {
-				_nc_warning("Non-octal digit `%c' in \\ sequence", c);
-				/* allow the digit; it'll do less harm */
-			    } else {
-				push_back((char)c);
-				break;
-			    }
-			}
-
-			number = number * 8 + c - '0';
-		    }
-
-		    if (number == 0)
-			number = 0200;
-		    *(ptr++) = (char) number;
-		} else {
-		    switch (c) {
-			case 'E':
-			case 'e':	*(ptr++) = '\033';	break;
-
-			case 'l':
-			case 'n':	*(ptr++) = '\n';	break;
-
-			case 'r':	*(ptr++) = '\r';	break;
-
-			case 'b':	*(ptr++) = '\010';	break;
-
-			case 's':	*(ptr++) = ' ';		break;
-
-			case 'f':	*(ptr++) = '\014';	break;
-
-			case 't':	*(ptr++) = '\t';	break;
-
-			case '\\':	*(ptr++) = '\\';	break;
-
-			case '^':	*(ptr++) = '^'; 	break;
-
-			case ',':	*(ptr++) = ',';		break;
-
-			case ':':	*(ptr++) = ':';		break;
-
-			case '\n':
-			    continue;
-
-			default:
-			    _nc_warning("Illegal character %s in \\ sequence",
-				    _tracechar((unsigned char)ch));
-			    *(ptr++) = (char)ch;
-		    } /* endswitch (ch) */
-		} /* endelse (ch < '0' ||  ch > '7') */
-	    } /* end else if (ch == '\\') */
-	    else {
-		*(ptr++) = (char)ch;
-	    }
-
-	    count ++;
-
-	    last_ch = ch;
-
-	    if (count > 1024)
-		_nc_warning("Very long string found.  Missing separator?");
-	} /* end while */
-
-	*ptr = '\0';
-
-	return(ch);
-}
 
 /*
 **	send_info_string(str)
@@ -393,7 +211,7 @@ show_info(
 	display_lines = 1;
 	start_display = 1;
 	for (i = 0; i < BOOLCOUNT; i++) {
-		if (CUR Booleans[i]) {
+		if ((i == xon_index) ? xon_shadow : CUR Booleans[i]) {
 			send_info_string(boolnames[i], ch);
 		}
 	}
@@ -474,7 +292,7 @@ save_info(
 
 	display_lines = 0;
 	for (i = 0; i < BOOLCOUNT; i++) {
-		if (CUR Booleans[i]) {
+		if (i == xon_index ? xon_shadow : CUR Booleans[i]) {
 			save_info_string(boolnames[i], fp);
 		}
 	}
@@ -510,7 +328,7 @@ show_value(
 {
 	struct name_table_entry const *nt;
 	char *s;
-	int n, op;
+	int n, op, b;
 	char buf[1024];
 	char new[1024];
 
@@ -528,11 +346,17 @@ show_value(
 		switch (nt->nte_type) {
 		case BOOLEAN:
 			if (op == SHOW_DELETE) {
-				CUR Booleans[nt->nte_index] = 0;
+				if (nt->nte_index == xon_index) {
+					xon_shadow = 0;
+				} else {
+					CUR Booleans[nt->nte_index] = 0;
+				}
 				return;
 			}
+			b = nt->nte_index == xon_index ? xon_shadow :
+				CUR Booleans[nt->nte_index];
 			sprintf(temp, "boolean  %s %s", buf,
-				CUR Booleans[nt->nte_index] ? "True" : "False");
+				b ? "True" : "False");
 			break;
 		case STRING:
 			if (op == SHOW_DELETE) {
@@ -569,7 +393,11 @@ show_value(
 	}
 	if (nt->nte_type == BOOLEAN) {
 		ptextln("Value flipped");
-		CUR Booleans[nt->nte_index] = !CUR Booleans[nt->nte_index];
+		if (nt->nte_index == xon_index) {
+			xon_shadow = !xon_shadow;
+		} else {
+			CUR Booleans[nt->nte_index] = !CUR Booleans[nt->nte_index];
+		}
 		return;
 	}
 	ptextln("Enter new value");
@@ -577,7 +405,7 @@ show_value(
 
 	switch (nt->nte_type) {
 	case STRING:
-		_tak_reset_input((FILE *) 0, buf);
+		_nc_reset_input((FILE *) 0, buf);
 		_nc_trans_string(new);
 		s = malloc(strlen(new) + 1);
 		strcpy(s, new);
@@ -664,20 +492,20 @@ show_changed(
 	int *state,
 	int *ch)
 {
-	int i, header = 1;
+	int i, header = 1, v;
 	char *a, *b;
 	static char title[] = "                     old value   cap  new value";
 	char abuf[1024];
 
 	for (i = 0; i < BOOLCOUNT; i++) {
-		if (original_term.Booleans[i] != CUR Booleans[i]) {
+		v = (i == xon_index) ? xon_shadow : CUR Booleans[i];
+		if (original_term.Booleans[i] != v) {
 			if (header) {
 				ptextln(title);
 				header = 0;
 			}
 			sprintf(temp, "%30d %6s %d",
-				original_term.Booleans[i], boolnames[i],
-				CUR Booleans[i]);
+				original_term.Booleans[i], boolnames[i], v);
 			ptextln(temp);
 		}
 	}
@@ -723,10 +551,11 @@ int
 user_modified(void)
 {
 	char *a, *b;
-	int i;
+	int i, v;
 
 	for (i = 0; i < BOOLCOUNT; i++) {
-		if (original_term.Booleans[i] != CUR Booleans[i]) {
+		v = (i == xon_index) ? xon_shadow : CUR Booleans[i];
+		if (original_term.Booleans[i] != v) {
 			return TRUE;
 		}
 	}
@@ -1044,6 +873,10 @@ edit_init(void)
 			ptextln(temp);
 		}
 	}
+	if (nt = _nc_find_entry("xon", _nc_info_hash_table)) {
+		xon_index = nt->nte_index;
+	}
+	xon_shadow = xon_xoff;
 }
 
 /*
@@ -1051,7 +884,7 @@ edit_init(void)
 **
 **	Change the padding on the selected cap
 */
-void
+static void
 change_one_entry(
 	struct test_list *test,
 	int *state,
@@ -1059,9 +892,9 @@ change_one_entry(
 {
 	struct name_table_entry const *nt;
 	int i, j, x, star, slash,  v, dot, ch;
-	char *s, *t, *p;
+	char *s, *t, *p, *current_string;
 	char buf[1024];
-	char pad[32];
+	char pad[1024];
 
 	i = test->flags & 255;
 	if (i == 255) {
@@ -1075,6 +908,7 @@ change_one_entry(
 		if ((nt = _nc_find_entry(pad, _nc_info_hash_table)) &&
 			(nt->nte_type == STRING)) {
 			x = nt->nte_index;
+			current_string = CUR Strings[x];
 		} else {
 			sprintf(temp, "%s is not a string capability", pad);
 			ptext(temp);
@@ -1083,9 +917,23 @@ change_one_entry(
 		}
 	} else {
 		x = tx_index[i];
+		current_string = tx_cap[i];
 		strcpy(pad, strnames[x]);
 	}
-	sprintf(buf, "Current value: (%s) %s", pad, file_expand(CUR Strings[x]));
+	if (!current_string) {
+		ptextln("That string is not currently defined.  Please enter a new value, including the padding delay:");
+		read_string(buf, sizeof(buf));
+		_nc_reset_input((FILE *) 0, buf);
+		_nc_trans_string(pad);
+		s = malloc(strlen(pad) + 1);
+		strcpy(s, pad);
+		CUR Strings[x] = s;
+		sprintf(temp, "new string value  %s", strnames[x]);
+		ptextln(temp);
+		ptextln(expand(s));
+		return;
+	}
+	sprintf(buf, "Current value: (%s) %s", pad, file_expand(current_string));
 	putln(buf);
 	ptextln("Enter new pad.  0 for no pad.  CR for no change.");
 	read_string(buf, 32);
@@ -1125,7 +973,7 @@ change_one_entry(
 		sprintf(pad, "%d%s%s",
 			v, star ? "*" : "", slash ? "/" : "");
 	}
-	s = CUR Strings[x];
+	s = current_string;
 	t = buf;
 	for (v = 0; (ch = *t = *s++); t++) {
 		if (v == '$' && ch == '<') {
@@ -1156,7 +1004,7 @@ change_one_entry(
 **
 **	Build the change pad menu list
 */
-void
+static void
 build_change_menu(
 	struct test_menu *m)
 {
@@ -1184,6 +1032,7 @@ build_change_menu(
 	j++;
 	change_pad_list[j].flags = MENU_LAST;
 	if (m->menu_title) {
+		put_crlf();
 		ptextln(m->menu_title);
 	}
 }
