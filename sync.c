@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <curses.h>
+#include "term.h"
 #include "tack.h"
 
 /* terminal-synchronization and performance tests */
@@ -48,8 +49,6 @@ struct test_menu sync_menu = {
 	sync_test, sync_test_list, 0, 0, 0
 };
 
-extern char letters[];
-
 int tty_can_sync;		/* TRUE if tty_sync_error() returned FALSE */
 int tty_newline_rate;		/* The number of newlines per second */
 int tty_clear_rate;		/* The number of clear-screens per second */
@@ -57,8 +56,8 @@ int tty_cps;			/* The number of characters per second */
 
 #define TTY_ACK_SIZE 64
 
-int ACK_char;			/* terminating ACK character */
-int junk_chars;			/* number of junk characters */
+int ACK_terminator;		/* terminating ACK character */
+int ACK_length;			/* length of ACK string */
 char *tty_ENQ;			/* enquire string */
 char tty_ACK[TTY_ACK_SIZE];	/* ACK response, set by tty_sync_error() */
 
@@ -72,98 +71,173 @@ char tty_ACK[TTY_ACK_SIZE];	/* ACK response, set by tty_sync_error() */
  *****************************************************************************/
 
 int
-tty_sync_error(
-	int term_char)
+tty_sync_error(void)
 {
 	int ch, ct, trouble, ack;
-	long read_time;
 
 	trouble = FALSE;
 	for (;;) {
-		tc_putp(tty_ENQ);	/* send ENQ */
+		tt_putp(tty_ENQ);	/* send ENQ */
 		ch = getnext(STRIP_PARITY);
-		read_time = time(0);	/* start the timer */
-		tty_ACK[ack = 0] = ch;
-		for (ct = junk_chars; ct > 0; ct--) {
-			if (ch == ACK_char)
-				return trouble;
-			ch = getnext(STRIP_PARITY);
-			if (ack < TTY_ACK_SIZE - 1)
-				tty_ACK[++ack] = ch;
-			if (ch == term_char) {
-				return TRUE;
-			}
-			if (term_char && (ct == 1)) {
-				junk_chars++;
-				ct++;
-			}
-		}
-		tty_ACK[ack + 1] = '\0';
-		if (ch == ACK_char)
-			return trouble;
-		if (term_char) {	/* called from verify_time() */
-			put_crlf();
-			putln("Terminal did not respond to ENQ");
-			tty_can_sync = SYNC_FAILED;
-			return (ch | 4096);
-		}
-		/*
-		   If we get here the terminal is sending too many
-		   characters.  The trick is to find out if the characters
-		   are comming from the terminal or the user.  We assume the
-		   terminal will send only while it is processing commands in
-		   its buffer, and that the buffer will empty in a short
-		   poriod of time.  Any characters sent after a few seconds
-		   must be from the user.
-		*/
+		event_start(TIME_SYNC);	/* start the timer */
 
-		do {
-			ch = getchp(STRIP_PARITY);
-			if (time(0) - read_time > 3) {
-				putchp(7);	/* ring the bell */
+		/*
+		   The timer doesn't start until we get the first character.
+		   After that I expect to get the remaining characters of
+		   the acknowledge string in a short period of time.  If
+		   that is not true then these characters are coming from
+		   the user and we need to send the ENQ sequence out again.
+		*/
+		for (ack = 0; ; ) {
+			if (ack < TTY_ACK_SIZE - 2) {
+				tty_ACK[ack] = ch;
+				tty_ACK[ack + 1] = '\0';
+			}
+			if (ch == ACK_terminator) {
+				return trouble;
+			}
+			if (++ack >= ACK_length) {
+				return trouble;
+			}
+			ch = getnext(STRIP_PARITY);
+			if (event_time(TIME_SYNC) > 400000) {
 				break;
 			}
-		} while (ch != 'c' && ch != 'C');
+		}
+
 		set_attr(0);	/* just in case */
-		putln(" -- sync -- ");
+		put_crlf();
+		if (trouble) {
+			/* The terminal won't sync.  Life is not good. */
+			return TRUE;
+		}
+		put_str(" -- sync -- ");
 		trouble = TRUE;
 	}
 }
 
+/*
+**	flush_input()
+**
+**	Throw away any output.
+*/
 void 
 flush_input(void)
-/* crude but effective way to flush input */
 {
-	if (tty_can_sync == SYNC_TESTED)
-		tty_sync_error(0);
+	if (tty_can_sync == SYNC_TESTED && ACK_terminator >= 0) {
+		(void) tty_sync_error();
+	} else {
+		spin_flush();
+	}
 }
 
-int
-enq_ack(void)
-/* send an ENQ, get an ACK */
+/*
+**	probe_enq_ok()
+**
+**	does the terminal do enq/ack handshaking?
+*/
+static void 
+probe_enq_ok(void)
 {
-	int sync_error;
+	int tc, len, ulen;
 
-	for (sync_error = 0; tty_sync_error(0); sync_error++) {
-		sleep(1);
-		if (sync_error > 2) {
-			ptext("\nPad processing terminated: ");
-			(void) wait_here();
-			time_pad = FALSE;
-			return FALSE;
+	put_str("Testing ENQ/ACK, standby...");
+	fflush(stdout);
+	can_test("u8 u9", FLAG_TESTED);
+
+	tty_ENQ = user9 ? user9 : "\005";
+	tc_putp(tty_ENQ);
+	event_start(TIME_SYNC);	/* start the timer */
+	read_key(tty_ACK, TTY_ACK_SIZE - 1);
+
+	if (event_time(TIME_SYNC) > 400000 || tty_ACK[0] == '\0') {
+		/* These characters came from the user.  Sigh. */
+		tty_can_sync = SYNC_FAILED;
+		ptext("\nThis program expects the ENQ sequence to be");
+		ptext(" answered with the ACK character.  This will help");
+		ptext(" the program reestablish synchronization when");
+		ptextln(" the terminal is overrun with data.");
+		ptext("\nENQ sequence from (u9): ");
+		putln(expand(tty_ENQ));
+		ptext("ACK recieved: ");
+		putln(expand(tty_ACK));
+		len = user8 ? strlen(user8) : 0;
+		sprintf(temp, "Length of ACK %d.  Expected length of ACK %d.",
+			(int) strlen(tty_ACK), len);
+		ptextln(temp);
+		if (len) {
+			temp[0] = user8[len - 1];
+			temp[1] = '\0';
+			ptext("Terminating character found in (u8): ");
+			putln(expand(temp));
+		}
+		return;
+	}
+
+	tty_can_sync = SYNC_TESTED;
+	if ((len = strlen(tty_ACK)) == 1) {
+		/* single character acknowledge string */
+		ACK_terminator = tty_ACK[0];
+		ACK_length = 4096;
+		return;
+	}
+	tc = tty_ACK[len - 1];
+	if (user8) {
+		ulen = strlen(user8);
+		if (tc == user8[ulen - 1]) {
+			/* ANSI style acknowledge string */
+			ACK_terminator = tc;
+			ACK_length = 4096;
+			return;
 		}
 	}
-	char_sent = 0;
-	return TRUE;
+	/* fixed length acknowledge string */
+	ACK_length = len;
+	ACK_terminator = -2;
+}
+
+/*
+**	verify_time()
+**
+**	verify that the time tests are ready to run.
+**	If the baud rate is not set then compute it.
+*/
+void
+verify_time(void)
+{
+	int status, ch;
+
+	if (tty_can_sync == SYNC_FAILED) {
+		return;
+	}
+	probe_enq_ok();
+	put_crlf();
+	if (tty_can_sync == SYNC_TESTED) {
+		put_crlf();
+		if (ACK_terminator >= 0) {
+			ptext("ACK terminating character: ");
+			temp[0] = ACK_terminator;
+			temp[1] = '\0';
+			ptextln(expand(temp));
+		} else {
+			sprintf(temp, "Fixed length ACK, %d characters",
+				ACK_length);
+			ptextln(temp);
+		}
+	}
+	if (tty_baud_rate == 0) {
+		sync_home(&sync_test_list[0], &status, &ch);
+	}
 }
 
 /*****************************************************************************
  *
  * Terminal performance tests
  *
- *	The only entry point of this group of functions is verify_time(),
- *	which determines the terminal's effective baud rate.  It is called
- *	at the beginning of the pad-test and function-key-test routines.
+ *	Find out how fast the terminal can:
+ *	  1) accept characters
+ *	  2) scroll the screen
+ *	  3) clear the screen
  *
  *****************************************************************************/
 
@@ -172,7 +246,7 @@ enq_ack(void)
 **
 **	Baudrate test
 */
-static void
+void
 sync_home(
 	struct test_list *t,
 	int *state,
@@ -190,7 +264,7 @@ sync_home(
 		return;
 	}
 	pad_test_startup(1);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		go_home();
 		for (j = 1; j < lines; j++) {
 			for (k = 0; k < columns; k++) {
@@ -203,7 +277,7 @@ sync_home(
 			SLOW_TERMINAL_EXIT;
 		}
 		NEXT_LETTER;
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, auto_right_margin == 0);
 	/* note:  tty_frame_size is the real framesize times two.
 	   This takes care of half bits. */
@@ -238,11 +312,11 @@ sync_lines(
 	}
 	pad_test_startup(0);
 	reps = 100;
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		sprintf(temp, "%d", test_complete);
 		put_str(temp);
 		put_newlines(reps);
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, 0);
 	j = sliding_scale(tx_count[0], 1000000, usec_run_time);
 	if (j > tty_newline_rate) {
@@ -277,13 +351,13 @@ sync_clear(
 	}
 	pad_test_startup(0);
 	reps = 20;
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		sprintf(temp, "%d", test_complete);
 		put_str(temp);
 		for (j = 0; j < reps; j++) {
 			put_clear();
 		}
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, 0);
 	j = sliding_scale(tx_count[0], 1000000, usec_run_time);
 	if (j > tty_clear_rate) {
@@ -317,104 +391,6 @@ sync_summary(
 }
 
 /*
-**	probe_enq_ok()
-**
-**	does the terminal do enq/ack handshaking?
-*/
-static void 
-probe_enq_ok(void)
-{
-	int i;
-	long read_time;
-
-	/* set up enq/ack sequences */
-	tty_ENQ = user9 ? user9 : "\005";
-	junk_chars = 0;
-	ACK_char = 6;
-	can_test("u8 u9", FLAG_TESTED);
-	if (user8) {
-		char *cp;
-
-		junk_chars = 0;
-		for (cp = user8; *cp; cp++) {
-			if (*cp != '%') {
-				junk_chars++;
-			} else {
-				++cp;
-				junk_chars++;
-			}
-		}
-		ACK_char = cp[-1];
-	}
-	put_str("Hit lower case g to start testing...");
-	fflush(stdout);
-	i = tty_sync_error('g');
-	if (i == FALSE) {
-		i = getchp(STRIP_PARITY);
-	}
-	if (i != 'g') {
-		/*
-		   Either the terminal did not respond or the user does not
-		   like us.  If the terminal returned nothing then 'i' will
-		   equal 'g'.  If the user refuses to type a 'g' or has
-		   forgot then wait for the letter 'g' for 2 seconds then
-		   give up.
-		*/
-		tty_can_sync = SYNC_FAILED;
-		ptext("\nThis program expects the ENQ sequence to be");
-		ptext(" answered with the ACK character.  This will help");
-		ptext(" the program reestablish synchronization when");
-		ptextln(" the terminal is overrun with data.");
-		ptext("\nENQ sequence from (u9): ");
-		putln(expand(tty_ENQ));
-		ptext("ACK recieved: ");
-		putln(expand(tty_ACK));
-		sprintf(temp, "Length of ACK %d.  Expected length of ACK %d.",
-			(int) strlen(tty_ACK), junk_chars + 1);
-		ptextln(temp);
-		temp[0] = ACK_char;
-		temp[1] = '\0';
-		ptext("Terminating character found in (u8): ");
-		putln(expand(temp));
-		put_crlf();
-		put_str("Please, hit lower case g to continue:");
-		fflush(stdout);
-		read_time = time(0);
-		for (i = 1; i < 20; i++) {
-			if (wait_here() == 'g') {
-				break;
-			}
-			if (time(0) - read_time > 2) {
-				break;
-			}
-		}
-		return;
-	}
-	tty_can_sync = SYNC_TESTED;
-}
-
-/*
-**	verify_time()
-**
-**	verify that the time tests are ready to run.
-**	If the baud rate is not set then compute it.
-*/
-void
-verify_time(void)
-{
-	int status, ch;
-
-	if (tty_can_sync == SYNC_FAILED) {
-		return;
-	}
-	probe_enq_ok();
-	put_crlf();
-	if (tty_baud_rate == 0) {
-		sync_home(&sync_test_list[0], &status, &ch);
-	}
-}
-
-/*
 **	sync_test(menu)
 **
 **	Run at the beginning of the pad tests and function key tests
@@ -428,6 +404,22 @@ sync_test(
 		verify_time();
 	}
 	if (menu->menu_title) {
+		put_crlf();
 		ptextln(menu->menu_title);
 	}
+}
+
+/*
+**	sync_handshake(test_list, status, ch)
+**
+**	Test or retest the ENQ/ACK handshake
+*/
+void
+sync_handshake(
+	struct test_list *t,
+	int *state,
+	int *ch)
+{
+	tty_can_sync = SYNC_NOT_TESTED;
+	verify_time();
 }

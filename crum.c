@@ -20,6 +20,7 @@
 */
 
 #include <curses.h>
+#include "term.h"
 #include "tack.h"
 
 /*
@@ -416,7 +417,8 @@ crum_os(
 		}
 		go_home();
 		put_newlines(3);
-		ptext("All the characters should look the same.  ");
+		ptext("    All the characters should look the same.  ");
 		generic_done_message(t, state, ch);
+		put_clear();
 	}
 }

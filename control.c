@@ -24,6 +24,7 @@
 #include <curses.h>
 #include <string.h>
 #include <stdlib.h>
+#include "term.h"
 #include "tack.h"
 
 /* terminfo test program control subroutines */
@@ -34,18 +35,22 @@ int test_complete;		/* counts number of tests completed */
 char txt_longer_test_time[80];	/* +) use longer time */
 char txt_shorter_test_time[80];	/* -) use shorter time */
 int pad_test_duration = 1;	/* number of seconds for a pad test */
+int auto_pad_mode;		/* run the time tests */
 int no_alarm_event;		/* TRUE if the alarm has not gone off yet */
 int usec_run_time;		/* length of last test in microseconds */
-struct timeval test_start_time;	/* Time of day when the test started */
 struct timezone zone;		/* Time zone at start of test */
+struct timeval stop_watch[MAX_TIMERS];	/* Hold the start timers */
 
 char txt_longer_augment[80];	/* >) use bigger augment */
 char txt_shorter_augment[80];	/* <) use smaller augment */
 
 /* caps under test data base */
+int tt_delay_max;		/* max number of milliseconds we can delay */
+int tt_delay_used;		/* number of milliseconds consumed in delay */
 char *tt_cap[TT_MAX];		/* value of string */
 int tt_affected[TT_MAX];	/* lines or columns effected (repitition factor) */
 int tt_count[TT_MAX];		/* Number of times sent */
+int tt_delay[TT_MAX];		/* Number of milliseconds delay */
 int ttp;			/* number of entries used */
 
 /* Saved value of the above data base */
@@ -53,27 +58,49 @@ char *tx_cap[TT_MAX];		/* value of string */
 int tx_affected[TT_MAX];	/* lines or columns effected (repitition factor) */
 int tx_count[TT_MAX];		/* Number of times sent */
 int tx_index[TT_MAX];		/* String index */
+int tx_delay[TT_MAX];		/* Number of milliseconds delay */
 int txp;			/* number of entries used */
 int tx_characters;		/* printing characters sent by test */
 int tx_cps;			/* characters per second */
 struct test_list *tx_source;	/* The test that generated this data */
 
-extern char *pad_repeat_test;	/* commands that force repeat */
-extern char letters[];
-extern int raw_characters_sent;	/* Total output characters */
 extern struct test_menu pad_menu;	/* Pad menu structure */
 extern struct test_list pad_test_list[];
-struct test_list *augment_test;
 
 #define RESULT_BLOCK		1024
 static int blocks;		/* number of result blocks available */
 static struct test_results *results;	/* pointer to next available */
 struct test_results *pads[STRCOUNT];	/* save pad results here */
 
+/*
+**	event_start(number)
+**
+**	Begin the stopwatch at the current time-of-day.
+*/
+void
+event_start(int n)
+{
+	(void) gettimeofday(&stop_watch[n], &zone);
+}
+
+/*
+**	event_time(number)
+**
+**	Return the number of milliseconds since this stop watch began.
+*/
+long
+event_time(int n)
+{
+	struct timeval current_time;
+
+	(void) gettimeofday(&current_time, &zone);
+	return ((current_time.tv_sec - stop_watch[n].tv_sec) * 1000000)
+		+ current_time.tv_usec - stop_watch[n].tv_usec;
+}
 
 /*****************************************************************************
  *
- * Execution control for capability tests
+ * Execution control for string capability tests
  *
  *****************************************************************************/
 
@@ -122,47 +149,60 @@ control_init(void)
 	set_augment_txt();
 }
 
+/*
+**	msec_cost(cap, affected-count)
+**
+**	Return the number of milliseconds delay needed by the cap.
+*/
+int
+msec_cost(
+	const char *const cap,
+	int affcnt)
+{
+	int dec, value, total, star, ch;
+	char *cp;
 
-void
-pad_time(char *cap, int *star, int *plain)
-{				/* return the pad time in tens of miliseconds */
-	int dec, i;
-
-	*star = *plain = 0;
-	if (!cap)
-		return;
-	for (; *cap; ++cap) {
-		if (*cap == '$' && cap[1] == '<') {
-			cap += 2;
-			for (i = dec = 0;; ++cap) {
-				if (!*cap)
-					return;
-				if (*cap >= '0' && *cap <= '9')
-					i = i * 10 + *cap - '0';
-				else if (*cap == '.')
+	if (!cap) {
+		return 0;
+	}
+	total = 0;
+	for (cp = (char *)cap; *cp; cp++) {
+		if (*cp == '$' && cp[1] == '<') {
+			star = 1;
+			value = dec = 0;
+			for (cp += 2; (ch = *cp); cp++) {
+				if (ch >= '0' && ch <= '9') {
+					value = value * 10 + (ch - '0');
+					dec *= 10;
+				} else
+				if (ch == '.') {
 					dec = 1;
-				else if (*cap == '*') {
-					if (!dec)
-						i *= 10;
-					*star += i;
-					i = 0;
-				} else if (*cap == '>') {
-					if (!dec)
-						i *= 10;
-					*plain += i;
+				} else
+				if (ch == '*') {
+					star = affcnt;
+				} else
+				if (ch == '>') {
 					break;
-				} else if (*cap != '/')
-					break;
+				}
+			}
+			if (dec > 1) {
+				total += (value * star) / dec;
+			} else {
+				total += (value * star);
 			}
 		}
 	}
+	return total;
 }
 
-
+/*
+**	liberated(cap)
+**
+**	Return the cap without padding
+*/
 char *
-liberated(cap)
-char *cap;
-{				/* return the cap without the padding */
+liberated(char *cap)
+{
 	static char cb[1024];
 	char *ts, *ls;
 
@@ -185,10 +225,14 @@ char *cap;
 	return cb;
 }
 
-
+/*
+**	page_loop()
+**
+**	send CR/LF or go home and bump letter
+*/
 void
 page_loop(void)
-{				/* send CR/LF or go home and bump letter */
+{
 	if (line_count + 2 >= lines) {
 		NEXT_LETTER;
 		go_home();
@@ -333,13 +377,27 @@ pad_test_startup(
 	}
 	reps = augment;
 	raw_characters_sent = 0;
-	test_complete = ttp = char_count = 0;
+	test_complete = ttp = char_count = tt_delay_used = 0;
 	letter = letters[letter_number = 0];
-	timerclear(&test_start_time);
-	if (pad_test_duration) {
-		set_alarm_clock(pad_test_duration);
+	if (pad_test_duration <= 0) {
+		pad_test_duration = 1;
 	}
-	(void) gettimeofday(&test_start_time, &zone);
+	tt_delay_max = pad_test_duration * 1000;
+	set_alarm_clock(pad_test_duration);
+	event_start(TIME_TEST);
+}
+
+/*
+**	still_testing()
+**
+**	This function is called to see if the test loop should be terminated.
+*/
+int
+still_testing(void)
+{
+	fflush(stdout);
+	test_complete++;
+	return EXIT_CONDITION;
 }
 
 /*
@@ -357,23 +415,26 @@ pad_test_shutdown(
 	int ss;				/* Save string index */
 	int cpo;			/* characters per operation */
 	int delta;			/* difference in characters */
+	int bogus;			/* Time is inaccurate */
 	struct test_results *r;		/* Results of current test */
 	int ss_index[TT_MAX];		/* String index */
 	struct timeval test_stop_time;
 
-	flush_input();
-	(void) gettimeofday(&test_stop_time, &zone);
+	if (tty_can_sync == SYNC_TESTED) {
+		bogus = tty_sync_error();
+	} else {
+		bogus = 1;
+	}
+	usec_run_time = event_time(TIME_TEST);
 	tx_source = t;
 	tx_characters = raw_characters_sent;
-	usec_run_time =
-		((test_stop_time.tv_sec - test_start_time.tv_sec) * 1000000)
-		+ test_stop_time.tv_usec - test_start_time.tv_usec;
 	tx_cps = sliding_scale(tx_characters, 1000000, usec_run_time);
 
 	/* save the data base */
 	for (txp = ss = counts = 0; txp < ttp; txp++) {
 		tx_cap[txp] = tt_cap[txp];
 		tx_count[txp] = tt_count[txp];
+		tx_delay[txp] = tt_delay[txp];
 		tx_affected[txp] = tt_affected[txp];
 		tx_index[txp] = get_string_cap_byvalue(tt_cap[txp]);
 		if (tx_index[txp] >= 0) {
@@ -387,22 +448,21 @@ pad_test_shutdown(
 	if (crlf) {
 		put_crlf();
 	}
-	if (counts == 0 || tty_cps == 0) {
+	if (counts == 0 || tty_cps == 0 || bogus) {
 		/* nothing to do */
 		return;
 	}
 	/* calculate the suggested pad times */
-	delta = sliding_scale(tty_cps, usec_run_time, 1000000) - tx_characters;
+	delta = usec_run_time - sliding_scale(tx_characters, 1000000, tty_cps);
 	if (delta < 0) {
 		/* probably should bump tx_characters */
 		delta = 0;
 	}
+	cpo = delta / counts;
 	for (i = 0; i < ss; i++) {
 		if (!(r = get_next_block())) {
 			return;
 		}
-		cpo = sliding_scale(delta, tx_count[ss_index[i]] * 10,
-			counts * counts);
 		r->next = pads[tx_index[ss_index[i]]];
 		pads[tx_index[ss_index[i]]] = r;
 		r->test = t;
@@ -427,15 +487,14 @@ show_cap_results(
 		sprintf(temp, "(%s)", strnames[x]);
 		ptext(temp);
 		while (r) {
-			delay = (r->delay * 10000) / tty_cps;
-			sprintf(temp, "$<%d>", delay);
+			sprintf(temp, "$<%d>", r->delay / 1000);
 			put_columns(temp, strlen(temp), 10);
 			r = r->next;
 		}
 		r = pads[x];
 		while (r) {
 			if (r->reps > 1) {
-				delay = ((r->delay * 10000) / r->reps) / tty_cps;
+				delay = r->delay / (r->reps * 100);
 				sprintf(temp, "$<%d.%d*>", delay / 10, delay % 10);
 				put_columns(temp, strlen(temp), 10);
 			}
@@ -463,7 +522,6 @@ dump_test_stats(
 	put_crlf();
 	if (tx_source && tx_source->caps_done) {
 		cap_index(tx_source->caps_done, x);
-#ifdef NOT_DONE_YET
 		if (x[0] >= 0) {
 			sprintf(temp, "Caps summary for (%s)",
 				tx_source->caps_done);
@@ -473,7 +531,6 @@ dump_test_stats(
 			}
 			put_crlf();
 		}
-#endif
 	}
 	sprintf(tbuf, "%011u", usec_run_time);
 	sprintf(temp, "Test time: %d.%s, characters per second %d, characters %d",
@@ -485,7 +542,8 @@ dump_test_stats(
 		} else {
 			strcpy(tbuf, "(?)");
 		}
-		sprintf(temp, "%8d  %3d  %8s %s", tx_count[i], tx_affected[i],
+		sprintf(temp, "%8d  %3d  $<%3d>  %8s %s",
+			tx_count[i], tx_affected[i], tx_delay[i],
 			tbuf, expand(tx_cap[i]));
 		putln(temp);
 	}

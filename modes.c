@@ -21,6 +21,7 @@
 
 #include <curses.h>
 #include <string.h>
+#include "term.h"
 #include "tack.h"
 
 /*
@@ -379,8 +380,12 @@ subtest_tbc(
 	int tabat;		/* the tab spacing we end up with */
 	int i;
 
-	tabat = set_tab ? 8 : init_tabs;
+	if (clear_all_tabs && !set_tab) {
+		ptext("(tbc) Clear-all-tabs is defined but (hts) set-tab is not.  ");
+		ptext("Once the tabs are cleared there is no way to set them.  ");
+	} else
 	if (clear_all_tabs) {
+		tabat = set_tab ? 8 : init_tabs;
 		tc_putp(clear_all_tabs);
 		ptext("Clear tabs (tbc)");
 		go_home();
@@ -467,8 +472,11 @@ subtest_hts(
 	put_newlines(5);
 	if (set_tab) {
 		ptextln("If the last two lines are not the same then (hts) has failed.");
-	} else {
+	} else
+	if (init_tabs > 0) {
 		ptextln("If the last two lines are not the same then (it) is wrong.");
+	} else {
+		ptextln("If the last two lines are the same then maybe you do have tabs and (it) should be changed.");
 	}
 	generic_done_message(t, state, ch);
 }

@@ -21,6 +21,7 @@
 
 #include <curses.h>
 #include <string.h>
+#include <stdlib.h>
 #include "term.h"
 #include "tack.h"
 
@@ -58,9 +59,6 @@ struct test_list printer_test_list[] = {
 };
 
 #define MAX_STRINGS STRCOUNT
-
-extern char *malloc();
-extern int hex_out;			/* Display output in hex */
 
 /* scan code externals */
 extern int scan_max;		/* length of longest scan code */
@@ -202,8 +200,9 @@ enter_key(
 		fkmax = fkmax > j ? fkmax : j;
 		/* do not permit duplicates */
 		for (j = 0; j < key_count; j++) {
-			if (!strcmp(fk_name[j], name))
+			if (!strcmp(fk_name[j], name)) {
 				return;
+			}
 		}
 		fkval[key_count] = value;
 		fk_tested[key_count] = 0;
@@ -242,24 +241,27 @@ end_funky(int ch)
 		break;
 	case 'n':
 	case 'N':
-		if (end_state == 'e')
+		if (end_state == 'e') {
 			end_state = 'n';
-		else
+		} else {
 			end_state = 0;
+		}
 		break;
 	case 'd':
 	case 'D':
-		if (end_state == 'n')
+		if (end_state == 'n') {
 			end_state = 'd';
-		else
+		} else {
 			end_state = 0;
+		}
 		break;
 	case 'l':
 	case 'L':
-		if (end_state == 'l')
+		if (end_state == 'l') {
 			end_state = '?';
-		else
+		} else {
 			end_state = 'l';
+		}
 		break;
 	default:
 		end_state = 0;
@@ -451,7 +453,7 @@ funkey_keys(
 	}
 	tty_raw(0, char_mask);
 	while (end_state != 'd') {
-		read_key(keybuf, fkmax);
+		read_key(keybuf, sizeof(keybuf));
 		fresh_line();
 		if (found_match(keybuf, hex_out, 0)) {
 			continue;
