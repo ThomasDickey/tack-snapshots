@@ -1,0 +1,318 @@
+/*
+** This software is Copyright (c) 1997 by Daniel Weaver.
+**
+** Permission is hereby granted to copy, distribute or otherwise
+** use any part of this package as long as you do not try to make
+** money from it or pretend that you wrote it.  This copyright
+** notice must be maintained in any copy made.
+**
+** Use of this software constitutes acceptance for use in an AS IS
+** condition. There are NO warranties with regard to this software.
+** In no event shall the author be liable for any damages whatsoever
+** arising out of or in connection with the use or performance of this
+** software.  Any use of this software is at the user's own risk.
+**
+**  If you make modifications to this software that you feel
+**  increases it usefulness for the rest of the community, please
+**  email the changes, enhancements, bug fixes as well as any and
+**  all ideas to me. This software is going to be maintained and
+**  enhanced as deemed necessary by the community.
+*/
+
+#include <curses.h>
+#include <ctype.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include "tac.h"
+
+/*
+   Menu control
+ */
+
+static char prompt_string[80];	/* menu prompt storage */
+
+/*
+**	menu_can_scan(menu-structure)
+**
+**	Recursivly scan the menu tree and find which cap names can be tested.
+*/
+void
+menu_can_scan(
+	struct test_menu *menu)
+{
+	struct test_list *mt;
+
+	for (mt = menu->tests; (mt->flags & MENU_LAST) == 0; mt++) {
+		can_test(mt->caps_done, FLAG_CAN_TEST);
+		can_test(mt->caps_tested, FLAG_CAN_TEST);
+		if (!(mt->test_procedure)) {
+			if (mt->sub_menu) {
+				menu_can_scan(mt->sub_menu);
+			}
+		}
+	}
+}
+
+/*
+**	menu_test_loop(test-structure, state, control-character)
+**
+**	This function implements the repeat test function.
+*/
+void
+menu_test_loop(
+	struct test_list *test,
+	int *state,
+	int *ch)
+{
+	int nch;
+
+	do {
+		if ((test->flags | *state) & MENU_CLEAR) {
+			put_clear();
+		} else
+		if (line_count + test->lines_needed >= lines) {
+			put_clear();
+		}
+		nch = 0;
+		if (test->test_procedure) {
+			/* The procedure takes precidence so I can pass
+			   the menu entry as an argument.
+			*/
+			can_test(test->caps_done, FLAG_TESTED);
+			can_test(test->caps_tested, FLAG_TESTED);
+			test->test_procedure(test, state, &nch);
+		} else
+		if (test->sub_menu) {
+			/* nested menu's */
+			menu_display(test->sub_menu, &nch);
+			*state = 0;
+			if (nch == 'q' || nch == 's') {
+				/* Quit and skip are killed here */
+				nch = '?';
+			}
+		} else {
+			break;	/* cya */
+		}
+		if (nch == '\r' || nch == '\n' || nch == 'n') {
+			nch = 0;
+			break;
+		}
+	} while (nch == 'r');
+	*ch = nch;
+}
+
+/*
+**	menu_display(menu-structure, flags)
+**
+**	This function implements menu control.
+*/
+void
+menu_display(
+	struct test_menu *menu,
+	int *last_ch)
+{
+	int test_state = 0, run_standard_tests;
+	int default_action = 0, ch = 0, nch = 0;
+	char *s;
+	struct test_list *mt;
+	struct test_list *repeat_tests = 0;
+	int repeat_state = 0;
+	int prompt_length;
+
+	prompt_length = strlen(prompt_string);
+	if (menu->ident) {
+		sprintf(&prompt_string[prompt_length], "/%s", menu->ident);
+	}
+	if (menu->prompt) {
+		if ((s = strchr(menu->prompt, '['))) {
+			default_action = s[1];
+		}
+	}
+	run_standard_tests = menu->standard_tests ?
+		menu->standard_tests[0] : -1;
+	if (!last_ch) {
+		last_ch = &ch;
+	}
+	while (1) {
+		if (ch) {
+			/* do nothing */;
+		} else {
+			/* Display the menu */
+			put_crlf();
+			if (menu->menu_function) {
+				/*
+				   this function may be used to restrict menu
+				   entries.  If used it must print the title.
+				*/
+				menu->menu_function(menu);
+			} else
+			if (menu->menu_title) {
+				ptextln(menu->menu_title);
+			}
+			for (mt = menu->tests; (mt->flags & MENU_LAST) == 0; mt++) {
+				if (mt->menu_entry) {
+					ptext(" ");
+					ptextln(mt->menu_entry);
+				}
+			}
+			if (menu->standard_tests) {
+				ptext(" ");
+				ptextln(menu->standard_tests);
+				ptextln(" r) repeat test");
+				ptextln(" s) skip to next test");
+			}
+			ptextln(" q) quit");
+			ptextln(" ?) help");
+			if (menu->prompt) {
+				put_crlf();
+				ptext(&prompt_string[1]);
+				ptext(" ");
+				ptext(menu->prompt);
+			}
+			/* read a character */
+			ch = wait_here();
+		}
+		if (ch == '\r' || ch == '\n') {
+			ch = default_action;
+		}
+		if (ch == 'q') {
+			break;
+		}
+		if (ch == '?') {
+			ch = 0;
+			continue;
+		}
+		nch = ch;
+		ch = 0;
+		/* Run one of the standard tests (by request) */
+		for (mt = menu->tests; (mt->flags & MENU_LAST) == 0; mt++) {
+			if (mt->menu_entry && (nch == mt->menu_entry[0])) {
+				menu_test_loop(mt, &test_state, &nch);
+				ch = nch;
+			}
+		}
+		if (menu->standard_tests && nch == 'r') {
+			menu->resume_tests = repeat_tests;
+			test_state = repeat_state;
+			nch = run_standard_tests;
+		}
+		if (nch == run_standard_tests) {
+			if (!(mt = menu->resume_tests)) {
+				mt = menu->tests;
+			}
+			if (mt->flags & MENU_LAST) {
+				mt = menu->tests;
+			}
+			/* Run the standard test suite */
+			for ( ; (mt->flags & MENU_LAST) == 0; ) {
+				if ((mt->flags & MENU_NEXT) == MENU_NEXT) {
+					repeat_tests = mt;
+					repeat_state = test_state;
+					nch = run_standard_tests;
+					menu_test_loop(mt, &test_state, &nch);
+					if (nch != 0 && nch != 'n') {
+						ch = nch;
+						break;
+					}
+					if (test_state & MENU_STOP) {
+						break;
+					}
+				}
+				mt++;
+			}
+			if (ch == 0) {
+				ch = default_action;
+			}
+			menu->resume_tests = mt;
+			menu->resume_state = test_state;
+			menu->resume_char = ch;
+
+			if ((menu->flags & MENU_NEXT) && (ch == run_standard_tests)) {
+				*last_ch = ch;
+				prompt_string[prompt_length] = '\0';
+				return;
+			}
+		}
+	}
+	*last_ch = ch;
+	prompt_string[prompt_length] = '\0';
+}
+
+/*
+**	generic_done_message(test_list)
+**
+**	Print the Done message and request input.
+*/
+void
+generic_done_message(
+	struct test_list *test,
+	int *state,
+	int *ch)
+{
+	char done_message[128];
+
+	if (test->caps_done) {
+		sprintf(done_message, "(%s) Done ", test->caps_done);
+		ptext(done_message);
+	} else {
+		ptext("Done ");
+	}
+	*ch = wait_here();
+	if (*ch == '\r' || *ch == '\n' || *ch == 's' || *ch == 'n') {
+		*ch = 0;
+	}
+}
+
+/*
+**	menu_clear_screen(test, state, ch)
+**
+**	Just clear the screen.
+*/
+void
+menu_clear_screen(
+	struct test_list *test,
+	int *state,
+	int *ch)
+{
+	put_clear();
+}
+
+/*
+**	menu_reset_init(test, state, ch)
+**
+**	Send the reset and init strings.
+*/
+void
+menu_reset_init(
+	struct test_list *test,
+	int *state,
+	int *ch)
+{
+	reset_init(TRUE);
+	put_crlf();
+}
+
+/*
+**	subtest_menu(test, state, ch)
+**
+**	Scan the menu looking for something to execute
+**	Return TRUE if we found anything.
+*/
+int
+subtest_menu(
+	struct test_list *test,
+	int *state,
+	int *ch)
+{
+	struct test_list *mt;
+
+	for (mt = test; (mt->flags & MENU_LAST) == 0; mt++) {
+		if (mt->menu_entry && (*ch == mt->menu_entry[0])) {
+			*ch = 0;
+			menu_test_loop(mt, state, ch);
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
