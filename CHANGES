@@ -1,3 +1,11 @@
+1997-12-24  Daniel.Weaver
+
+	* HISTORY: ncurses-4.1-971220
+
+1997-12-22  Daniel.Weaver
+
+	* ansi.c, tack.1: ncurses-4.1-971220
+
 1997-12-02  Daniel.Weaver
 
 	* tack.c, init.c: ncurses-4.1-971220

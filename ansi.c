@@ -20,6 +20,7 @@
 */
 #include <stdio.h>
 #include <curses.h>
+#include "term.h"
 #include "tack.h"
 
 /*
@@ -599,7 +600,7 @@ terminal_state(void)
 /*
 **	ansi_report_help()
 **
-**	Display the informational data one the ANSI report test.
+**	Display the informational data for the ANSI report test.
 */
 static void
 ansi_report_help(void)
