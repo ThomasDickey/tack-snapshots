@@ -1,3 +1,7 @@
+1997-10-26  Daniel.Weaver
+
+	* makefile, edit.c, tack.h, sync.c: ncurses-4.1-971101
+
 1997-10-25  Daniel.Weaver
 
 	* pad.c, tack.1: ncurses-4.1-971101

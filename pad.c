@@ -21,7 +21,7 @@
 
 #include <curses.h>
 #include <string.h>
-#include "tac.h"
+#include "tack.h"
 
 /* test the pad counts on the terminal */
 
@@ -63,6 +63,12 @@ static void pad_crash(struct test_list *, int *, int *);
 
 extern struct test_menu change_pad_menu;
 
+/*
+   Any command found in this list, executed from a "Done" prompt
+   will force the default action to repeat rather than next.
+*/
+char *pad_repeat_test = {"ep-+<>"};
+
 struct test_list pad_test_list[] = {
 	{0, 0, 0, 0, "e) edit terminfo", 0, &edit_menu},
 	{0, 0, 0, 0, "p) change padding", 0, &change_pad_menu},
@@ -71,6 +77,8 @@ struct test_list pad_test_list[] = {
 	{0, 0, 0, 0, "i) Send reset and init", menu_reset_init, 0},
 	{0, 0, 0, 0, txt_longer_test_time, longer_test_time, 0},
 	{0, 0, 0, 0, txt_shorter_test_time, shorter_test_time, 0},
+	{0, 0, 0, 0, txt_longer_augment, longer_augment, 0},
+	{0, 0, 0, 0, txt_shorter_augment, shorter_augment, 0},
 	/***
 	   Phase 1: Test initialization and reset strings.
 	
@@ -97,22 +105,22 @@ struct test_list pad_test_list[] = {
 	*/
 	{MENU_NEXT, 0, "home", 0, 0, pad_home1, 0},
 	{MENU_NEXT, 0, "home) (nel", 0, 0, pad_home2, 0},
-	{MENU_NEXT + 1, 0, "clear", 0, 0, pad_clear, 0},
-	{MENU_NEXT, 0, "ed", 0, 0, pad_clear, 0},
-	{MENU_NEXT, 0, "ech", 0, 0, pad_ech, 0},
-	{MENU_NEXT, 0, "el1", "cub1 nel", 0, pad_el1, 0},
-	{MENU_NEXT, 0, "el", "nel", 0, pad_el, 0},
+	{MENU_NEXT | 1, 0, "clear", 0, 0, pad_clear, 0},
+	{MENU_NEXT | MENU_LM1, 0, "ed", 0, 0, pad_clear, 0},
+	{MENU_NEXT | MENU_80c, 0, "ech", 0, 0, pad_ech, 0},
+	{MENU_NEXT | MENU_80c, 0, "el1", "cub1 nel", 0, pad_el1, 0},
+	{MENU_NEXT | MENU_10c, 0, "el", "nel", 0, pad_el, 0},
 	/*
 	   Phase 3: Character deletions and insertions
 	*/
 	{MENU_NEXT, 0, "smdc) (rmdc", 0, 0, pad_smdc, 0},
-	{MENU_NEXT, 0, "dch", "smdc rmdc", 0, pad_dch, 0},
-	{MENU_NEXT, 0, "dch1", "smdc rmdc", 0, pad_dch1, 0},
+	{MENU_NEXT | MENU_80c, 0, "dch", "smdc rmdc", 0, pad_dch, 0},
+	{MENU_NEXT | MENU_80c, 0, "dch1", "smdc rmdc", 0, pad_dch1, 0},
 	{MENU_NEXT, 0, "smir) (rmir", 0, 0, pad_smir, 0},
-	{MENU_NEXT, 0, "ich) (ip", "smir rmir", 0, pad_ich, 0},
-	{MENU_NEXT, 0, "ich1) (ip", "smir rmir", 0, pad_ich1, 0},
+	{MENU_NEXT | MENU_90c, 0, "ich) (ip", "smir rmir", 0, pad_ich, 0},
+	{MENU_NEXT | MENU_90c, 0, "ich1) (ip", "smir rmir", 0, pad_ich1, 0},
 	{MENU_NEXT, 4, "ich1) (dch1", "smir rmir", 0, pad_xch1, 0},
-	{MENU_NEXT, 0, "rep", 0, 0, pad_rep, 0},
+	{MENU_NEXT | MENU_90c, 0, "rep", 0, 0, pad_rep, 0},
 	/*
 	   Phase 4: Test cursor addressing pads.
 	*/
@@ -122,17 +130,17 @@ struct test_list pad_test_list[] = {
 	*/
 	{MENU_NEXT, 0, "hd", 0, 0, pad_hd, 0},
 	{MENU_NEXT, 0, "hu", 0, 0, pad_hu, 0},
-	{MENU_NEXT + 1, 0, "rin", 0, 0, pad_rin, 0},
+	{MENU_NEXT | MENU_LM1 | 1, 0, "rin", 0, 0, pad_rin, 0},
 	{MENU_NEXT, 0, "ri", 0, 0, pad_rin, 0},
-	{MENU_NEXT + 1, 0, "il", 0, 0, pad_il, 0},
+	{MENU_NEXT | MENU_LM1 | 1, 0, "il", 0, 0, pad_il, 0},
 	{MENU_NEXT, 0, "il1", 0, 0, pad_il, 0},
-	{MENU_NEXT + 1, 0, "indn", 0, 0, pad_indn, 0},
+	{MENU_NEXT | MENU_LM1 | 1, 0, "indn", 0, 0, pad_indn, 0},
 	{MENU_NEXT, 0, "ind", 0, 0, pad_indn, 0},
-	{MENU_NEXT + 1, 0, "dl", 0, 0, pad_dl, 0},
+	{MENU_NEXT | MENU_LM1 | 1, 0, "dl", 0, 0, pad_dl, 0},
 	{MENU_NEXT, 0, "dl1", 0, 0, pad_dl, 0},
 	{MENU_NEXT, 0, "il1) (dl1", 0, 0, pad_xl, 0},
 	{MENU_NEXT, 0, "sc) (rc", 0, 0, pad_scrc, 0},
-	{MENU_NEXT, 0, "csr) (ind", 0, 0, pad_csrind, 0},
+	{MENU_NEXT | MENU_50l, 0, "csr) (ind", 0, 0, pad_csrind, 0},
 	{MENU_NEXT, 0, "sc) (csr) (rc", 0, 0, pad_sccsrrc, 0},
 	{MENU_NEXT, 0, "csr) (nel", "sc rc", 0, pad_csr_nel, 0},
 	{MENU_NEXT, 0, "csr) (cup", 0, 0, pad_csr_cup, 0},
@@ -176,7 +184,8 @@ char letters[] = "AbCdefghiJklmNopQrStuVwXyZ";
 
 static char *clr_test_name[CLEAR_TEST_MAX] = {
 	"full page", "sparse page", "short lines", "one full line",
-"one short line"};
+	"one short line"
+};
 
 static char every_line[] = "This text should be on every line.";
 static char all_lines[] = "Each char on any line should be the same.  ";
@@ -200,7 +209,7 @@ pad_standard(
 	char tbuf[128];
 
 	if ((cap = get_string_cap_byname(t->caps_done, &long_name))) {
-		sprintf(tbuf, "(%s) %s, start testing [n] > ", t->caps_done,
+		sprintf(tbuf, "(%s) %s, start testing", t->caps_done,
 			long_name);
 		if (skip_pad_test(t, state, ch, tbuf)) {
 			return;
@@ -214,7 +223,7 @@ pad_standard(
 			tt_putp(cap);
 			putchp(letter);
 		} while(no_alarm_event);
-		pad_test_shutdown(0);
+		pad_test_shutdown(t, 0);
 		if (full_page) {
 			home_down();
 		} else {
@@ -278,7 +287,6 @@ init_cup(
 	int *state,
 	int *ch)
 {
-	hzcc = columns * 8 / 10;	/* horizontal character count */
 	init_xon_xoff(t, state, ch);
 	if (enter_ca_mode) {
 		tc_putp(enter_ca_mode);
@@ -312,7 +320,7 @@ pad_home1(
 		   truly brain damaged terminals will fail this test because
 		   they cannot accept data at full rate
 		*/
-		if (skip_pad_test(t, state, ch, "(home) Home start testing [n] > ")) {
+		if (skip_pad_test(t, state, ch, "(home) Home start testing")) {
 			return;
 		}
 		pad_test_startup(1);
@@ -330,7 +338,7 @@ pad_home1(
 			}
 			NEXT_LETTER;
 		}
-		pad_test_shutdown(1);
+		pad_test_shutdown(t, 0);
 		ptext("All the dots should line up.  ");
 		pad_done_message(t, state, ch);
 		put_clear();
@@ -352,7 +360,7 @@ pad_home2(
 
 	if (can_go_home) {
 		if (skip_pad_test(t, state, ch,
-			"(home) Home, (nel) newline start testing [n] > ")) {
+			"(home) Home, (nel) newline start testing")) {
 			return;
 		}
 		pad_test_startup(1);
@@ -371,7 +379,7 @@ pad_home2(
 			}
 			NEXT_LETTER;
 		}
-		pad_test_shutdown(0);
+		pad_test_shutdown(t, 0);
 		ptext("All the dots should line up.  ");
 		pad_done_message(t, state, ch);
 		put_clear();
@@ -398,11 +406,10 @@ pad_clear(
 		clr_test_value[j] = 32767;
 	}
 	clear_select = auto_right_margin ? 0 : 1;
-	augment = is_clear ? lines : lines - 1;
 	if (is_clear) {
-		txt = "(clear) clear-screen start testing [n] > ";
+		txt = "(clear) clear-screen start testing";
 	} else {
-		txt = "(ed) erase-to-end-of-display start testing [n] > ";
+		txt = "(ed) erase-to-end-of-display start testing";
 	}
 	if (skip_pad_test(t, state, ch, txt)) {
 		return;
@@ -419,6 +426,8 @@ pad_clear(
 				augment = 2;
 			if (augment < lines) {
 				put_clear();
+				tt_putparm(cursor_address, 1,
+					lines - augment - 1, 0);
 				ptextln("This line should not be erased (ed)");
 			}
 		}
@@ -490,15 +499,14 @@ pad_clear(
 				if (augment == lines) {
 					go_home();
 				} else {
-					tt_putparm(cursor_address,
-						lines - reps,
+					tt_putparm(cursor_address, 1,
 						lines - reps, 0);
 				}
 				tt_tputs(clr_eos, reps);
 			}
 			NEXT_LETTER;
 		}
-		pad_test_shutdown(1);
+		pad_test_shutdown(t, 1);
 		ptext(end_message);
 
 		pad_done_message(t, state, ch);
@@ -545,15 +553,13 @@ pad_ech(
 		pad_done_message(t, state, ch);
 		return;
 	}
-	augment = hzcc;
 	if (skip_pad_test(t, state, ch,
-		"(ech) Erase-characters start testing [n] > ")) {
+		"(ech) Erase-characters start testing")) {
 		return;
 	}
 	if (augment > columns - 2) {
 		augment = columns - 2;
 	}
-	reps = augment;
 	pad_test_startup(1);
 	for ( ; no_alarm_event; test_complete++) {
 		go_home();
@@ -573,7 +579,7 @@ pad_ech(
 		put_crlf();
 		NEXT_LETTER;
 	}
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	ptext(all_lines);
 	pad_done_message(t, state, ch);
 	put_clear();
@@ -597,22 +603,16 @@ pad_el1(
 		pad_done_message(t, state, ch);
 		return;
 	}
-	augment = hzcc;
 	if (skip_pad_test(t, state, ch,
-		"(el1) Erase-to-beginning-of-line start testing [n] > ")) {
+		"(el1) Erase-to-beginning-of-line start testing")) {
 		return;
 	}
 	if (augment > columns - 2) {
 		augment = columns - 2;
 	}
-	reps = augment;
 	pad_test_startup(1);
 	for ( ; no_alarm_event; test_complete++) {
 		go_home();
-		if (augment > columns - 2) {
-			augment = columns - 2;
-		}
-		reps = augment;
 		for (i = 2; i < lines; i++) {
 			for (j = 0; j <= reps; j++) {
 				putchp(letter);
@@ -630,7 +630,7 @@ pad_el1(
 		put_crlf();
 		NEXT_LETTER;
 	}
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	ptext(all_lines);
 	pad_done_message(t, state, ch);
 	put_clear();
@@ -654,11 +654,11 @@ pad_el(
 		pad_done_message(t, state, ch);
 		return;
 	}
-	augment = hzcc / 10;
 	if (skip_pad_test(t, state, ch,
-		"(el) Clear-to-end-of-line start testing [n] > ")) {
+		"(el) Clear-to-end-of-line start testing")) {
 		return;
 	}
+	hzcc = columns * 8 / 10;	/* horizontal character count */
 	if (augment > hzcc) {
 		augment = hzcc;
 	}
@@ -679,7 +679,7 @@ pad_el(
 		put_crlf();
 		NEXT_LETTER;
 	}
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	ptext(all_lines);
 	pad_done_message(t, state, ch);
 	put_clear();
@@ -708,7 +708,7 @@ pad_smdc(
 		return;
 	}
 	if (skip_pad_test(t, state, ch,
-		"(smdc) (rmdc) Enter/Exit-delete-mode start testing [n] > ")) {
+		"(smdc) (rmdc) Enter/Exit-delete-mode start testing")) {
 		return;
 	}
 	pad_test_startup(1);
@@ -720,7 +720,7 @@ pad_smdc(
 			putchp(letter);
 		}
 	}
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	home_down();
 	ptext(no_visual);
 	pad_done_message(t, state, ch);
@@ -745,17 +745,16 @@ pad_dch(
 		pad_done_message(t, state, ch);
 		return;
 	}
-	augment = hzcc;
 	if (skip_pad_test(t, state, ch,
-		"(dch) Delete-characters start testing [n] > ")) {
+		"(dch) Delete-characters start testing")) {
 		return;
 	}
+	hzcc = columns * 8 / 10;	/* horizontal character count */
 	if (augment > hzcc) {
 		augment = hzcc;
 	}
 	pad_test_startup(1);
 	for ( ; no_alarm_event; test_complete++) {
-		reps = augment;
 		go_home();
 		for (i = 2; i < lines; i++) {
 			for (j = 0; j <= reps; j++) {
@@ -772,7 +771,7 @@ pad_dch(
 		put_crlf();
 		NEXT_LETTER;
 	}
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	home_down();
 	ptext(all_lines);
 	pad_done_message(t, state, ch);
@@ -801,16 +800,13 @@ pad_dch1(
 		pad_done_message(t, state, ch);
 		return;
 	}
-	augment = hzcc;
 	if (skip_pad_test(t, state, ch,
-		"(dch1) Delete-character start testing [n] > ")) {
+		"(dch1) Delete-character start testing")) {
 		return;
 	}
+	hzcc = columns * 8 / 10;	/* horizontal character count */
 	if (augment > hzcc) {
 		augment = hzcc;
-	}
-	if (augment < 1) {
-		augment = 1;
 	}
 	pad_test_startup(1);
 	for ( ; no_alarm_event; test_complete++) {
@@ -832,7 +828,7 @@ pad_dch1(
 		put_crlf();
 		NEXT_LETTER;
 	}
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	ptext(all_lines);
 	pad_done_message(t, state, ch);
 	put_clear();
@@ -861,7 +857,7 @@ pad_smir(
 		return;
 	}
 	if (skip_pad_test(t, state, ch,
-		"(smir) (rmir) Enter/Exit-insert-mode start testing [n] > ")) {
+		"(smir) (rmir) Enter/Exit-insert-mode start testing")) {
 		return;
 	}
 	pad_test_startup(1);
@@ -873,7 +869,7 @@ pad_smir(
 			putchp(letter);
 		}
 	}
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	home_down();
 	ptext(no_visual);
 	pad_done_message(t, state, ch);
@@ -898,11 +894,11 @@ pad_ich(
 		pad_done_message(t, state, ch);
 		return;
 	}
-	augment = j = columns * 9 / 10;
 	if (skip_pad_test(t, state, ch,
-		"(ich) Insert-characters, (ip) Insert-padding start testing [n] > ")) {
+		"(ich) Insert-characters, (ip) Insert-padding start testing")) {
 		return;
 	}
+	j = columns * 9 / 10;
 	if (augment > j) {
 		augment = j;
 	}
@@ -927,7 +923,7 @@ pad_ich(
 		NEXT_LETTER;
 		put_crlf();
 	}
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	ptext(all_lines);
 	pad_done_message(t, state, ch);
 	tc_putp(exit_insert_mode);
@@ -944,7 +940,7 @@ pad_ich1(
 	int *state,
 	int *ch)
 {
-	int i, j, l;
+	int i, j;
 
 	if (!insert_character) {
 		ptext("(ich1) Insert-character, not present.  ");
@@ -952,10 +948,12 @@ pad_ich1(
 		return;
 	}
 	if (skip_pad_test(t, state, ch,
-		"(ich1) Insert-character, (ip) Insert-padding start testing [n] > ")) {
+		"(ich1) Insert-character, (ip) Insert-padding start testing")) {
 		return;
 	}
-	l = columns * 9 / 10;
+	if (augment > columns - 2) {
+		augment = columns - 2;
+	}
 	pad_test_startup(1);
 	for ( ; no_alarm_event; test_complete++) {
 		put_clear();
@@ -966,11 +964,11 @@ pad_ich1(
 			replace_mode = 0;
 			if (!insert_padding && !insert_character) {
 				/* only enter/exit is needed */
-				for (j = 0; j < l; j++) {
+				for (j = 0; j < augment; j++) {
 					putchp('.');
 				}
 			} else {
-				for (j = 0; j < l; j++) {
+				for (j = 0; j < augment; j++) {
 					tt_putp(insert_character);
 					putchp('.');
 					tt_putp(insert_padding);
@@ -981,14 +979,14 @@ pad_ich1(
 			put_crlf();
 			SLOW_TERMINAL_EXIT;
 		}
-		for (j = 0; j < l; j++) {
+		for (j = 0; j < augment; j++) {
 			putchp('.');
 		}
 		putchp(letter);
 		NEXT_LETTER;
 		put_crlf();
 	}
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	ptext(all_lines);
 	pad_done_message(t, state, ch);
 	tc_putp(exit_insert_mode);
@@ -1015,7 +1013,7 @@ pad_xch1(
 		return;
 	}
 	if (skip_pad_test(t, state, ch,
-		"(ich1) Insert-character, (dch1) Delete-character start testing [n] > ")) {
+		"(ich1) Insert-character, (dch1) Delete-character start testing")) {
 		return;
 	}
 	put_crlf();
@@ -1026,7 +1024,7 @@ pad_xch1(
 		tt_putp(insert_character);
 		tt_putp(delete_character);
 	}
-	pad_test_shutdown(1);
+	pad_test_shutdown(t, 1);
 	ptextln(xch1);
 	ptext("The preceeding two lines should be the same.  ");
 	pad_done_message(t, state, ch);
@@ -1050,9 +1048,8 @@ pad_rep(
 		pad_done_message(t, state, ch);
 		return;
 	}
-	augment = columns * 9 / 10;
 	if (skip_pad_test(t, state, ch,
-		"(rep) Repeat-character start testing [n] > ")) {
+		"(rep) Repeat-character start testing")) {
 		return;
 	}
 	if (augment > columns - 2) {
@@ -1061,7 +1058,6 @@ pad_rep(
 	if (augment < 2) {
 		augment = 2;
 	}
-	reps = augment;
 	pad_test_startup(1);
 	for ( ; no_alarm_event; test_complete++) {
 		go_home();
@@ -1075,7 +1071,7 @@ pad_rep(
 		put_crlf();
 		NEXT_LETTER;
 	}
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	ptextln(all_lines);
 	pad_done_message(t, state, ch);
 }
@@ -1099,7 +1095,7 @@ pad_cup(
 		return;
 	}
 	if (skip_pad_test(t, state, ch,
-		"(cup) Cursor-address start testing [n] > ")) {
+		"(cup) Cursor-address start testing")) {
 		return;
 	}
 	put_clear();
@@ -1133,7 +1129,7 @@ pad_cup(
 		}
 		NEXT_LETTER;
 	}
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	tt_putparm(cursor_address, 1, line_count = r, char_count = c);
 	pad_done_message(t, state, ch);
 	put_clear();
@@ -1158,7 +1154,7 @@ pad_hd(
 		return;
 	}
 	if (skip_pad_test(t, state, ch,
-		"(hd) Half-line-down start testing [n] > ")) {
+		"(hd) Half-line-down start testing")) {
 		return;
 	}
 	pad_test_startup(1);
@@ -1180,7 +1176,7 @@ pad_hd(
 		}
 		NEXT_LETTER;
 	}
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	pad_done_message(t, state, ch);
 }
 
@@ -1203,7 +1199,7 @@ pad_hu(
 		return;
 	}
 	if (skip_pad_test(t, state, ch,
-		"(hu) Half-line-up start testing [n] > ")) {
+		"(hu) Half-line-up start testing")) {
 		return;
 	}
 	pad_test_startup(1);
@@ -1226,7 +1222,7 @@ pad_hu(
 		go_home();
 		NEXT_LETTER;
 	}
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	pad_done_message(t, state, ch);
 }
 
@@ -1251,8 +1247,7 @@ pad_rin(
 			pad_done_message(t, state, ch);
 			return;
 		}
-		augment = lines - 1;
-		start_message = "(rin) Scroll-reverse-n-lines start testing [n] > ";
+		start_message = "(rin) Scroll-reverse-n-lines start testing";
 	} else {
 		/* ri */
 		if (!scroll_reverse) {
@@ -1260,8 +1255,8 @@ pad_rin(
 			pad_done_message(t, state, ch);
 			return;
 		}
+		start_message = "(ri) Scroll-reverse start testing";
 		augment = 1;
-		start_message = "(ri) Scroll-reverse start testing [n] > ";
 	}
 	if (skip_pad_test(t, state, ch, start_message)) {
 		return;
@@ -1288,7 +1283,7 @@ pad_rin(
 	sprintf(temp, "Scroll reverse %d line%s.  ", augment,
 		augment == 1 ? "" : "s");
 	put_str(temp);
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	pad_done_message(t, state, ch);
 	put_clear();
 }
@@ -1308,23 +1303,22 @@ pad_il(
 	char *start_message;
 
 	if (t->flags & 1) {
-		/* rin */
+		/* il */
 		if (!parm_insert_line) {
 			ptext("(il) Insert-lines not present.  ");
 			pad_done_message(t, state, ch);
 			return;
 		}
-		augment = lines - 1;
-		start_message = "(il) Insert-lines start testing [n] > ";
+		start_message = "(il) Insert-lines start testing";
 	} else {
-		/* ri */
+		/* il1 */
 		if (!insert_line) {
 			ptext("(il1) Insert-line not present.  ");
 			pad_done_message(t, state, ch);
 			return;
 		}
+		start_message = "(il1) Insert-line start testing";
 		augment = 1;
-		start_message = "(il1) Insert-line start testing [n] > ";
 	}
 	if (skip_pad_test(t, state, ch, start_message)) {
 		return;
@@ -1351,7 +1345,7 @@ pad_il(
 	sprintf(temp, "Insert %d line%s.  ", augment,
 		augment == 1 ? "" : "s");
 	put_str(temp);
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	pad_done_message(t, state, ch);
 	put_clear();
 }
@@ -1377,12 +1371,11 @@ pad_indn(
 			pad_done_message(t, state, ch);
 			return;
 		}
-		augment = lines - 1;
-		start_message = "(indn) Scroll-forward-n-lines start testing [n] > ";
+		start_message = "(indn) Scroll-forward-n-lines start testing";
 	} else {
 		/* ind */
+		start_message = "(ind) Scroll-forward start testing";
 		augment = 1;
-		start_message = "(ind) Scroll-forward start testing [n] > ";
 	}
 	if (skip_pad_test(t, state, ch, start_message)) {
 		return;
@@ -1411,7 +1404,7 @@ pad_indn(
 	sprintf(temp, "\nScroll forward %d line%s.  ", augment,
 		augment == 1 ? "" : "s");
 	put_str(temp);
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	pad_done_message(t, state, ch);
 }
 
@@ -1436,8 +1429,7 @@ pad_dl(
 			pad_done_message(t, state, ch);
 			return;
 		}
-		augment = lines - 1;
-		start_message = "(dl) Delete-lines start testing [n] > ";
+		start_message = "(dl) Delete-lines start testing";
 	} else {
 		/* dl1 */
 		if (!delete_line) {
@@ -1445,8 +1437,8 @@ pad_dl(
 			pad_done_message(t, state, ch);
 			return;
 		}
+		start_message = "(dl1) Delete-line start testing";
 		augment = 1;
-		start_message = "(dl1) Delete-line start testing [n] > ";
 	}
 	if (skip_pad_test(t, state, ch, start_message)) {
 		return;
@@ -1478,7 +1470,7 @@ pad_dl(
 	sprintf(temp, "\nDelete %d line%s.  ", augment,
 		augment == 1 ? "" : "s");
 	put_str(temp);
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	pad_done_message(t, state, ch);
 }
 
@@ -1498,7 +1490,7 @@ pad_xl(
 		return;
 	}
 	if (skip_pad_test(t, state, ch,
-		"(il1) Insert-line, (dl1) Delete-line start testing [n] > ")) {
+		"(il1) Insert-line, (dl1) Delete-line start testing")) {
 		return;
 	}
 	put_clear();
@@ -1525,7 +1517,7 @@ pad_xl(
 		put_cr();
 		tt_putp(delete_line);
 	}
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	home_down();
 	ptext("The top of the screen should have a paragraph of text.  ");
 	pad_done_message(t, state, ch);
@@ -1558,7 +1550,7 @@ pad_scrc(
 		return;
 	}
 	if (skip_pad_test(t, state, ch,
-		"(sc) (rc) Save/Restore-cursor start testing [n] > ")) {
+		"(sc) (rc) Save/Restore-cursor start testing")) {
 		return;
 	}
 	pad_test_startup(1);
@@ -1571,7 +1563,7 @@ pad_scrc(
 			putchp('X');
 		}
 	}
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	home_down();
 	ptext(above_line);
 	pad_done_message(t, state, ch);
@@ -1595,13 +1587,15 @@ pad_csrind(
 		pad_done_message(t, state, ch);
 		return;
 	}
-	augment = (lines + 1) / 2;
 	if (skip_pad_test(t, state, ch,
-		"(csr) Save/Restore-cursor, (ind) index start testing [n] > ")) {
+		"(csr) Save/Restore-cursor, (ind) index start testing")) {
 		return;
 	}
 	if (augment < 2) {
 		augment = 2;
+	}
+	if (augment > lines - 1) {
+		augment = lines - 1;
 	}
 	put_clear();
 	ptext("This text is on the top line.");
@@ -1618,7 +1612,7 @@ pad_csrind(
 	for (i = augment; i > 1; i--) {
 		put_ind();
 	}
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	ptext("All but top and bottom lines should be blank.  ");
 	pad_done_message(t, state, ch);
 	tt_putparm(change_scroll_region, 1, 0, lines - 1);
@@ -1643,7 +1637,7 @@ pad_sccsrrc(
 		return;
 	}
 	if (skip_pad_test(t, state, ch,
-		"(sc) (csr) (rc) Save/Change/Restore-cursor, start testing [n] > ")) {
+		"(sc) (csr) (rc) Save/Change/Restore-cursor, start testing")) {
 		return;
 	}
 	pad_test_startup(1);
@@ -1657,7 +1651,7 @@ pad_sccsrrc(
 			putchp('X');
 		}
 	}
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	home_down();
 	ptext(above_line);
 	pad_done_message(t, state, ch);
@@ -1682,7 +1676,7 @@ pad_csr_nel(
 		return;
 	}
 	if (skip_pad_test(t, state, ch,
-		"(csr) Change-scroll-region, (nel) newline start testing [n] > ")) {
+		"(csr) Change-scroll-region, (nel) newline start testing")) {
 		return;
 	}
 	pad_test_startup(1);
@@ -1700,7 +1694,7 @@ pad_csr_nel(
 		tt_putparm(change_scroll_region, 1, 0, lines - 1);
 		tt_putp(restore_cursor);
 	}
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	put_str("  ");
 	pad_done_message(t, state, ch);
 	tt_putparm(change_scroll_region, 1, 0, lines - 1);
@@ -1724,7 +1718,7 @@ pad_csr_cup(
 		return;
 	}
 	if (skip_pad_test(t, state, ch,
-		"(csr) Change-scroll-region, (cup) cursor-address start testing [n] > ")) {
+		"(csr) Change-scroll-region, (cup) cursor-address start testing")) {
 		return;
 	}
 	pad_test_startup(1);
@@ -1734,13 +1728,13 @@ pad_csr_cup(
 				put_crlf();
 			}
 			tt_putparm(change_scroll_region, 1, i, lines - 1);
-			tt_putparm(cursor_address, lines, lines - 1, 0);
+			tt_putparm(cursor_address, 1, lines - 1, 0);
 			put_str(every_line);
 		}
 		tt_putparm(change_scroll_region, 1, 0, lines - 1);
-		tt_putparm(cursor_address, lines, lines - 1, strlen(every_line));
+		tt_putparm(cursor_address, 1, lines - 1, strlen(every_line));
 	}
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	put_str("  ");
 	pad_done_message(t, state, ch);
 	tt_putparm(change_scroll_region, 1, 0, lines - 1);
@@ -1760,7 +1754,7 @@ pad_ht(
 	int i, j;
 
 	if (skip_pad_test(t, state, ch,
-		"(ht) Tab start testing [n] > ")) {
+		"(ht) Tab start testing")) {
 		return;
 	}
 	pad_test_startup(1);
@@ -1788,7 +1782,7 @@ pad_ht(
 			}
 		if (cursor_address)
 			for (i = 1; i < lines - 2; i++) {
-				tt_putparm(cursor_address, lines, i - 1, 0);
+				tt_putparm(cursor_address, 1, i - 1, 0);
 				for (j = 8; j < columns; j += 8) {
 					putchp('\t');
 				}
@@ -1802,7 +1796,7 @@ pad_ht(
 			putln("N");
 		}
 	}
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	ptextln("Letters on the screen other than Ns at the right margin indicate failure.");
 	ptext("A-(am) D-(cud1) C-(cup) N-(nel)  ");
 	pad_done_message(t, state, ch);
@@ -1827,7 +1821,7 @@ pad_smso(
 		return;
 	}
 	if (skip_pad_test(t, state, ch,
-		"(smso) (rmso) Enter/Exit-standout-mode start testing [n] > ")) {
+		"(smso) (rmso) Enter/Exit-standout-mode start testing")) {
 		return;
 	}
 	/*
@@ -1848,7 +1842,7 @@ pad_smso(
 			putchp('X');
 		}
 	}
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	home_down();
 	ptext(above_line);
 	pad_done_message(t, state, ch);
@@ -1875,7 +1869,7 @@ pad_smacs(
 		return;
 	}
 	if (skip_pad_test(t, state, ch,
-		"(smacs) (rmacs) Enter/Exit-altcharset-mode start testing [n] > ")) {
+		"(smacs) (rmacs) Enter/Exit-altcharset-mode start testing")) {
 		return;
 	}
 	pad_test_startup(1);
@@ -1890,7 +1884,7 @@ pad_smacs(
 			putchp(letter);
 		}
 	}
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	home_down();
 	ptext("Every other character is from the alternate character set.  ");
 	pad_done_message(t, state, ch);
@@ -1918,7 +1912,7 @@ pad_crash(
 	ptext("If you would like to see if the terminal will really lock up.");
 	ptextln("  I will send the clear screen sequence without the pads.");
 	if (skip_pad_test(t, state, ch,
-		"(clear) Clear-screen start crash testing [n] > ")) {
+		"(clear) Clear-screen start crash testing")) {
 		return;
 	}
 	save_xon_xoff = xon_xoff;
@@ -1929,6 +1923,6 @@ pad_crash(
 		tt_putp(clear_screen);
 	}
 	xon_xoff = save_xon_xoff;
-	pad_test_shutdown(1);
+	pad_test_shutdown(t, 1);
 	pad_done_message(t, state, ch);
 }

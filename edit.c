@@ -36,21 +36,10 @@
 #endif
 
 #include "tic.h"
-#include "tac.h"
+#include "tack.h"
 
 /*
  * Terminfo edit features
-
-Edit menu:
-i) show current terminfo
-t) show caps tested
-c) show caps changed
-u) show caps that are defined but cannot be tested
-v) display single cap
-e) edit cap (string, boolean or number)
-p) change padding on cap
-w) write modified terminfo to file
-
  */
 static void show_info(struct test_list *, int *, int *);
 static void show_value(struct test_list *, int *, int *);
@@ -84,10 +73,12 @@ extern void build_change_menu(struct test_menu *);
 extern void change_one_entry(struct test_list *, int *, int *);
 
 struct test_menu change_pad_menu = {
-	0, "[q] > ", 0,
+	0, 'q', 0,
 	"Select cap name", "change", 0,
 	build_change_menu, change_pad_list, 0, 0, 0
 };
+
+extern struct test_results *pads[STRCOUNT];	/* save pad results here */
 
 static TERMTYPE	original_term;		/* terminal type description */
 
@@ -358,14 +349,14 @@ send_info_string(
 		if (++display_lines > lines) {
 			ptext("-- more -- ");
 			*ch = wait_here();
-			if (*ch != '\r' && *ch != '\n') {
+			if (*ch == 'q') {
 				display_lines = -1;
 				return;
 			}
 			display_lines = 0;
 		}
 		if (len >= columns) {
-			/* if the terminal does not (am) them this loses */
+			/* if the terminal does not (am) then this loses */
 			if (columns) {
 				display_lines += ((strlen(str) + 3) / columns) + 1;
 			}
@@ -419,8 +410,8 @@ show_info(
 			send_info_string(buf, ch);
 		}
 	}
-	put_crlf();
-	generic_done_message(t, state, ch);
+	put_newlines(2);
+	*ch = REQUEST_PROMPT;
 }
 
 /*
@@ -477,7 +468,7 @@ save_info(
 	}
 	time(&now);
 	/* Note: ctime() returns a newline at the end of the string */
-	(void) fprintf(fp, "# Terminfo created by TAK for TERM=%s on %s",
+	(void) fprintf(fp, "# Terminfo created by TACK for TERM=%s on %s",
 		tty_basename, ctime(&now));
 	(void) fprintf(fp, "%s|%s,\n", tty_basename, longname());
 
@@ -652,6 +643,12 @@ get_string_cap_byvalue(
 				return i;
 			}
 		}
+		/* search for translated strings */
+		for (i = 0; i < TM_last; i++) {
+			if (TM_string[i].value == value) {
+				return TM_string[i].index;
+			}
+		}
 	}
 	return -1;
 }
@@ -714,7 +711,7 @@ show_changed(
 		ptextln("No changes");
 	}
 	put_crlf();
-	generic_done_message(t, state, ch);
+	*ch = REQUEST_PROMPT;
 }
 
 /*
@@ -785,6 +782,7 @@ mark_cap(
 	} else {
 		sprintf(temp, "Cap not found: %s", name);
 		ptextln(temp);
+		(void) wait_here();
 	}
 }
 
@@ -819,6 +817,79 @@ can_test(
 			mark_cap(name, flags);
 		}
 	}
+}
+
+/*
+**	cap_index(name-list, index-list)
+**
+**	Scan the name list and return a list of indexes.
+**	<space> ( and ) may be used as seperators.
+**	This list is terminated with -1.
+*/
+void
+cap_index(
+	char *s,
+	int *index)
+{
+	struct name_table_entry const *nt;
+	int ch, i, j;
+	char name[32];
+
+	if (s) {
+		for (i = j = 0; ; s++) {
+			name[j] = ch = *s;
+			if (ch == ' ' || ch == ')' || ch == '(' || ch == 0) {
+				if (j) {
+					name[j] = '\0';
+					if ((nt = _nc_find_entry(name,
+						_nc_info_hash_table)) &&
+						(nt->nte_type == STRING)) {
+						*index++ = nt->nte_index;
+					}
+				}
+				if (ch == 0) {
+					break;
+				}
+				j = 0;
+			} else {
+				j++;
+			}
+		}
+	}
+	*index = -1;
+}
+
+/*
+**	cap_match(name-list, cap)
+**
+**	Scan the name list and see if the cap is in the list.
+**	Return TRUE if we find an exact match.
+**	<space> ( and ) may be used as seperators.
+*/
+int
+cap_match(
+	char *names,
+	char *cap)
+{
+	char *s;
+	int c, l, t;
+
+	if (names) {
+		l = strlen(cap);
+		while ((s = strstr(names, cap))) {
+			c = (names == s) ? 0 : *(s - 1);
+			t = s[l];
+			if ((c == 0 || c == ' ' || c == '(') &&
+				(t == 0 || t == ' ' || t == ')')) {
+				return TRUE;
+			}
+			if (t == 0) {
+				break;
+			}
+			names = s + l;
+		}
+	}
+	return FALSE;
 }
 
 /*
@@ -877,9 +948,8 @@ show_report(
 		sprintf(temp, "%s ", nx[i]);
 		ptext(temp);
 	}
-	put_crlf();
-	put_crlf();
-	generic_done_message(t, state, ch);
+	put_newlines(1);
+	*ch = REQUEST_PROMPT;
 }
 
 /*
@@ -896,6 +966,7 @@ show_untested(
 {
 	int i;
 
+	ptextln("Caps that are defined but cannot be tested:");
 	for (i = 0; i < BOOLCOUNT; i++) {
 		if (flag_boolean[i] == 0 && CUR Booleans[i]) {
 			sprintf(temp, "%s ", boolnames[i]);
@@ -914,9 +985,8 @@ show_untested(
 			ptext(temp);
 		}
 	}
-	put_crlf();
-	put_crlf();
-	generic_done_message(t, state, ch);
+	put_newlines(1);
+	*ch = REQUEST_PROMPT;
 }
 
 /*
@@ -929,6 +999,7 @@ edit_init(void)
 {
 	int i, j, lc;
 	char *lab;
+	struct name_table_entry const *nt;
 	int label_strings[STRCOUNT];
 
 	for (i = 0; i < BOOLCOUNT; i++) {
@@ -960,6 +1031,17 @@ edit_init(void)
 				}
 			}
 			enter_key(strnames[i], CUR Strings[i], lab);
+		}
+	}
+	/* Lookup the translated strings */
+	for (i = 0; i < TM_last; i++) {
+		if ((nt = _nc_find_entry(TM_string[i].name,
+			_nc_info_hash_table)) && (nt->nte_type == STRING)) {
+			TM_string[i].index = nt->nte_index;
+		} else {
+			sprintf(temp, "TM_string lookup failed for: %s",
+				TM_string[i].name);
+			ptextln(temp);
 		}
 	}
 }
@@ -1007,7 +1089,7 @@ change_one_entry(
 	putln(buf);
 	ptextln("Enter new pad.  0 for no pad.  CR for no change.");
 	read_string(buf, 32);
-	if (buf[0] == '\0' || buf[1] == '\0') {
+	if (buf[0] == '\0' || (buf[1] == '\0' && isalpha(buf[0]))) {
 		*chp = buf[0];
 		return;
 	}
@@ -1082,8 +1164,7 @@ build_change_menu(
 	char *s;
 
 	for (i = j = 0; i < txp; i++) {
-		if ((k = get_string_cap_byvalue(tx_cap[i])) >= 0) {
-			tx_index[i] = k;
+		if ((k = tx_index[i]) >= 0) {
 			s = file_expand(tx_cap[i]);
 			s[40] = '\0';
 			sprintf(change_pad_text[j], "%c) (%s) %s",

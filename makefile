@@ -44,7 +44,7 @@ CFILES= $(DIR)/ansi.c $(DIR)/charset.c $(DIR)/color.c $(DIR)/control.c \
 $(CMD): $(OFILES)
 	$(CC) -g -o $(CMD) $(OFILES) $(LDFLAGS)
 
-$(OFILES): $(DIR)/tac.h
+$(OFILES): $(DIR)/tack.h
 
 lint:
 	lint $(CFILES)
@@ -53,7 +53,7 @@ clean:
 	rm -f $(OFILES) $(CMD) TAGS tack.tar tack.tar.gz
 
 # vi tags
-tags: $(CFILES) $(DIR)/tac.h
+tags: $(CFILES) $(DIR)/tack.h
 	ctags $(>)
 
 # emacs tags
@@ -63,22 +63,22 @@ TAGS: $(CFILES)
 install: $(CMD)
 	cp $(CMD) $(BINDIR)
 
-list: $(DIR)/tac.h $(CFILES)
+list: $(DIR)/tack.h $(CFILES)
 	for name in $(>) ; \
 	do \
 		ucb cat -n $$name | ucb pr -h "$$name" | ucb lpr ; \
 	done
 
 #	archive a backup copy
-arch: $(DIR)/Makefile $(DIR)/tac.h $(CFILES)
+arch: $(DIR)/Makefile $(DIR)/tack.h $(CFILES)
 	rm -f tack.a
 	ar q tack.a $(>)
 
 tack.tar.gz: tack.tar
 	gzip tack.tar
 
-#tack.tar: README tack.1 GRIPES Makefile *.[ch] 
-#	tar -cvf tack.tar README tack.1 GRIPES Makefile *.[ch]
+#tack.tar: HISTORY tack.1 Makefile *.[ch] 
+#	tar -cvf tack.tar HISTORY tack.1 Makefile *.[ch]
 
-tack.tar: makefile *.[ch] 
-	tar -cvf tack.tar makefile *.[ch]
+tack.tar: makefile *.[ch] tack.1 HISTORY
+	tar -cvf tack.tar makefile *.[ch] tack.1 HISTORY

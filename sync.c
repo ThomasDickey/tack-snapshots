@@ -23,7 +23,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <curses.h>
-#include "tac.h"
+#include "tack.h"
 
 /* terminal-synchronization and performance tests */
 
@@ -43,7 +43,7 @@ struct test_list sync_test_list[] = {
 };
 
 struct test_menu sync_menu = {
-	0, "[n] > ", 0,
+	0, 'n', 0,
 	"Performance tests", "perf", "n) run standard tests",
 	sync_test, sync_test_list, 0, 0, 0
 };
@@ -53,6 +53,7 @@ extern char letters[];
 int tty_can_sync;		/* TRUE if tty_sync_error() returned FALSE */
 int tty_newline_rate;		/* The number of newlines per second */
 int tty_clear_rate;		/* The number of clear-screens per second */
+int tty_cps;			/* The number of characters per second */
 
 #define TTY_ACK_SIZE 64
 
@@ -103,7 +104,7 @@ tty_sync_error(
 		if (term_char) {	/* called from verify_time() */
 			put_crlf();
 			putln("Terminal did not respond to ENQ");
-			tty_can_sync = FALSE;
+			tty_can_sync = SYNC_FAILED;
 			return (ch | 4096);
 		}
 		/*
@@ -124,7 +125,7 @@ tty_sync_error(
 			}
 		} while (ch != 'c' && ch != 'C');
 		set_attr(0);	/* just in case */
-		putln(" -- synch -- ");
+		putln(" -- sync -- ");
 		trouble = TRUE;
 	}
 }
@@ -133,7 +134,7 @@ void
 flush_input(void)
 /* crude but effective way to flush input */
 {
-	if (tty_can_sync)
+	if (tty_can_sync == SYNC_TESTED)
 		tty_sync_error(0);
 }
 
@@ -185,7 +186,7 @@ sync_home(
 		return;
 	}
 	if (skip_pad_test(t, state, ch,
-		"(home) Start baudrate search [n] > ")) {
+		"(home) Start baudrate search")) {
 		return;
 	}
 	pad_test_startup(1);
@@ -203,12 +204,15 @@ sync_home(
 		}
 		NEXT_LETTER;
 	}
-	pad_test_shutdown(1);
+	pad_test_shutdown(t, auto_right_margin == 0);
 	/* note:  tty_frame_size is the real framesize times two.
 	   This takes care of half bits. */
 	j = (tx_cps * tty_frame_size) >> 1;
 	if (j > tty_baud_rate) {
 		tty_baud_rate = j;
+	}
+	if (tx_cps > tty_cps) {
+		tty_cps = tx_cps;
 	}
 	sprintf(temp, "%d characters per second.  Baudrate %d  ", tx_cps, j);
 	ptext(temp);
@@ -229,7 +233,7 @@ sync_lines(
 	int j;
 
 	if (skip_pad_test(t, state, ch,
-		"(nel) Start scroll performance test [n] > ")) {
+		"(nel) Start scroll performance test")) {
 		return;
 	}
 	pad_test_startup(0);
@@ -239,12 +243,12 @@ sync_lines(
 		put_str(temp);
 		put_newlines(reps);
 	}
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	j = sliding_scale(tx_count[0], 1000000, usec_run_time);
 	if (j > tty_newline_rate) {
 		tty_newline_rate = j;
 	}
-	sprintf(temp, "%d newlines per second.  ", j);
+	sprintf(temp, "%d linefeeds per second.  ", j);
 	ptext(temp);
 	generic_done_message(t, state, ch);
 }
@@ -268,7 +272,7 @@ sync_clear(
 		return;
 	}
 	if (skip_pad_test(t, state, ch,
-		"(clear) Start clear-screen performance test [n] > ")) {
+		"(clear) Start clear-screen performance test")) {
 		return;
 	}
 	pad_test_startup(0);
@@ -280,7 +284,7 @@ sync_clear(
 			put_clear();
 		}
 	}
-	pad_test_shutdown(0);
+	pad_test_shutdown(t, 0);
 	j = sliding_scale(tx_count[0], 1000000, usec_run_time);
 	if (j > tty_clear_rate) {
 		tty_clear_rate = j;
@@ -301,8 +305,13 @@ sync_summary(
 	int *state,
 	int *ch)
 {
-	sprintf(temp, "Baudrate=%ld, newlines/sec=%d, clear-screen/sec=%d",
-		tty_baud_rate, tty_newline_rate, tty_clear_rate);
+	char size[32];
+
+	put_crlf();
+	ptextln("Terminal  size    characters/sec linefeeds/sec  clears/sec");
+	sprintf(size, "%dx%d", columns, lines);
+	sprintf(temp, "%-10s%-11s%11d   %11d %11d", tty_basename, size,
+		tty_cps, tty_newline_rate, tty_clear_rate);
 	ptextln(temp);
 	generic_done_message(t, state, ch);
 }
@@ -322,6 +331,7 @@ probe_enq_ok(void)
 	tty_ENQ = user9 ? user9 : "\005";
 	junk_chars = 0;
 	ACK_char = 6;
+	can_test("u8 u9", FLAG_TESTED);
 	if (user8) {
 		char *cp;
 
@@ -350,7 +360,7 @@ probe_enq_ok(void)
 		   forgot then wait for the letter 'g' for 2 seconds then
 		   give up.
 		*/
-		tty_can_sync = FALSE;
+		tty_can_sync = SYNC_FAILED;
 		ptext("\nThis program expects the ENQ sequence to be");
 		ptext(" answered with the ACK character.  This will help");
 		ptext(" the program reestablish synchronization when");
@@ -380,7 +390,7 @@ probe_enq_ok(void)
 		}
 		return;
 	}
-	tty_can_sync = TRUE;
+	tty_can_sync = SYNC_TESTED;
 }
 
 /*
@@ -394,10 +404,11 @@ verify_time(void)
 {
 	int status, ch;
 
-	if (tty_can_sync == FALSE) {
+	if (tty_can_sync == SYNC_FAILED) {
 		return;
 	}
 	probe_enq_ok();
+	put_crlf();
 	if (tty_baud_rate == 0) {
 		sync_home(&sync_test_list[0], &status, &ch);
 	}
@@ -415,7 +426,6 @@ sync_test(
 	control_init();
 	if (tty_can_sync == SYNC_NOT_TESTED) {
 		verify_time();
-		put_crlf();
 	}
 	if (menu->menu_title) {
 		ptextln(menu->menu_title);
