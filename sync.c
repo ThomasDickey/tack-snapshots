@@ -1,28 +1,28 @@
 /*
-** This software is Copyright (c) 1991 by Daniel Weaver.
-**
-** Permission is hereby granted to copy, distribute or otherwise
-** use any part of this package as long as you do not try to make
-** money from it or pretend that you wrote it.  This copyright
-** notice must be maintained in any copy made.
-**
-** Use of this software constitutes acceptance for use in an AS IS
-** condition. There are NO warranties with regard to this software.
-** In no event shall the author be liable for any damages whatsoever
-** arising out of or in connection with the use or performance of this
-** software.  Any use of this software is at the user's own risk.
-**
-**  If you make modifications to this software that you feel
-**  increases it usefulness for the rest of the community, please
-**  email the changes, enhancements, bug fixes as well as any and
-**  all ideas to me. This software is going to be maintained and
-**  enhanced as deemed necessary by the community.
+** Copyright (C) 1991, 1997 Free Software Foundation, Inc.
+** 
+** This file is part of TACK.
+** 
+** TACK is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License as published by
+** the Free Software Foundation; either version 2, or (at your option)
+** any later version.
+** 
+** TACK is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+** 
+** You should have received a copy of the GNU General Public License
+** along with TACK; see the file COPYING.  If not, write to
+** the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+** Boston, MA 02111-1307, USA.
 */
 
 #include <tack.h>
 #include <time.h>
 
-MODULE_ID("$Id: sync.c,v 1.4 1997/12/27 18:00:54 tom Exp $")
+MODULE_ID("$Id: sync.c,v 1.5 1998/01/10 00:31:07 Daniel.Weaver Exp $")
 
 /* terminal-synchronization and performance tests */
 
