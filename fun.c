@@ -22,7 +22,7 @@
 #include <curses.h>
 #include <string.h>
 #include "term.h"
-#include "tac.h"
+#include "tack.h"
 
 /*
  * Test the function keys on the terminal.  The code for echo tests
@@ -83,9 +83,17 @@ static char *fk_unknown[MAX_FK_UNK];
 static int fk_length[MAX_FK_UNK];
 static int funk;
 
+/*
+**	keys_tested(first-time, show-help, hex-output)
+**
+**	Display a list of the keys not tested.
+*/
 static void
-keys_tested(int first_time, int hex_output)
-{				/* display a list of the keys not tested */
+keys_tested(
+	int first_time,
+	int show_help,
+	int hex_output)
+{
 	int i, l;
 	char outbuf[256];
 
@@ -170,6 +178,10 @@ keys_tested(int first_time, int hex_output)
 		}
 	}
 	put_newlines(2);
+	if (show_help) {
+		ptextln("Hit any function key.  Type 'end' to quit.  Type ? to update the display.");
+		put_crlf();
+	}
 }
 
 /*
@@ -339,7 +351,7 @@ found_match(char *s, int hx, int cc)
 		}
 	}
 	if (end_state == '?') {
-		keys_tested(0, hx);
+		keys_tested(0, 1, hx);
 		tty_raw(cc, char_mask);
 		end_state = 0;
 	}
@@ -367,7 +379,7 @@ found_exit(char *keybuf, int hx, int cc)
 			if (wait_here() == 'X') {
 				return TRUE;
 			}
-			keys_tested(0, hx);
+			keys_tested(0, 1, hx);
 			tty_raw(cc, char_mask);
 			return FALSE;
 		}
@@ -383,7 +395,7 @@ found_exit(char *keybuf, int hx, int cc)
 			j &= (keybuf[k] & STRIP_PARITY) == '?';
 		}
 		if (j || end_state == '?') {
-			keys_tested(0, hx);
+			keys_tested(0, 1, hx);
 			tty_raw(cc, char_mask);
 			end_state = 0;
 			return FALSE;
@@ -431,9 +443,7 @@ funkey_keys(
 	if (keypad_xmit) {
 		tc_putp(keypad_xmit);
 	}
-	keys_tested(1, hex_out);	/* also clears screen */
-	ptextln("Hit any function key.  Type 'end' to quit.  Type ? to update the display.");
-	put_crlf();
+	keys_tested(1, 1, hex_out);	/* also clears screen */
 	keybuf[0] = '\0';
 	end_state = 0;
 	if (scan_mode) {
@@ -453,7 +463,8 @@ funkey_keys(
 	if (keypad_local) {
 		tc_putp(keypad_local);
 	}
-	keys_tested(0, hex_out);
+	keys_tested(0, 0, hex_out);
+	ptext("Function key test ");
 	generic_done_message(t, state, ch);
 }
 
@@ -770,15 +781,24 @@ report_help(int crx)
 	ptextln(" all     echo all characters after <cr> or <lf> as is. (echo mode)");
 }
 
-void 
-test_report(int crx, int hex_display)
-{				/* status report and echo test */
-	int i, j, ch, crp, high_bit, save_scan_mode;
+/*
+**	tools_report(testlist, state, ch)
+**
+**	Run the echo tool and report tool
+*/
+void
+tools_report(
+	struct test_list *t,
+	int *state,
+	int *pch)
+{
+	int i, j, ch, crp, crx, high_bit, save_scan_mode, hex_display;
 	char buf[1024];
 	char txt[8];
 
+	hex_display = hex_out;
 	put_clear();
-	if (crx == 1) {
+	if ((crx = (t->flags & 255)) == 1) {
 		ptext("Characters after a CR or LF will be echoed as");
 		ptextln(" is.  All other characters will be expanded.");
 		report_help(crx);

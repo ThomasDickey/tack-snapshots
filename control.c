@@ -22,41 +22,25 @@
 #include <unistd.h>
 #include <sys/time.h>	/* for sun */
 #include <curses.h>
-#include "tac.h"
+#include <string.h>
+#include <stdlib.h>
+#include "tack.h"
 
 /* terminfo test program control subroutines */
 
-#define CAP_MAX 64
-#define EDIT_MAX 4
-
-struct cap_tab {
-   char *name;
-   char *value;
-   int cur_star, cur_plain;
-   int new_star, new_plain;
-};
-
 /* globals */
 int test_complete;		/* counts number of tests completed */
-int test_count;			/* counts how many times end_test() was
-				   called */
-long start_time;		/* start of test (in seconds) */
-long end_time;			/* end of test (in seconds) */
-int capper;			/* points into cap_list[] for time tests */
-struct cap_tab cap_list[CAP_MAX];	/* holds time test results */
-char *ced_name[EDIT_MAX];	/* cap name used for pad edit */
-char **ced_value[EDIT_MAX];	/* cap value used for pad edit */
-int milli_pad;			/* accumulated pad in 10 microsecond units */
-int milli_reps;			/* multiplicative pad in 10 microsecond units */
-int pad_sent;			/* number of characters for pad */
 
-char txt_longer_test_time[80];	/* >) use longer time */
-char txt_shorter_test_time[80];	/* <) use shorter time */
+char txt_longer_test_time[80];	/* +) use longer time */
+char txt_shorter_test_time[80];	/* -) use shorter time */
 int pad_test_duration = 1;	/* number of seconds for a pad test */
 int no_alarm_event;		/* TRUE if the alarm has not gone off yet */
 int usec_run_time;		/* length of last test in microseconds */
 struct timeval test_start_time;	/* Time of day when the test started */
 struct timezone zone;		/* Time zone at start of test */
+
+char txt_longer_augment[80];	/* >) use bigger augment */
+char txt_shorter_augment[80];	/* <) use smaller augment */
 
 /* caps under test data base */
 char *tt_cap[TT_MAX];		/* value of string */
@@ -64,7 +48,7 @@ int tt_affected[TT_MAX];	/* lines or columns effected (repitition factor) */
 int tt_count[TT_MAX];		/* Number of times sent */
 int ttp;			/* number of entries used */
 
-/* Saved valure of the above data base */
+/* Saved value of the above data base */
 char *tx_cap[TT_MAX];		/* value of string */
 int tx_affected[TT_MAX];	/* lines or columns effected (repitition factor) */
 int tx_count[TT_MAX];		/* Number of times sent */
@@ -72,17 +56,20 @@ int tx_index[TT_MAX];		/* String index */
 int txp;			/* number of entries used */
 int tx_characters;		/* printing characters sent by test */
 int tx_cps;			/* characters per second */
+struct test_list *tx_source;	/* The test that generated this data */
 
-extern char *malloc();
+extern char *pad_repeat_test;	/* commands that force repeat */
 extern char letters[];
 extern int raw_characters_sent;	/* Total output characters */
 extern struct test_menu pad_menu;	/* Pad menu structure */
 extern struct test_list pad_test_list[];
+struct test_list *augment_test;
 
-#ifdef ACCO
-extern FILE *fpacco;
+#define RESULT_BLOCK		1024
+static int blocks;		/* number of result blocks available */
+static struct test_results *results;	/* pointer to next available */
+struct test_results *pads[STRCOUNT];	/* save pad results here */
 
-#endif
 
 /*****************************************************************************
  *
@@ -90,13 +77,49 @@ extern FILE *fpacco;
  *
  *****************************************************************************/
 
+/*
+**	get_next_block()
+**
+**	Get a results block for pad test data.
+*/
+struct test_results *
+get_next_block(void)
+{
+	if (blocks <= 0) {
+		results = (struct test_results *)
+			malloc(sizeof(struct test_results) * RESULT_BLOCK);
+		if (!results) {
+			ptextln("Malloc failed");
+			return (struct test_results *) 0;
+		}
+		blocks = RESULT_BLOCK;
+	}
+	blocks--;
+	return results++;
+}
+
+/*
+**	set_augment_txt()
+**
+**	Initialize the augment menu selections
+*/
+void
+set_augment_txt(void)
+{
+	sprintf(txt_longer_augment,
+		">) Change lines/characters effected to %d", augment << 1);
+	sprintf(txt_shorter_augment,
+		"<) Change lines/characters effected to %d", augment >> 1);
+}
+
 void
 control_init(void)
 {
-	sprintf(txt_longer_test_time, ">) Change test time to %d seconds",
-		pad_test_duration << 1);
-	sprintf(txt_shorter_test_time, "<) Change test time to %d seconds",
-		pad_test_duration >> 1);
+	sprintf(txt_longer_test_time, "+) Change test time to %d seconds",
+		pad_test_duration + 1);
+	sprintf(txt_shorter_test_time, "-) Change test time to %d seconds",
+		pad_test_duration - 1);
+	set_augment_txt();
 }
 
 
@@ -161,383 +184,6 @@ char *cap;
 	}
 	return cb;
 }
-#ifdef NOT_USED
-int
-enter_cap(char *n, char *v)
-{				/* enter a cap into the cap_list (for time
-				   tests) */
-	int i;
-
-	/* find an empty slot */
-	for (i = 0; cap_list[i].value; ++i) {
-		if (i >= CAP_MAX)
-			return -1;
-		if (!strcmp(cap_list[i].value, v)) {
-			if (cap_list[i].name && n &&
-				strcmp(cap_list[i].name, n))
-				continue;
-			if (!cap_list[i].name)
-				cap_list[i].name = n;
-			return i;
-		}
-	}
-	cap_list[i].value = v;
-	cap_list[i].name = n;
-	cap_list[i].new_star = cap_list[i].new_plain = 32767;
-	pad_time(v, &cap_list[i].cur_star, &cap_list[i].cur_plain);
-	return i;
-}
-
-
-int
-multi_test(char *error_name,
-	int clr, int or_bits, int and_bits, int acco_bits, int num_caps,
-	char *cn1, char **cv1,
-	char *cn2, char **cv2,
-	char *cn3, char **cv3,
-	char *cn4, char **cv4)
-{				/* clear the screen and start the test
-				   (general case) */
-	int ch, i, or_flag, and_flag, select_flag;
-	static char name_buffer[128];
-
-	ced_name[0] = cn1;
-	ced_name[1] = cn2;
-	ced_name[2] = cn3;
-	ced_name[3] = cn4;
-	ced_value[0] = cv1;
-	ced_value[1] = cv2;
-	ced_value[2] = cv3;
-	ced_value[3] = cv4;
-	for (i = 0; i < num_caps; i++) {
-		can_test(ced_name[i], FLAG_CAN_TEST);
-	}
-	test_count = milli_pad = milli_reps = 0;
-	or_flag = or_bits & 1;
-	and_flag = and_bits & 1;
-	select_flag = !cap_select;
-	name_buffer[0] = '\0';
-	ch = 0;
-#ifdef ACCO
-	fprintf(fpacco, "(");
-	if (or_flag)
-		fprintf(fpacco, "TRUE");
-	else
-		for (i = 0; i < num_caps; i++) {
-			if ((or_bits >> i) & 2) {
-				fprintf(fpacco, "%s", ced_name[i]);
-				if ((or_bits >> i) & -4)
-					fprintf(fpacco, "|");
-			}
-		}
-	fprintf(fpacco, ")|(");
-	if (and_flag)
-		for (i = 0; i < num_caps; i++) {
-			if ((and_bits >> i) & 2) {
-				fprintf(fpacco, "%s", ced_name[i]);
-				if ((and_bits >> i) & -4)
-					fprintf(fpacco, "&");
-			}
-		}
-	else
-		fprintf(fpacco, "FALSE");
-	fprintf(fpacco, ") ACCO(");
-	for (i = 0; i < num_caps; i++) {
-		if ((acco_bits >> i) & 2) {
-			fprintf(fpacco, "%s", ced_name[i]);
-			if ((acco_bits >> i) & -4)
-				fprintf(fpacco, "+");
-		}
-	}
-	fprintf(fpacco, ") %s\n", error_name ? error_name : "");
-#endif
-	for (i = 0; i < num_caps; i++) {
-		if ((or_bits >> i) & 2)
-			or_flag |= *ced_value[i] != NULL;
-		if ((and_bits >> i) & 2)
-			and_flag &= *ced_value[i] != NULL;
-		if (*ced_value[i] && ((acco_bits >> i) & 2)) {
-			++ch;
-			capper = enter_cap(ced_name[i], *ced_value[i]);
-			(void) acco_pad(ced_name[i], *ced_value[i]);
-		}
-		if (cap_select)
-			select_flag |= strcmp(cap_select, ced_name[i]) == 0;
-		sprintf(&name_buffer[strlen(name_buffer)], "(%s) ", ced_name[i]);
-	}
-	if (!select_flag)
-		return FALSE;
-	if (or_flag | and_flag) {
-		for (i = num_caps; i < EDIT_MAX; ced_name[i++] = NULL)
-			continue;
-		sprintf(done_test, "%sDone: ", current_test = name_buffer);
-		letter = letters[letter_number = 0];
-		put_clear();
-		clear_select = -1;
-		char_max = full_test;
-		reps = 0;
-		if (ch != 1)
-			capper = -1;
-		if (time_pad)
-			return enq_ack();
-		put_str("Begin ");
-		ptext(name_buffer);
-		ptext("pad test, hit CR to continue, n to skip test: ");
-		return begin_pad_char(clr);
-	}
-	ptext(error_name);
-	if (!time_pad) {
-		ptext(", not present: ");
-		ch = wait_here();
-		if (ch == 'c' || ch == 'C')
-			put_clear();
-	} else
-		ptextln(", not present");
-	return FALSE;
-}
-
-
-static int
-time_test_state(int clr)
-{				/* calculate and report the suggested pad
-				   times */
-	long v;
-
-	/*
-	   time is one of the things that UNIX does poorly. So I fuss around
-	   with sloppy numbers.
-	*/
-	v = end_time - start_time -
-		((char_sent >> 1) * tty_frame_size) / tty_baud_rate;
-	if (capper == -2) {	/* truely brain damaged terminals come here */
-		v = ((char_sent >> 1) * tty_frame_size)
-			/ (end_time - start_time);
-		sprintf(temp, "This terminal has a maximum effective baud rate of %ld. ", v);
-		ptext(temp);
-		ptext(" System load may be to high. ");
-		ptextln(" The results of this test will be incorrect!");
-		return 2;
-	} else {
-		if (capper == -1)
-			put_str("combined");
-		else {
-			sprintf(temp, "(%s)", cap_list[capper].name);
-			ptext(temp);
-		}
-		put_dec(" pad time should be %d.%d milliseconds", v);
-
-		if (reps) {
-			sprintf(temp, " for %d reps.", reps);
-			ptextln(temp);
-			put_dec("%d.%d* milliseconds per rep", v / reps);
-		}
-		put_crlf();
-
-		if (capper >= 0) {
-			if (milli_pad < cap_list[capper].new_plain)
-				cap_list[capper].new_plain = v;
-			if (reps != 0 &&
-				v / reps < cap_list[capper].new_star)
-				cap_list[capper].new_star = v / reps;
-			/*
-			   if the terminal makes it here once then we want to
-			   report each time. This forces a smaller number
-			   into the tables.
-			*/
-		}
-		if (milli_reps != 0 && reps != 0) {
-			ptext("current value is ");
-			if (milli_pad)
-				put_dec("%d.%d milliseconds and ",
-					milli_pad);
-			put_dec("%d.%d* milliseconds per rep",
-				milli_reps);
-		} else
-			put_dec("current value is %d.%d milliseconds", milli_pad);
-		put_crlf();
-		if (clear_select != -1) {
-			clr_test_value[clear_select] = v;
-			clr_test_reps[clear_select] = reps;
-		}
-	}
-	return 0;
-}
-
-/*
- * This code is executed at the bottom of each test to print the "Done"
- * message and control the looping of tests.
- */
-
-int
-repeat_pad_test(char *txt, char *cap, int clr)
-{
-	int ch;
-	static char *help[] = {
-		"?  -  this help message\n"
-		"c  -  continue",
-		"d  -  double the pad multiplier",
-		"h  -  halve the pad multiplier",
-		"i  -  send the reset and init strings",
-		"p  -  change the padding for this capability",
-		"q  -  quit (prompts for verification)",
-		"?  -  print this help message",
-		"<  -  decrease the time for each test",
-		">  -  increase the time for each test",
-		"<number> - set the pad multiplier",
-		"y  -  record success and go on to next test",
-		"n  -  record failure and go on to next test",
-		"<CR> -  record nothing, go on to next test",
-	0};
-
-	test_count++;
-	if (char_sent < char_max)
-		return TRUE;
-	if (txt)
-		ptext(txt);
-	if (xon_xoff && tty_can_sync && tty_sync_error(0) && test_length >= 10) {
-		end_time = time(0);
-		switch (time_test_state(clr)) {
-		case 0:
-			if (time_pad)
-				return FALSE;
-			break;
-		case 1:
-			if (time_pad)
-				return TRUE;
-			break;
-		case 2:
-			break;
-		}
-	}
-
-	/* process the character(s) at the end of a test */
-	/* return FALSE if end of loop */
-	set_attr(0);	/* just in case */
-	for (;;) {
-		ptext(done_test);
-		ch = wait_here();
-		switch (ch) {
-		case '?':
-			put_clear();
-			for (ch = 0; help[ch]; ch++) {
-				ptextln(help[ch]);
-			}
-			sprintf(temp, "Tests will affect %d lines (or characters).",
-				augment);
-			ptextln(temp);
-			sprintf(temp, "Tests will run %d seconds.", test_length);
-			ptextln(temp);
-			if (debug_level > 0) {
-				sprintf(temp, "cpms = %f %d, pad_sent=%d, milli_pad=%d ",
-					(float) tty_cpms / (float) (1 << CPMS_SHIFT), tty_cpms,
-					pad_sent, milli_pad);
-				ptextln(temp);
-				sprintf(temp, "OUTPUT TRANS %d, NOECHO %d, CHAR MODE %d",
-					stty_query(TTY_OUT_TRANS) != 0,
-					stty_query(TTY_NOECHO) != 0,
-					stty_query(TTY_CHAR_MODE) != 0);
-				ptextln(temp);
-			}
-			/* in case the "Done" gets eaten */
-			ptext(done_test);
-			break;
-		case '>':
-		case '<':
-			if (ch == '>')
-				test_length *= 2;
-			else
-				test_length /= 2;
-			control_init();
-			sprintf(temp, "\nPad test will run %d seconds.",
-				test_length);
-			ptext(temp);
-			break;
-		case 'C':
-			put_clear();
-		case 'c':
-			/* continue */
-			break;
-		case 'd':
-		case 'D':
-			/* double the test augment */
-			augment *= 2;
-			sprintf(temp, "\nPad test will affect %d lines (or characters).",
-				augment);
-			ptext(temp);
-			break;
-		case 'h':
-		case 'H':
-			/* cut the test augment in half */
-			augment /= 2;
-			sprintf(temp, "\nPad test will affect %d lines (or characters).",
-				augment);
-			ptext(temp);
-			break;
-		case 'i':
-		case 'I':
-			/* send the reset and init strings */
-			reset_init(TRUE);
-			tc_putp(exit_insert_mode);
-			replace_mode = 1;
-			put_mode(exit_attribute_mode);
-			break;
-		case '0':
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-		case '6':
-		case '7':
-		case '8':
-		case '9':
-			/* read a new test augment */
-			augment = 0;
-			while (ch >= '0' && ch <= '9') {
-				if (stty_query(TTY_NOECHO))
-					tc_putch(ch);
-				augment = ch - '0' + augment * 10;
-				ch = getchp(STRIP_PARITY);
-			}
-			sprintf(temp, "\nPad test will affect %d lines (or characters).",
-				augment);
-			ptext(temp);
-			break;
-		case 'q':
-		case 'Q':
-			ptext("Enter Y to quit:");
-			ch = wait_here();
-			}
-			break;
-		case 'r':
-		case 'R':
-			if (augment < 1)
-				augment = 1;
-			char_max = full_test;
-			put_clear();
-			char_sent = 0;
-			if (time_pad)
-				return enq_ack();
-			start_time = time(0);
-			return TRUE;
-		case 'n':
-		case 'N':
-			log_status(cap, FALSE);
-			goto next;
-		case 'y':
-		case 'Y':
-			log_status(cap, TRUE);
-		case '\r':
-		case '\n':
-	next:
-		default:
-			if (clr)
-				put_clear();
-			return FALSE;
-		}
-	}
-}
-#endif
 
 
 void
@@ -564,10 +210,17 @@ skip_pad_test(
 	int *ch,
 	char *text)
 {
+	char rep_text[16];
+
 	while(1) {
 		if (text) {
 			ptext(text);
 		}
+		if ((test->flags & MENU_LC_MASK)) {
+			sprintf(rep_text, " *%d", augment);
+			ptext(rep_text);
+		}
+		ptext(" [n] > ");
 		*ch = wait_here();
 		if (*ch == 's') {
 			/* Skip is converted to next */
@@ -579,7 +232,7 @@ skip_pad_test(
 			*ch = '?';
 			return TRUE;
 		}
-		if (*ch == '\r' || *ch == '\n' || *ch == 'n') {
+		if (*ch == '\r' || *ch == '\n' || *ch == 'n' || *ch == 'r') {
 			/* this is the only response that allows the test to run */
 			*ch = 0;
 		}
@@ -601,19 +254,43 @@ pad_done_message(
 	int *state,
 	int *ch)
 {
+	int default_action = 0;
 	char done_message[128];
+	char rep_text[16];
 
 	while (1) {
+		if ((test->flags & MENU_LC_MASK)) {
+			sprintf(rep_text, "*%d", augment);
+		} else {
+			rep_text[0] = '\0';
+		}
 		if (test->caps_done) {
-			sprintf(done_message, "(%s) Done ", test->caps_done);
+			sprintf(done_message, "(%s)%s Done ", test->caps_done,
+			rep_text);
 			ptext(done_message);
 		} else {
+			if (rep_text[0]) {
+				ptext(rep_text);
+				ptext(" ");
+			}
 			ptext("Done ");
 		}
-		*ch = wait_here();
-		if (*ch == '\r' || *ch == '\n' || *ch == 's' || *ch == 'n') {
+		if (debug_level & 2) {
+			dump_test_stats(test, state, ch);
+		} else {
+			*ch = wait_here();
+		}
+		if (*ch == '\r' || *ch == '\n') {
+			*ch = default_action;
+			return;
+		}
+		if (*ch == 's' || *ch == 'n') {
 			*ch = 0;
 			return;
+		}
+		if (strchr(pad_repeat_test, *ch)) {
+			/* default action is now repeat */
+			default_action = 'r';
 		}
 		if (subtest_menu(pad_test_list, state, ch)) {
 			continue;
@@ -672,12 +349,21 @@ pad_test_startup(
 */
 void
 pad_test_shutdown(
+	struct test_list *t,
 	int crlf)
 {
+	int i;
+	int counts;			/* total counts */
+	int ss;				/* Save string index */
+	int cpo;			/* characters per operation */
+	int delta;			/* difference in characters */
+	struct test_results *r;		/* Results of current test */
+	int ss_index[TT_MAX];		/* String index */
 	struct timeval test_stop_time;
 
 	flush_input();
 	(void) gettimeofday(&test_stop_time, &zone);
+	tx_source = t;
 	tx_characters = raw_characters_sent;
 	usec_run_time =
 		((test_stop_time.tv_sec - test_start_time.tv_sec) * 1000000)
@@ -685,13 +371,76 @@ pad_test_shutdown(
 	tx_cps = sliding_scale(tx_characters, 1000000, usec_run_time);
 
 	/* save the data base */
-	for (txp = 0; txp < ttp; txp++) {
+	for (txp = ss = counts = 0; txp < ttp; txp++) {
 		tx_cap[txp] = tt_cap[txp];
 		tx_count[txp] = tt_count[txp];
 		tx_affected[txp] = tt_affected[txp];
+		tx_index[txp] = get_string_cap_byvalue(tt_cap[txp]);
+		if (tx_index[txp] >= 0) {
+			if (cap_match(t->caps_done, strnames[tx_index[txp]])) {
+				ss_index[ss++] = txp;
+				counts += tx_count[txp];
+			}
+		}
 	}
 
 	if (crlf) {
+		put_crlf();
+	}
+	if (counts == 0 || tty_cps == 0) {
+		/* nothing to do */
+		return;
+	}
+	/* calculate the suggested pad times */
+	delta = sliding_scale(tty_cps, usec_run_time, 1000000) - tx_characters;
+	if (delta < 0) {
+		/* probably should bump tx_characters */
+		delta = 0;
+	}
+	for (i = 0; i < ss; i++) {
+		if (!(r = get_next_block())) {
+			return;
+		}
+		cpo = sliding_scale(delta, tx_count[ss_index[i]] * 10,
+			counts * counts);
+		r->next = pads[tx_index[ss_index[i]]];
+		pads[tx_index[ss_index[i]]] = r;
+		r->test = t;
+		r->reps = tx_affected[ss_index[i]];
+		r->delay = cpo;
+	}
+}
+
+/*
+**	show_cap_results(index)
+**
+**	Display the previous results
+*/
+void
+show_cap_results(
+	int x)
+{
+	struct test_results *r;		/* a result */
+	int delay;
+
+	if ((r = pads[x])) {
+		sprintf(temp, "(%s)", strnames[x]);
+		ptext(temp);
+		while (r) {
+			delay = (r->delay * 10000) / tty_cps;
+			sprintf(temp, "$<%d>", delay);
+			put_columns(temp, strlen(temp), 10);
+			r = r->next;
+		}
+		r = pads[x];
+		while (r) {
+			if (r->reps > 1) {
+				delay = ((r->delay * 10000) / r->reps) / tty_cps;
+				sprintf(temp, "$<%d.%d*>", delay / 10, delay % 10);
+				put_columns(temp, strlen(temp), 10);
+			}
+			r = r->next;
+		}
 		put_crlf();
 	}
 }
@@ -709,11 +458,22 @@ dump_test_stats(
 {
 	int i, j;
 	char tbuf[32];
+	int x[32];
 
 	put_crlf();
-	if (pad_menu.resume_tests && pad_menu.resume_tests->caps_done) {
-		sprintf(temp, "Caps summary for (%s)", pad_menu.resume_tests->caps_done);
-		ptextln(temp);
+	if (tx_source && tx_source->caps_done) {
+		cap_index(tx_source->caps_done, x);
+#ifdef NOT_DONE_YET
+		if (x[0] >= 0) {
+			sprintf(temp, "Caps summary for (%s)",
+				tx_source->caps_done);
+			ptextln(temp);
+			for (i = 0; x[i] >= 0; i++) {
+				show_cap_results(x[i]);
+			}
+			put_crlf();
+		}
+#endif
 	}
 	sprintf(tbuf, "%011u", usec_run_time);
 	sprintf(temp, "Test time: %d.%s, characters per second %d, characters %d",
@@ -743,13 +503,14 @@ longer_test_time(
 	int *state,
 	int *ch)
 {
-	pad_test_duration <<= 1;
-	sprintf(txt_longer_test_time, ">) Change test time to %d seconds",
-		pad_test_duration << 1);
-	sprintf(txt_shorter_test_time, "<) Change test time to %d seconds",
-		pad_test_duration >> 1);
+	pad_test_duration += 1;
+	sprintf(txt_longer_test_time, "+) Change test time to %d seconds",
+		pad_test_duration + 1);
+	sprintf(txt_shorter_test_time, "-) Change test time to %d seconds",
+		pad_test_duration - 1);
 	sprintf(temp, "Tests will run for %d seconds", pad_test_duration);
 	ptext(temp);
+	*ch = REQUEST_PROMPT;
 }
 
 /*
@@ -764,13 +525,63 @@ shorter_test_time(
 	int *ch)
 {
 	if (pad_test_duration > 1) {
-		pad_test_duration >>= 1;
-		sprintf(txt_longer_test_time, ">) Change test time to %d seconds",
-			pad_test_duration << 1);
-		sprintf(txt_shorter_test_time, "<) Change test time to %d seconds",
-			pad_test_duration >> 1);
+		pad_test_duration -= 1;
+		sprintf(txt_longer_test_time, "+) Change test time to %d seconds",
+			pad_test_duration + 1);
+		sprintf(txt_shorter_test_time, "-) Change test time to %d seconds",
+			pad_test_duration - 1);
 	}
 	sprintf(temp, "Tests will run for %d second%s", pad_test_duration,
 		pad_test_duration > 1 ? "s" : "");
 	ptext(temp);
+	*ch = REQUEST_PROMPT;
+}
+
+/*
+**	longer_augment(test_list, status, ch)
+**
+**	Lengthen the number of lines/characters effected
+*/
+void
+longer_augment(
+	struct test_list *t,
+	int *state,
+	int *ch)
+{
+	augment <<= 1;
+	set_augment_txt();
+	if (augment_test) {
+		t = augment_test;
+	}
+	sprintf(temp, "The pad tests will effect %d %s.", augment,
+		((t->flags & MENU_LC_MASK) == MENU_lines) ?
+		"lines" : "characters");
+	ptextln(temp);
+	*ch = REQUEST_PROMPT;
+}
+
+/*
+**	shorter_augment(test_list, status, ch)
+**
+**	Shorten the number of lines/characters effected
+*/
+void
+shorter_augment(
+	struct test_list *t,
+	int *state,
+	int *ch)
+{
+	if (augment > 1) {
+		/* don't let the augment go to zero */
+		augment >>= 1;
+	}
+	set_augment_txt();
+	if (augment_test) {
+		t = augment_test;
+	}
+	sprintf(temp, "The pad tests will effect %d %s.", augment,
+		((t->flags & MENU_LC_MASK) == MENU_lines) ?
+		"lines" : "characters");
+	ptextln(temp);
+	*ch = REQUEST_PROMPT;
 }
