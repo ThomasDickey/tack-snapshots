@@ -1,3 +1,9 @@
+1997-12-28  Thomas E. Dickey  <dickey@clark.net>
+
+	* tack.h: first cut of fixes for AIX/SCO/CLIX
+
+	* sysdep.c, control.c: first cut of fixes for AIX/CLIX/SCO
+
 1997-12-27  Thomas E. Dickey  <dickey@clark.net>
 
 	* ansi.c, charset.c, control.c, crum.c, edit.c, fun.c, init.c, menu.c, modes.c, output.c, scan.c, sync.c, sysdep.c, tack.c:

@@ -23,7 +23,7 @@
 
 #include <sys/time.h>	/* for sun */
 
-MODULE_ID("$Id: control.c,v 1.4 1997/12/27 18:00:55 tom Exp $")
+MODULE_ID("$Id: control.c,v 1.5 1997/12/28 19:59:30 tom Exp $")
 
 /* terminfo test program control subroutines */
 
@@ -36,7 +36,6 @@ int pad_test_duration = 1;	/* number of seconds for a pad test */
 int auto_pad_mode;		/* run the time tests */
 int no_alarm_event;		/* TRUE if the alarm has not gone off yet */
 int usec_run_time;		/* length of last test in microseconds */
-struct timezone zone;		/* Time zone at start of test */
 struct timeval stop_watch[MAX_TIMERS];	/* Hold the start timers */
 
 char txt_longer_augment[80];	/* >) use bigger augment */
@@ -78,7 +77,10 @@ struct test_results *pads[STRCOUNT];	/* save pad results here */
 void
 event_start(int n)
 {
-	(void) gettimeofday(&stop_watch[n], &zone);
+#if HAVE_GETTIMEOFDAY
+	(void) gettimeofday(&stop_watch[n], (struct timezone *)0);
+#else
+#endif
 }
 
 /*
@@ -89,11 +91,14 @@ event_start(int n)
 long
 event_time(int n)
 {
+#if HAVE_GETTIMEOFDAY
 	struct timeval current_time;
 
-	(void) gettimeofday(&current_time, &zone);
+	(void) gettimeofday(&current_time, (struct timezone *)0);
 	return ((current_time.tv_sec - stop_watch[n].tv_sec) * 1000000)
 		+ current_time.tv_usec - stop_watch[n].tv_usec;
+#else
+#endif
 }
 
 /*****************************************************************************
