@@ -20,6 +20,7 @@
 */
 
 #include <curses.h>
+#include "term.h"
 #include "tack.h"
 
 /*
@@ -107,17 +108,19 @@ color_trans(int c)
 	bg_color[pairs_used] = c;
 	if (hue_lightness_saturation) {
 		tc_putp(tparm(initialize_color, pairs_used,
-				def_colors[c].h, def_colors[c].l, def_colors[c].s));
+			def_colors[c].h, def_colors[c].l, def_colors[c].s));
 	} else {
 		tc_putp(tparm(initialize_color, pairs_used,
-				def_colors[c].r, def_colors[c].g, def_colors[c].b));
+			def_colors[c].r, def_colors[c].g, def_colors[c].b));
 	}
 	return pairs_used++;
 }
 
 static void
-new_color(fg, bg, hungry)
-int fg, bg, hungry;
+new_color(
+	int fg,
+	int bg,
+	int hungry)
 {				/* change the color to fg and bg. */
 	int i;
 
