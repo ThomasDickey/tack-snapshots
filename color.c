@@ -20,7 +20,7 @@
 */
 
 #include <curses.h>
-#include "tac.h"
+#include "tack.h"
 
 /*
  * Color terminal tests.  Has only one entry point: test_color().

@@ -36,7 +36,7 @@
 #include <signal.h>
 #include <termios.h>
 #include <errno.h>
-#include "tac.h"
+#include "tack.h"
 
 #ifndef TRUE
 #define	TRUE	1
@@ -273,7 +273,7 @@ stty_query(int q)
 /*
 **	initial_stty_query(question)
 **
-**	Does the initial driver settings have this property?
+**	Did the initial driver settings have this property?
 */
 int
 initial_stty_query(int q)
@@ -323,6 +323,26 @@ char_ready(void)
 #define char_ready() 1
 #endif
 #endif
+
+/*
+**	spin_flush()
+**
+**	Wait one or two seconds for the input stream to stop.
+**	Throw away all characters.
+*/
+void
+spin_flush(void)
+{
+	long start_reading;
+	unsigned char buf[64];
+
+	start_reading = time(0);	/* start the timer */
+	while (time(0) - start_reading < 2) {
+		if (char_ready()) {
+			(void) read(fileno(stdin), &buf, sizeof(buf));
+		}
+	}
+}
 
 void 
 read_key(char *buf, int max)

@@ -18,13 +18,14 @@
 **  all ideas to me. This software is going to be maintained and
 **  enhanced as deemed necessary by the community.
 */
+#include <stdio.h>
+#include <curses.h>
+#include "tack.h"
+
 /*
  * Standalone tests for ANSI terminals.  Three entry points:
  * test_ansi_graphics(), test_ansi_reports() and test_ansi_sgr().
  */
-#include <stdio.h>
-#include <curses.h>
-#include "tac.h"
 
 /*****************************************************************************
  *
@@ -263,7 +264,8 @@ read_reports(void)
 		if (terminal_class < report_list[i].lvl &&
 			tc < report_list[i].lvl) {
 			put_crlf();
-			ptext("tac/tools <return> to continue > ");
+			menu_prompt();
+			ptext(" <return> to continue > ");
 			j = wait_here();
 			if (j != 'c' && j != 'C')
 				return j;
@@ -321,7 +323,8 @@ read_reports(void)
 
 		}
 	}
-	ptext("tac/tools r->repeat test, <return> to continue > ");
+	menu_prompt();
+	ptext(" r->repeat test, <return> to continue > ");
 	return wait_here();
 }
 
@@ -451,8 +454,9 @@ terminal_state(void)
 			put_crlf();
 			if (i) {
 				sprintf(temp, "Private use: %c", puc[i][0]);
-			} else
+			} else {
 				strcpy(temp, "Standard modes:");
+			}
 			k = strlen(temp);
 			ptext(temp);
 			for (j = 0; j < sizeof(buf); buf[j++] = ' ');
@@ -462,7 +466,8 @@ terminal_state(void)
 				if (!valid_mode(('$' << 8) | 'y')) {
 					/* not valid, save terminating value */
 					s = expand(ansi_buf);
-					sprintf(tms, "%s%s%d %s  ", tms, puc[i], j, s);
+					sprintf(tms, "%s%s%d %s  ", tms,
+						puc[i], j, s);
 					break;
 				}
 				if (private_use != puc[i][0])
@@ -475,8 +480,9 @@ terminal_state(void)
 						buf[k] = '\0';
 						put_crlf();
 						ptextln(buf);
-						for (k = 0; k < sizeof(buf);)
+						for (k = 0; k < sizeof(buf);) {
 							buf[k++] = ' ';
+						}
 						k = 0;
 					}
 					sprintf(temp, " %d", j);
@@ -509,8 +515,9 @@ terminal_state(void)
 	if ((i = modes_found) != 0) {
 		put_crlf();
 		put_crlf();
-		if (tms[0])
+		if (tms[0]) {
 			ptextln(tms);
+		}
 		ptext("Hit 'Y' to test mode set/reset states: ");
 		i = wait_here();
 	}
@@ -609,9 +616,12 @@ ansi_report_help(void)
 **
 **	Test the ANSI status report functions
 */
-int 
-test_ansi_reports(void)
-{				/* test ansi status reports */
+void
+tools_status(
+	struct test_list *t,
+	int *state,
+	int *ch)
+{
 	int i;
 
 	put_clear();
@@ -621,7 +631,8 @@ test_ansi_reports(void)
 	do {
 		i = read_reports();
 		if (i != 'r' && i != 'R') {
-			return (i);
+			*ch = i;
+			return;
 		}
 	} while (i);
 
@@ -629,11 +640,11 @@ test_ansi_reports(void)
 		do {
 			i = request_cfss();
 		} while (i == 'r' || i == 'R');
+		*ch = i;
 		terminal_state();
 	} else {
 		tty_set();
 	}
-	return (0);
 }
 
 
@@ -684,13 +695,13 @@ display_sgr(char puc)
 static void 
 print_sgr20(int on, int off)
 {
-	if (char_count > columns - 13)
+	if (char_count > columns - 13) {
 		put_crlf();
-	else if (char_count)
+	} else if (char_count) {
 		put_str("  ");
+	}
 	char_count += 11;
-	printf("%d/%d \033[%dmon\033[%dm off\033[0m",
-		on, off, on, off);
+	printf("%d/%d \033[%dmon\033[%dm off\033[0m", on, off, on, off);
 }
 
 /*
@@ -716,13 +727,16 @@ sgr20(void)
 }
 
 /*
-**	test_ansi_sgr()
+**	tools_sgr(testlist, state, ch)
 **
-**	Test the SGR modes.
+**	Run the ANSI graphics rendition mode tool
 **	Return the last character typed.
 */
-int 
-test_ansi_sgr(void)
+void
+tools_sgr(
+	struct test_list *t,
+	int *state,
+	int *ch)
 {
 	int k;
 
@@ -730,7 +744,8 @@ test_ansi_sgr(void)
 	for (k = 0;;) {
 		display_sgr(k);
 		put_crlf();
-		ptext("tac/tools/sgr Enter =><?r [<cr>] > ");
+		menu_prompt();
+		ptext("/sgr Enter =><?r [<cr>] > ");
 		k = wait_here();
 		if ((k == 'r') || (k == 'R')) {
 			k = 0;
@@ -741,8 +756,7 @@ test_ansi_sgr(void)
 	sgr20();
 
 	put_newlines(2);
-	ptext("tac/tools/sgr > ");
-	return (wait_here());
+	*ch = REQUEST_PROMPT;
 }
 
 /*****************************************************************************
@@ -823,12 +837,15 @@ Dec extended definitions
  */
 
 /*
-**	test_ansi_graphics()
+**	tools_charset(testlist, state, ch)
 **
-**	test ANSI character sets
+**	Run the ANSI alt-charset mode tool
 */
-int 
-test_ansi_graphics(void)
+void
+tools_charset(
+	struct test_list *t,
+	int *state,
+	int *pch)
 {
 	int j, ch;
 	char bank[32];
@@ -843,9 +860,9 @@ test_ansi_graphics(void)
 		show_characters(bank, 0);
 
 		/* G0 will not print in GR */
-		if (bank[1] & 3)
+		if (bank[1] & 3) {
 			show_characters(bank, 0x80);
-
+		}
 		ptext("bank+set> ");
 		for (j = 1; (ch = getchp(char_mask)); j++) {
 			if (ch == EOF)
@@ -865,5 +882,5 @@ test_ansi_graphics(void)
 			break;
 		bank[j + 1] = '\0';
 	}
-	return (0);
+	put_crlf();
 }

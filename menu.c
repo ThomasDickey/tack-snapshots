@@ -24,34 +24,26 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include "tac.h"
+#include "tack.h"
 
 /*
    Menu control
  */
 
-static char prompt_string[80];	/* menu prompt storage */
+static void test_byname(struct test_menu *, int *, int *);
+
+struct test_list *augment_test;
+char prompt_string[80];	/* menu prompt storage */
 
 /*
-**	menu_can_scan(menu-structure)
+**	menu_prompt()
 **
-**	Recursivly scan the menu tree and find which cap names can be tested.
+**	Print the menu prompt string.
 */
 void
-menu_can_scan(
-	struct test_menu *menu)
+menu_prompt(void)
 {
-	struct test_list *mt;
-
-	for (mt = menu->tests; (mt->flags & MENU_LAST) == 0; mt++) {
-		can_test(mt->caps_done, FLAG_CAN_TEST);
-		can_test(mt->caps_tested, FLAG_CAN_TEST);
-		if (!(mt->test_procedure)) {
-			if (mt->sub_menu) {
-				menu_can_scan(mt->sub_menu);
-			}
-		}
-	}
+	ptext(&prompt_string[1]);
 }
 
 /*
@@ -65,8 +57,28 @@ menu_test_loop(
 	int *state,
 	int *ch)
 {
-	int nch;
+	int nch, p;
 
+	if ((test->flags & MENU_REP_MASK) && (augment_test != test)) {
+		/* set the augment variable (first time only) */
+		p = (test->flags >> 8) & 15;
+		if ((test->flags & MENU_REP_MASK) == MENU_LM1) {
+			augment = lines - 1;
+		} else
+		if ((test->flags & MENU_ONE_MASK) == MENU_ONE) {
+			augment = 1;
+		} else
+		if ((test->flags & MENU_LC_MASK) == MENU_lines) {
+			augment = lines * p / 10;
+		} else
+		if ((test->flags & MENU_LC_MASK) == MENU_columns) {
+			augment = columns * p / 10;
+		} else {
+			augment = 1;
+		}
+		augment_test = test;
+		set_augment_txt();
+	}
 	do {
 		if ((test->flags | *state) & MENU_CLEAR) {
 			put_clear();
@@ -113,8 +125,7 @@ menu_display(
 	int *last_ch)
 {
 	int test_state = 0, run_standard_tests;
-	int default_action = 0, ch = 0, nch = 0;
-	char *s;
+	int hot_topic, ch = 0, nch = 0;
 	struct test_list *mt;
 	struct test_list *repeat_tests = 0;
 	int repeat_state = 0;
@@ -124,20 +135,14 @@ menu_display(
 	if (menu->ident) {
 		sprintf(&prompt_string[prompt_length], "/%s", menu->ident);
 	}
-	if (menu->prompt) {
-		if ((s = strchr(menu->prompt, '['))) {
-			default_action = s[1];
-		}
-	}
+	hot_topic = menu->default_action;
 	run_standard_tests = menu->standard_tests ?
 		menu->standard_tests[0] : -1;
 	if (!last_ch) {
 		last_ch = &ch;
 	}
 	while (1) {
-		if (ch) {
-			/* do nothing */;
-		} else {
+		if (ch == 0) {
 			/* Display the menu */
 			put_crlf();
 			if (menu->menu_function) {
@@ -164,17 +169,21 @@ menu_display(
 			}
 			ptextln(" q) quit");
 			ptextln(" ?) help");
-			if (menu->prompt) {
-				put_crlf();
-				ptext(&prompt_string[1]);
-				ptext(" ");
-				ptext(menu->prompt);
+		}
+		if (ch == 0 || ch == REQUEST_PROMPT) {
+			put_crlf();
+			ptext(&prompt_string[1]);
+			if (hot_topic) {
+				ptext(" [");
+				putchp(hot_topic);
+				ptext("]");
 			}
+			ptext(" > ");
 			/* read a character */
 			ch = wait_here();
 		}
 		if (ch == '\r' || ch == '\n') {
-			ch = default_action;
+			ch = hot_topic;
 		}
 		if (ch == 'q') {
 			break;
@@ -188,8 +197,17 @@ menu_display(
 		/* Run one of the standard tests (by request) */
 		for (mt = menu->tests; (mt->flags & MENU_LAST) == 0; mt++) {
 			if (mt->menu_entry && (nch == mt->menu_entry[0])) {
-				menu_test_loop(mt, &test_state, &nch);
+				if (mt->flags & MENU_MENU) {
+					test_byname(menu, &test_state, &nch);
+				} else {
+					menu_test_loop(mt, &test_state, &nch);
+				}
 				ch = nch;
+				if ((mt->flags & MENU_COMPLETE) && ch == 0) {
+					/* top level */
+					hot_topic = 'q';
+					ch = '?';
+				}
 			}
 		}
 		if (menu->standard_tests && nch == 'r') {
@@ -222,16 +240,15 @@ menu_display(
 				mt++;
 			}
 			if (ch == 0) {
-				ch = default_action;
+				ch = hot_topic;
 			}
 			menu->resume_tests = mt;
 			menu->resume_state = test_state;
 			menu->resume_char = ch;
 
-			if ((menu->flags & MENU_NEXT) && (ch == run_standard_tests)) {
-				*last_ch = ch;
-				prompt_string[prompt_length] = '\0';
-				return;
+			if (ch == run_standard_tests) {
+				/* pop up a level */
+				break;
 			}
 		}
 	}
@@ -259,7 +276,11 @@ generic_done_message(
 		ptext("Done ");
 	}
 	*ch = wait_here();
-	if (*ch == '\r' || *ch == '\n' || *ch == 's' || *ch == 'n') {
+	if (*ch == '\r' || *ch == '\n' || *ch == 'n') {
+		*ch = 0;
+	}
+	if (*ch == 's') {
+		*state |= MENU_STOP;
 		*ch = 0;
 	}
 }
@@ -289,7 +310,7 @@ menu_reset_init(
 	int *state,
 	int *ch)
 {
-	reset_init(TRUE);
+	reset_init();
 	put_crlf();
 }
 
@@ -307,12 +328,97 @@ subtest_menu(
 {
 	struct test_list *mt;
 
-	for (mt = test; (mt->flags & MENU_LAST) == 0; mt++) {
-		if (mt->menu_entry && (*ch == mt->menu_entry[0])) {
-			*ch = 0;
-			menu_test_loop(mt, state, ch);
-			return TRUE;
+	if (*ch) {
+		for (mt = test; (mt->flags & MENU_LAST) == 0; mt++) {
+			if (mt->menu_entry && (*ch == mt->menu_entry[0])) {
+				*ch = 0;
+				menu_test_loop(mt, state, ch);
+				return TRUE;
+			}
 		}
 	}
 	return FALSE;
+}
+
+/*
+**	menu_can_scan(menu-structure)
+**
+**	Recursivly scan the menu tree and find which cap names can be tested.
+*/
+void
+menu_can_scan(
+	struct test_menu *menu)
+{
+	struct test_list *mt;
+
+	for (mt = menu->tests; (mt->flags & MENU_LAST) == 0; mt++) {
+		can_test(mt->caps_done, FLAG_CAN_TEST);
+		can_test(mt->caps_tested, FLAG_CAN_TEST);
+		if (!(mt->test_procedure)) {
+			if (mt->sub_menu) {
+				menu_can_scan(mt->sub_menu);
+			}
+		}
+	}
+}
+
+/*
+**	menu_search(menu-structure, cap)
+**
+**	Recursivly search the menu tree and execute any tests that use cap.
+*/
+void
+menu_search(
+	struct test_menu *menu,
+	int *state,
+	int *ch,
+	char *cap)
+{
+	struct test_list *mt;
+	int nch;
+
+	for (mt = menu->tests; (mt->flags & MENU_LAST) == 0; mt++) {
+		nch = 0;
+		if (cap_match(mt->caps_done, cap)
+			|| cap_match(mt->caps_tested, cap)) {
+			menu_test_loop(mt, state, &nch);
+		}
+		if (!(mt->test_procedure)) {
+			if (mt->sub_menu) {
+				menu_search(mt->sub_menu, state, &nch, cap);
+			}
+		}
+		if (*state & MENU_STOP) {
+			break;
+		}
+		if (nch != 0 && nch != 'n') {
+			*ch = nch;
+			break;
+		}
+	}
+}
+
+/*
+**	test_byname(menu, state, ch)
+**
+**	Get a cap name then run all tests that use that cap.
+*/
+static void
+test_byname(
+	struct test_menu *menu,
+	int *state,
+	int *ch)
+{
+	char cap[32];
+	int test_state;
+
+	if (tty_can_sync == SYNC_NOT_TESTED) {
+		verify_time();
+	}
+	ptext("enter name: ");
+	read_string(cap, sizeof(cap));
+	if (cap[0]) {
+		menu_search(menu, &test_state, ch, cap);
+	}
+	*ch = '?';
 }
