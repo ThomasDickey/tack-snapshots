@@ -23,7 +23,7 @@
 #include <time.h>
 #include <tic.h>
 
-MODULE_ID("$Id: edit.c,v 1.5 1998/01/02 17:37:27 tom Exp $")
+MODULE_ID("$Id: edit.c,v 1.6 1998/01/03 19:42:54 tom Exp $")
 
 /*
  * Terminfo edit features
@@ -77,66 +77,6 @@ int xon_shadow;
 
 static int start_display;		/* the display has just started */
 static int display_lines;		/* number of lines displayed */
-
-/* this deals with differences over whether 0x7f and 0x80..0x9f are controls */
-#define CHAR_OF(s) (*(const unsigned char *)(s))
-#define REALCTL(s) (CHAR_OF(s) < 127 && iscntrl(CHAR_OF(s)))
-#define REALPRINT(s) (CHAR_OF(s) < 127 && isprint(CHAR_OF(s)))
-
-static char *
-file_expand(const char *srcp)
-{
-	static char	buffer[1024];
-	int		bufp;
-	const char	*str = srcp;
-	bool		islong = (strlen(str) > 3);
-
-    	bufp = 0;
-    	while (*str) {
-		if (*str == '%' && REALPRINT(str+1)) {
-	    		buffer[bufp++] = *str++;
-	    		buffer[bufp++] = *str;
-		}
-		else if (*str == '\033') {
-	    		buffer[bufp++] = '\\';
-	    		buffer[bufp++] = 'E';
-		}
-		else if (*str == '\\') {
-	    		buffer[bufp++] = '\\';
-	    		buffer[bufp++] = '\\';
-		}
-		else if (*str == ' ') {
-	    		buffer[bufp++] = '\\';
-	    		buffer[bufp++] = 's';
-		}
-		else if (*str == ',' || *str == ':' || *str == '^') {
-	    		buffer[bufp++] = '\\';
-	    		buffer[bufp++] = *str;
-		}
-		else if (REALPRINT(str))
-		    	buffer[bufp++] = *str;
-		else if (*str == '\r' && (islong || (strlen(srcp) > 2 && str[1] == '\0'))) {
-	    		buffer[bufp++] = '\\';
-	    		buffer[bufp++] = 'r';
-		}
-		else if (*str == '\n' && islong) {
-	    		buffer[bufp++] = '\\';
-	    		buffer[bufp++] = 'n';
-		}
-#define UnCtl(c) ((0xff & (c)) + '@')
-		else if (REALCTL(str) && *str != '\\' && (!islong || isdigit(str[1]))) {
-			(void) sprintf(&buffer[bufp], "^%c", UnCtl(*str));
-			bufp += 2;
-		} else {
-			(void) sprintf(&buffer[bufp], "\\%03o", 0xff & *str);
-			bufp += 4;
-		}
-		str++;
-    	}
-    	buffer[bufp] = '\0';
-    	return(buffer);
-}
-
 
 /*
 **	send_info_string(str)
@@ -300,7 +240,7 @@ save_info(
 	for (i = 0; i < STRCOUNT; i++) {
 		if (CUR Strings[i]) {
 			sprintf(buf, "%s=%s", strnames[i],
-				file_expand(CUR Strings[i]));
+				_nc_tic_expand(CUR Strings[i], TRUE));
 			save_info_string(buf, fp);
 		}
 	}
@@ -525,9 +465,9 @@ show_changed(
 				ptextln(title);
 				header = 0;
 			}
-			strcpy(abuf, file_expand(a));
+			strcpy(abuf, _nc_tic_expand(a, TRUE));
 			sprintf(temp, "%30s %6s %s", abuf, strnames[i],
-				file_expand(b));
+				_nc_tic_expand(b, TRUE));
 			putln(temp);
 		}
 	}
@@ -931,7 +871,7 @@ change_one_entry(
 		ptextln(expand(t));
 		return;
 	}
-	sprintf(buf, "Current value: (%s) %s", pad, file_expand(current_string));
+	sprintf(buf, "Current value: (%s) %s", pad, _nc_tic_expand(current_string, TRUE));
 	putln(buf);
 	ptextln("Enter new pad.  0 for no pad.  CR for no change.");
 	read_string(buf, 32);
@@ -1011,7 +951,7 @@ build_change_menu(
 
 	for (i = j = 0; i < txp; i++) {
 		if ((k = tx_index[i]) >= 0) {
-			s = file_expand(tx_cap[i]);
+			s = _nc_tic_expand(tx_cap[i], TRUE);
 			s[40] = '\0';
 			sprintf(change_pad_text[j], "%c) (%s) %s",
 				'a' + j, strnames[k], s);

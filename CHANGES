@@ -1,3 +1,13 @@
+1998-01-03  Thomas E. Dickey  <dickey@clark.net>
+
+	* tack.h: moved ncurses' externs to tic.h
+
+	* edit.c: split-out _nc_tic_expand(), as per DW's request.
+
+	* sysdep.c: nits (we don't _need_ time.h?)
+
+	* tack.h: SCO's compiler doesn't like array-of-const
+
 1998-01-02  Thomas E. Dickey  <dickey@clark.net>
 
 	* control.c: work with no 'gettimeofday()'

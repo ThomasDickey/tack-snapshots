@@ -26,9 +26,9 @@
 
 #include <tack.h>
 
-#ifdef sun
-#include <time.h>
-#endif
+#include <signal.h>
+#include <termios.h>
+#include <errno.h>
 
 #if HAVE_SELECT
 #if HAVE_SYS_TIME_H && HAVE_SYS_TIME_SELECT
@@ -39,11 +39,7 @@
 #endif
 #endif
 
-#include <signal.h>
-#include <termios.h>
-#include <errno.h>
-
-MODULE_ID("$Id: sysdep.c,v 1.5 1997/12/28 20:15:20 tom Exp $")
+MODULE_ID("$Id: sysdep.c,v 1.6 1998/01/03 16:26:48 tom Exp $")
 
 #if DECL_ERRNO
 extern int errno;
