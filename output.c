@@ -23,7 +23,7 @@
 #include <tack.h>
 #include <time.h>
 
-MODULE_ID("$Id: output.c,v 1.4 1997/12/27 18:00:54 tom Exp $")
+MODULE_ID("$Id: output.c,v 1.5 1998/01/02 17:40:58 tom Exp $")
 
 /* globals */
 long char_sent;			/* number of characters sent */
@@ -156,7 +156,7 @@ tt_tputs(const char *string, int reps)
 	if (string) {
 		for (i = 0; i < TT_MAX; i++) {
 			if (i >= ttp) {
-				tt_cap[i] = string;
+				tt_cap[i] = (char *)string;
 				tt_affected[i] = reps;
 				tt_count[i] = 1;
 				tt_delay[i] = msec_cost(string, reps);
@@ -203,7 +203,7 @@ tt_putparm(
 	if (string) {
 		for (i = 0; i < TT_MAX; i++) {
 			if (i >= ttp) {
-				tt_cap[i] = string;
+				tt_cap[i] = (char *)string;
 				tt_affected[i] = reps;
 				tt_count[i] = 1;
 				tt_delay[i] = msec_cost(string, reps);
@@ -317,7 +317,7 @@ put_newlines(int n)
 **	This function does translation of control characters.
 */
 void
-putchp(char c)
+putchp(int c)
 {
 	switch (c) {
 	case '\b':
