@@ -1,3 +1,9 @@
+1999-02-07  Thomas E. Dickey  <dickey@clark.net>
+
+	* HISTORY: nit
+
+	* init.c: tweak to make this build after renaming as per Alexander
+
 1998-09-26  Thomas E. Dickey  <dickey@clark.net>
 
 	* edit.c: add param to _nc_tic_expand()
