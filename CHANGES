@@ -1,3 +1,7 @@
+1998-03-28  Thomas E. Dickey  <dickey@clark.net>
+
+	* Makefile.in: updates to sync with ncurses 4.2
+
 1998-02-11  Thomas E. Dickey  <dickey@clark.net>
 
 	* ncurses_tst.hin: FROM_KEYS
