@@ -1,3 +1,7 @@
+2003-11-29  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* install-sh: resync with my-autoconf
+
 2002-06-29  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* mkinstalldirs: RCS_BASE
