@@ -1,3 +1,12 @@
+1998-01-02  Thomas E. Dickey  <dickey@clark.net>
+
+	* control.c: work with no 'gettimeofday()'
+	workaround for SCO 3.x compiler which gets confused by array of const.
+
+	* output.c, edit.c, fun.c: SCO's compiler doesn't like array-of-const
+
+	* ansi.c: SCO's compiler: parameter promotion warnings.
+
 1997-12-28  Thomas E. Dickey  <dickey@clark.net>
 
 	* tack.h: first cut of fixes for AIX/SCO/CLIX

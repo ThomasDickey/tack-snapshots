@@ -23,9 +23,15 @@
 
 #include <sys/time.h>	/* for sun */
 
-MODULE_ID("$Id: control.c,v 1.5 1997/12/28 19:59:30 tom Exp $")
+MODULE_ID("$Id: control.c,v 1.6 1998/01/02 17:51:37 tom Exp $")
 
 /* terminfo test program control subroutines */
+
+#if HAVE_GETTIMEOFDAY
+#define MY_TIMER struct timeval
+#else
+#define MY_TIMER time_t
+#endif
 
 /* globals */
 int test_complete;		/* counts number of tests completed */
@@ -36,7 +42,7 @@ int pad_test_duration = 1;	/* number of seconds for a pad test */
 int auto_pad_mode;		/* run the time tests */
 int no_alarm_event;		/* TRUE if the alarm has not gone off yet */
 int usec_run_time;		/* length of last test in microseconds */
-struct timeval stop_watch[MAX_TIMERS];	/* Hold the start timers */
+MY_TIMER stop_watch[MAX_TIMERS]; /* Hold the start timers */
 
 char txt_longer_augment[80];	/* >) use bigger augment */
 char txt_shorter_augment[80];	/* <) use smaller augment */
@@ -44,14 +50,14 @@ char txt_shorter_augment[80];	/* <) use smaller augment */
 /* caps under test data base */
 int tt_delay_max;		/* max number of milliseconds we can delay */
 int tt_delay_used;		/* number of milliseconds consumed in delay */
-const char *tt_cap[TT_MAX];	/* value of string */
+char *tt_cap[TT_MAX];		/* value of string */
 int tt_affected[TT_MAX];	/* lines or columns effected (repitition factor) */
 int tt_count[TT_MAX];		/* Number of times sent */
 int tt_delay[TT_MAX];		/* Number of milliseconds delay */
 int ttp;			/* number of entries used */
 
 /* Saved value of the above data base */
-const char *tx_cap[TT_MAX];	/* value of string */
+char *tx_cap[TT_MAX];		/* value of string */
 int tx_affected[TT_MAX];	/* lines or columns effected (repitition factor) */
 int tx_count[TT_MAX];		/* Number of times sent */
 int tx_index[TT_MAX];		/* String index */
@@ -80,6 +86,7 @@ event_start(int n)
 #if HAVE_GETTIMEOFDAY
 	(void) gettimeofday(&stop_watch[n], (struct timezone *)0);
 #else
+	stop_watch[n] = time((time_t *)0);
 #endif
 }
 
@@ -92,12 +99,13 @@ long
 event_time(int n)
 {
 #if HAVE_GETTIMEOFDAY
-	struct timeval current_time;
+	MY_TIMER current_time;
 
 	(void) gettimeofday(&current_time, (struct timezone *)0);
 	return ((current_time.tv_sec - stop_watch[n].tv_sec) * 1000000)
 		+ current_time.tv_usec - stop_watch[n].tv_usec;
 #else
+	return (time((time_t *)0) - stop_watch[n]) * 1000;
 #endif
 }
 
@@ -434,7 +442,7 @@ pad_test_shutdown(
 
 	/* save the data base */
 	for (txp = ss = counts = 0; txp < ttp; txp++) {
-		tx_cap[txp] = tt_cap[txp];
+		tx_cap[txp]   = (char *)tt_cap[txp];
 		tx_count[txp] = tt_count[txp];
 		tx_delay[txp] = tt_delay[txp];
 		tx_affected[txp] = tt_affected[txp];

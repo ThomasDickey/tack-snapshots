@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: ansi.c,v 1.4 1997/12/27 18:00:55 tom Exp $")
+MODULE_ID("$Id: ansi.c,v 1.5 1998/01/02 17:32:17 tom Exp $")
 
 /*
  * Standalone tests for ANSI terminals.  Three entry points:
@@ -417,7 +417,7 @@ request_cfss(void)
 **	print the mode display entry
 */
 static void
-mode_display(const char *p, char n, char c, char s, char r)
+mode_display(const char *p, int n, int c, char s, char r)
 {
 	int k;
 
@@ -658,7 +658,7 @@ tools_status(
 **	puc -> Private Use Character
 */
 static void 
-display_sgr(char puc)
+display_sgr(int puc)
 {
 	int k;
 
