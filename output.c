@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <curses.h>
+#include "term.h"
 #include "tack.h"
 
 /* globals */
@@ -123,6 +124,7 @@ tc_putch(int c)
 	}
 	if (log_fp) {
 		/* terminal output logging */
+		c &= 0xff;
 		if (c < 32) {
 			fprintf(log_fp, "<%s>", c0[c]);
 			log_count += 5;
@@ -159,11 +161,13 @@ tt_tputs(const char *string, int reps)
 				tt_cap[i] = (char *) string;
 				tt_affected[i] = reps;
 				tt_count[i] = 1;
+				tt_delay[i] = msec_cost(string, reps);
 				ttp++;
 				break;
 			}
 			if (string == tt_cap[i] && reps == tt_affected[i]) {
 				tt_count[i]++;
+				tt_delay_used += tt_delay[i];
 				break;
 			}
 		}
@@ -204,11 +208,13 @@ tt_putparm(
 				tt_cap[i] = (char *) string;
 				tt_affected[i] = reps;
 				tt_count[i] = 1;
+				tt_delay[i] = msec_cost(string, reps);
 				ttp++;
 				break;
 			}
 			if (string == tt_cap[i] && reps == tt_affected[i]) {
 				tt_count[i]++;
+				tt_delay_used += tt_delay[i];
 				break;
 			}
 		}
@@ -748,16 +754,10 @@ wait_here(void)
 			i = -1;
 		} else if (ch != 021) {	/* Not Control Q */
 			/* could be abort character */
+			spin_flush();
 			if (tty_can_sync == SYNC_TESTED) {
-				sleep(1);
-				for (j = 1; j < 5; j++) {
-					if (!tty_sync_error(0)) {
-						break;
-					}
-					sleep(1);
-				}
+				(void) tty_sync_error();
 			} else {
-				spin_flush();
 				put_str("\n? ");
 			}
 		}
@@ -800,9 +800,13 @@ read_string(
 	char_sent = 0;
 }
 
+/*
+**	maybe_wait(lines)
+**
+**	wait if near the end of the screen, then clear screen
+*/
 void 
 maybe_wait(int n)
-/* wait if near the end of the screen, then clear screen */
 {
 	if (line_count + n >= lines) {
 		if (char_sent != 0) {

@@ -20,10 +20,8 @@
 */
 /* terminfo action checker include file */
 
-#include "term.h"
-
 #define MAJOR_VERSION 0
-#define MINOR_VERSION 1
+#define MINOR_VERSION 2
 
 extern FILE *log_fp;
 extern FILE *debug_fp;
@@ -37,17 +35,27 @@ extern char tty_shortname[];
 #define SYNC_NOT_TESTED	2
 #define SYNC_NEEDED	3
 
-extern int ACK_char, junk_chars, tty_can_sync;
+extern int tty_can_sync;
 extern int total_pads_sent;	/* count pad characters sent */
 extern int total_caps_sent;	/* count caps sent */
 extern int total_printing_characters;	/* count printing characters sent */
 extern int no_alarm_event;	/* TRUE if the alarm has not gone off yet */
 extern int usec_run_time;	/* length of last test in microseconds */
+extern int raw_characters_sent;	/* Total output characters */
+
+/* Stopwatch event timers */
+#define TIME_TEST 0
+#define TIME_SYNC 1
+#define TIME_FLUSH 2
+#define MAX_TIMERS 3
 
 /* definitions for pad.c */
 
-#define SLOW_TERMINAL_EXIT if (!test_complete && !no_alarm_event) { break; }
+#define EXIT_CONDITION (no_alarm_event && (tt_delay_used < tt_delay_max))
+#define SLOW_TERMINAL_EXIT if (!test_complete && !EXIT_CONDITION) { break; }
+#define CAP_NOT_FOUND if (auto_pad_mode) return
 
+extern char letters[26];
 #define NEXT_LETTER letter = letters[letter_number =\
 	letters[letter_number + 1] ? letter_number + 1 : 0]
 
@@ -56,19 +64,16 @@ extern char letter;
 extern int letter_number;
 extern int augment, reps;
 extern long char_sent;
-
-#define CLEAR_TEST_MAX 5
-extern int clear_select;
-extern int clr_test_value[CLEAR_TEST_MAX];
-extern int clr_test_reps[CLEAR_TEST_MAX];
+extern char *pad_repeat_test;	/* commands that force repeat */
 
 extern int replace_mode;
 extern int char_count, line_count, expand_chars;
 extern int can_go_home, can_clear_screen;
 
 extern int translate_mode, scan_mode;
-extern int time_pad;
+extern int auto_pad_mode;		/* TRUE for auto time tests */
 extern int char_mask;
+extern int hex_out;			/* Display output in hex */
 
 /* Parity bit macros */
 #define STRIP_PARITY 0x7f
@@ -129,16 +134,20 @@ struct mode_list {
 #define TT_MAX	8
 #define MAX_CHANGES (TT_MAX+2)
 
+extern int tt_delay_max;	/* max number of milliseconds we can delay */
+extern int tt_delay_used;	/* number of milliseconds consumed in delay */
 extern char *tt_cap[TT_MAX];	/* value of string */
 extern int tt_affected[TT_MAX];	/* lines or columns effected (repitition
 				   factor) */
 extern int tt_count[TT_MAX];	/* Number of times sent */
+extern int tt_delay[TT_MAX];	/* Number of milliseconds delay */
 extern int ttp;			/* number of entries used */
 
 extern char *tx_cap[TT_MAX];	/* value of string */
 extern int tx_affected[TT_MAX];	/* lines or columns effected (repitition
 				   factor) */
 extern int tx_count[TT_MAX];	/* Number of times sent */
+extern int tx_delay[TT_MAX];	/* Number of milliseconds delay */
 extern int tx_index[TT_MAX];	/* String index */
 extern int txp;			/* number of entries used */
 extern int tx_characters;	/* printing characters sent by test */
@@ -218,6 +227,7 @@ struct test_menu {
 
 extern char prompt_string[80];	/* menu prompt storage */
 extern struct test_menu edit_menu;
+extern struct test_list *augment_test;
 
 /* tack.c */
 extern void show_usage(char *);
@@ -257,12 +267,15 @@ extern void read_string(char *, int);
 extern int getnext(int);
 
 /* control.c */
+extern void event_start(int);
+extern long event_time(int);
 extern char *liberated(char *);
 extern void page_loop(void);
 extern void control_init(void);
-extern void pad_time(char *, int *, int *);
+extern int msec_cost(const char *const, int);
 extern int skip_pad_test(struct test_list *, int *, int *, char *);
 extern void pad_test_startup(int);
+extern int still_testing(void);
 extern void pad_test_shutdown(struct test_list *, int);
 extern void dump_test_stats(struct test_list *, int *, int *);
 extern void longer_test_time(struct test_list *, int *, int *);
@@ -278,10 +291,10 @@ extern int sliding_scale(int, int, int);
 
 /* sync.c */
 extern void verify_time(void);
-extern int tty_sync_error(int);
-extern int enq_ack(void);
+extern int tty_sync_error(void);
 extern void flush_input(void);
 extern void sync_test(struct test_menu *);
+extern void sync_handshake(struct test_list *, int *, int *);
 
 /* charset.c */
 extern void set_attr(int);
@@ -345,3 +358,6 @@ extern void menu_clear_screen(struct test_list *, int *, int *);
 extern void menu_reset_init(struct test_list *, int *, int *);
 extern int subtest_menu(struct test_list *, int *, int *);
 
+/* definitions found in ncurses(3X) */
+extern int _nc_nulls_sent;		/* Add one for every null sent */
+extern char _nc_trans_string(char *);
