@@ -23,7 +23,7 @@
 #include <time.h>
 #include <tic.h>
 
-MODULE_ID("$Id: edit.c,v 1.7 1998/01/10 00:28:43 Daniel.Weaver Exp $")
+MODULE_ID("$Id: edit.c,v 1.8 1998/09/26 22:02:07 tom Exp $")
 
 /*
  * Terminfo edit features
@@ -240,7 +240,7 @@ save_info(
 	for (i = 0; i < STRCOUNT; i++) {
 		if (CUR Strings[i]) {
 			sprintf(buf, "%s=%s", strnames[i],
-				_nc_tic_expand(CUR Strings[i], TRUE));
+				_nc_tic_expand(CUR Strings[i], TRUE, TRUE));
 			save_info_string(buf, fp);
 		}
 	}
@@ -465,9 +465,9 @@ show_changed(
 				ptextln(title);
 				header = 0;
 			}
-			strcpy(abuf, _nc_tic_expand(a, TRUE));
+			strcpy(abuf, _nc_tic_expand(a, TRUE, TRUE));
 			sprintf(temp, "%30s %6s %s", abuf, strnames[i],
-				_nc_tic_expand(b, TRUE));
+				_nc_tic_expand(b, TRUE, TRUE));
 			putln(temp);
 		}
 	}
@@ -871,7 +871,7 @@ change_one_entry(
 		ptextln(expand(t));
 		return;
 	}
-	sprintf(buf, "Current value: (%s) %s", pad, _nc_tic_expand(current_string, TRUE));
+	sprintf(buf, "Current value: (%s) %s", pad, _nc_tic_expand(current_string, TRUE, TRUE));
 	putln(buf);
 	ptextln("Enter new pad.  0 for no pad.  CR for no change.");
 	read_string(buf, 32);
@@ -951,7 +951,7 @@ build_change_menu(
 
 	for (i = j = 0; i < txp; i++) {
 		if ((k = tx_index[i]) >= 0) {
-			s = _nc_tic_expand(tx_cap[i], TRUE);
+			s = _nc_tic_expand(tx_cap[i], TRUE, TRUE);
 			s[40] = '\0';
 			sprintf(change_pad_text[j], "%c) (%s) %s",
 				'a' + j, strnames[k], s);

@@ -1,3 +1,7 @@
+1998-09-26  Thomas E. Dickey  <dickey@clark.net>
+
+	* edit.c: add param to _nc_tic_expand()
+
 1998-03-28  Thomas E. Dickey  <dickey@clark.net>
 
 	* Makefile.in: updates to sync with ncurses 4.2
