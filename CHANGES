@@ -1,3 +1,7 @@
+1997-10-03  Daniel.Weaver
+
+	* charset.c, output.c, edit.c, crum.c: ncurses-4.1-971011
+
 1997-10-02  Daniel.Weaver
 
 	* menu.c: ncurses-4.1-971011
