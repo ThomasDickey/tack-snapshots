@@ -19,9 +19,9 @@
 **  enhanced as deemed necessary by the community.
 */
 
-#include <curses.h>
-#include "term.h"
-#include "tack.h"
+#include <tack.h>
+
+MODULE_ID("$Id: color.c,v 1.5 1997/12/27 18:00:08 tom Exp $")
 
 /*
  * Color terminal tests.  Has only one entry point: test_color().
@@ -56,11 +56,8 @@ struct test_list color_test_list[] = {
 #define COLOR_WHITE     7
 #endif
 
-extern struct mode_list alt_modes[];
-extern int mode_map[];
-
 struct color_table {
-	char *name;
+	const char *name;
 	int index;
 	int r, g, b;
 	int h, l, s;
@@ -311,8 +308,8 @@ static int
 rainbow(int n)
 {				/* print the programable color display */
 	int i, c, d, palette_full, initial_pair;
-	static struct {
-		char *name;
+	static const struct {
+		const char *name;
 		char ch;
 	}  splat[] = {
 		{"Bg normal", ' '},

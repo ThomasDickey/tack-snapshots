@@ -18,10 +18,10 @@
 **  all ideas to me. This software is going to be maintained and
 **  enhanced as deemed necessary by the community.
 */
-#include <stdio.h>
-#include <curses.h>
-#include "term.h"
-#include "tack.h"
+
+#include <tack.h>
+
+MODULE_ID("$Id: ansi.c,v 1.4 1997/12/27 18:00:55 tom Exp $")
 
 /*
  * Standalone tests for ANSI terminals.  Three entry points:
@@ -45,7 +45,6 @@
 #define MAX_MODES 256
 
 static char default_bank[] = "\033(B\017";
-static char *puc[] = {"", "<", "=", ">", "?", 0};
 static int private_use, ape, terminal_class, got_escape;
 static short ansi_value[256];
 static char ansi_buf[512], pack_buf[512];
@@ -53,8 +52,8 @@ static char *ach, *pch;
 
 struct ansi_reports {
 	int lvl, final;
-	char *text;
-	char *request;
+	const char *text;
+	const char *request;
 };
 
 static struct ansi_reports report_list[] = {
@@ -94,15 +93,15 @@ static struct ansi_reports report_list[] = {
 };
 
 struct request_control {
-	char *text;
-	char *expect;
-	char *request;
-	char *set_mode;
-	char *reset_mode;
+	const char *text;
+	const char *expect;
+	const char *request;
+	const char *set_mode;
+	const char *reset_mode;
 };
 
 /* Request control function selection or setting */
-struct request_control rqss[] = {
+static const struct request_control rqss[] = {
 	{"Data sent to screen", "0", "$}", "\033[0$}", 0},
 	{"Data sent to disabled status line", "0", "$}"},
 	{"\033[0$~\033[1$}", "\033[0$}"},
@@ -418,7 +417,7 @@ request_cfss(void)
 **	print the mode display entry
 */
 static void
-mode_display(char *p, char n, char c, char s, char r)
+mode_display(const char *p, char n, char c, char s, char r)
 {
 	int k;
 
@@ -439,6 +438,8 @@ mode_display(char *p, char n, char c, char s, char r)
 static void
 terminal_state(void)
 {
+	static const char *puc[] = {"", "<", "=", ">", "?", 0};
+
 	int i, j, k, l, modes_found;
 	char *s;
 	char buf[256], tms[256];
@@ -460,7 +461,8 @@ terminal_state(void)
 			}
 			k = strlen(temp);
 			ptext(temp);
-			for (j = 0; j < sizeof(buf); buf[j++] = ' ');
+			for (j = 0; j < (int) sizeof(buf); buf[j++] = ' ')
+				;
 			for (j = l = 0; j < 255 && j - l < 50; j++) {
 				sprintf(temp, "\033[%s%d$p", puc[i], j);
 				tc_putp(temp);
@@ -481,7 +483,7 @@ terminal_state(void)
 						buf[k] = '\0';
 						put_crlf();
 						ptextln(buf);
-						for (k = 0; k < sizeof(buf);) {
+						for (k = 0; k < (int) sizeof(buf);) {
 							buf[k++] = ' ';
 						}
 						k = 0;
@@ -619,8 +621,8 @@ ansi_report_help(void)
 */
 void
 tools_status(
-	struct test_list *t,
-	int *state,
+	struct test_list *t GCC_UNUSED,
+	int *state GCC_UNUSED,
 	int *ch)
 {
 	int i;
@@ -735,8 +737,8 @@ sgr20(void)
 */
 void
 tools_sgr(
-	struct test_list *t,
-	int *state,
+	struct test_list *t GCC_UNUSED,
+	int *state GCC_UNUSED,
 	int *ch)
 {
 	int k;
@@ -844,9 +846,9 @@ Dec extended definitions
 */
 void
 tools_charset(
-	struct test_list *t,
-	int *state,
-	int *pch)
+	struct test_list *t GCC_UNUSED,
+	int *state GCC_UNUSED,
+	int *chp GCC_UNUSED)
 {
 	int j, ch;
 	char bank[32];
@@ -874,7 +876,7 @@ tools_charset(
 			bank[j] = ch;
 			if (ch < ' ' || ch > '/')
 				break;
-			if (j + 1 >= sizeof(bank))
+			if (j + 1 >= (int) sizeof(bank))
 				break;
 		}
 		if (j == 1)

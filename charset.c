@@ -19,11 +19,9 @@
 **  enhanced as deemed necessary by the community.
 */
 
-#include <curses.h>
-#include <string.h>
-#include <ctype.h>
-#include "term.h"
-#include "tack.h"
+#include <tack.h>
+
+MODULE_ID("$Id: charset.c,v 1.4 1997/12/27 18:00:55 tom Exp $")
 
 /*
 	Menu definitions for alternate character set and SGR tests.
@@ -42,7 +40,7 @@ static void charset_smacs(struct test_list *t, int *state, int *ch);
 static void charset_attributes(struct test_list *t, int *state, int *ch);
 static void charset_sgr(struct test_list *t, int *state, int *ch);
 
-struct test_list acs_test_list[] = {
+const struct test_list acs_test_list[] = {
 	{0, 0, 0, 0, "e) edit terminfo", 0, &edit_menu},
 	{MENU_NEXT, 3, "bel", 0, 0, charset_bel, 0},
 	{MENU_NEXT, 3, "flash", 0, 0, charset_flash, 0},
@@ -59,7 +57,7 @@ struct test_list acs_test_list[] = {
 	{MENU_LAST, 0, 0, 0, 0, 0, 0}
 };
 
-struct mode_list alt_modes[] = {
+const struct mode_list alt_modes[] = {
 	{"normal", "(sgr0)", "(sgr0)", 1},
 	{"standout", "(smso)", "(rmso)", 2},
 	{"underline", "(smul)", "(rmul)", 4},
@@ -77,11 +75,11 @@ struct mode_list alt_modes[] = {
    Then the underline attribute does not show up.  The following map
    will reorder the display so that the underline attribute will
    show up. */
-int mode_map[10] = {0, 1, 3, 4, 5, 6, 7, 8, 9, 2};
+const int mode_map[10] = {0, 1, 3, 4, 5, 6, 7, 8, 9, 2};
 
 struct graphics_pair {
 	unsigned char c;
-	char *name;
+	const char *name;
 };
 
 static struct graphics_pair glyph[] = {
@@ -256,7 +254,7 @@ charset_sgr(
 	}
 	ptext("Test video attributes (sgr)");
 
-	for (i = 0; i < (sizeof(alt_modes) / sizeof(struct mode_list));
+	for (i = 0; i < (int) (sizeof(alt_modes) / sizeof(struct mode_list));
 		i++) {
 		put_crlf();
 		sprintf(temp, "%d %-20s", i, alt_modes[i].name);
@@ -367,7 +365,6 @@ charset_attributes(
 }
 
 #define GLYPHS 256
-#undef acs_map
 
 /*
 **	charset_smacs(test_list, status, ch)
@@ -413,13 +410,13 @@ test_acs(
 {				/* alternate character set */
 	int i, j;
 	char valid_glyph[GLYPHS];
-	char acs_map[GLYPHS];
+	char acs_table[GLYPHS];
 	static unsigned char vt100[] = "`afgjklmnopqrstuvwxyz{|}~";
 
 	line_count = 0;
 	for (i = 0; i < GLYPHS; i++) {
 		valid_glyph[i] = FALSE;
-		acs_map[i] = i;
+		acs_table[i] = i;
 	}
 	if (acs_chars) {
 		sprintf(temp, "Alternate character set map: %s",
@@ -431,7 +428,7 @@ test_acs(
 			}
 			for (j = 0;; j++) {
 				if (glyph[j].c == (unsigned char) acs_chars[i]) {
-					acs_map[glyph[j].c] = acs_chars[i + 1];
+					acs_table[glyph[j].c] = acs_chars[i + 1];
 					valid_glyph[glyph[j].c] = TRUE;
 					break;
 				}
@@ -465,7 +462,7 @@ test_acs(
 	for (i = 0; glyph[i].name[0]; i++) {
 		if (valid_glyph[glyph[i].c]) {
 			put_mode(enter_alt_charset_mode);
-			put_this(acs_map[glyph[i].c]);
+			put_this(acs_table[glyph[i].c]);
 			char_count++;
 			put_mode(exit_alt_charset_mode);
 			if (magic_cookie_glitch >= 1) {

@@ -20,12 +20,10 @@
 */
 /* screen formatting and I/O utility functions */
 
-#include <stdlib.h>
-#include <unistd.h>
+#include <tack.h>
 #include <time.h>
-#include <curses.h>
-#include "term.h"
-#include "tack.h"
+
+MODULE_ID("$Id: output.c,v 1.4 1997/12/27 18:00:54 tom Exp $")
 
 /* globals */
 long char_sent;			/* number of characters sent */
@@ -59,14 +57,14 @@ struct default_string_list TM_string[TM_last] = {
 	{"ht", "\t", 0}
 };
 
-static char *c0[32] = {
+static const char *c0[32] = {
 	"NUL", "SOH", "STX", "ETX", "EOT", "ENQ", "ACK",
 	"BEL", "BS", "HT", "LF", "VT", "FF", "CR", "SO", "SI",
 	"DLE", "DC1", "DC2", "DC3", "DC4", "NAK", "SYN", "ETB",
 	"CAN", "EM", "SUB", "ESC", "FS", "GS", "RS", "US"
 };
 
-static char *c1[32] = {
+static const char *c1[32] = {
 	"", "", "", "", "IND", "NEL", "SSA", "ESA",
 	"HTS", "HTJ", "VTS", "PLD", "PLU", "RI", "SS2", "SS3",
 	"DCS", "PU1", "PU2", "STS", "CCH", "MW", "SPA", "EPA",
@@ -158,7 +156,7 @@ tt_tputs(const char *string, int reps)
 	if (string) {
 		for (i = 0; i < TT_MAX; i++) {
 			if (i >= ttp) {
-				tt_cap[i] = (char *) string;
+				tt_cap[i] = string;
 				tt_affected[i] = reps;
 				tt_count[i] = 1;
 				tt_delay[i] = msec_cost(string, reps);
@@ -205,7 +203,7 @@ tt_putparm(
 	if (string) {
 		for (i = 0; i < TT_MAX; i++) {
 			if (i >= ttp) {
-				tt_cap[i] = (char *) string;
+				tt_cap[i] = string;
 				tt_affected[i] = reps;
 				tt_count[i] = 1;
 				tt_delay[i] = msec_cost(string, reps);
@@ -369,14 +367,14 @@ putchp(char c)
 
 
 void
-put_str(char *s)
+put_str(const char *s)
 {				/* send the string to the terminal */
 	for (; *s; putchp(*s++));
 }
 
 
 void
-putln(char *s)
+putln(const char *s)
 {				/* output a string followed by a CR LF */
 	for (; *s; putchp(*s++));
 	put_crlf();
@@ -384,7 +382,7 @@ putln(char *s)
 
 
 void
-put_columns(char *s, int len, int w)
+put_columns(const char *s, int len, int w)
 {				/* put out s in column format */
 	int l;
 
@@ -415,9 +413,9 @@ put_columns(char *s, int len, int w)
 **	This is more estetic on 40 column terminals.
 */
 void
-ptext(char *s)
+ptext(const char *s)
 {
-	char *t;
+	const char *t;
 
 	while (*s) {
 		for (t = s + 1; *t > ' '; t++);
@@ -455,7 +453,7 @@ three_digit(char *tx, int i)
 
 
 void
-ptextln(char *s)
+ptextln(const char *s)
 {				/* print the text using ptext() then add a CR
 				   LF */
 	ptext(s);
@@ -491,7 +489,7 @@ expand_one(int ch, char **v)
 
 
 char *
-expand(char *s)
+expand(const char *s)
 {				/* convert the string to printable form */
 	static char buf[4096];
 	char *t, *v;
@@ -565,7 +563,7 @@ hex_expand_to(char *s, int l)
 	for (t = buf; *s; s++) {
 		sprintf(t, "%02X ", *s & 0xff);
 		t += 3;
-		if (t - buf > sizeof(buf) - 4) {
+		if (t - buf > (int) sizeof(buf) - 4) {
 			break;
 		}
 	}
@@ -579,7 +577,7 @@ hex_expand_to(char *s, int l)
 
 
 char *
-expand_command(char *c)
+expand_command(const char *c)
 {				/* expand an ANSI escape sequence */
 	static char buf[256];
 	int i, j, ch;
@@ -723,7 +721,7 @@ wait_here(void)
 	char message[16];
 	int i, j;
 
-	for (i = 0; i < sizeof(cc); i++) {
+	for (i = 0; i < (int) sizeof(cc); i++) {
 		cc[i] = ch = getchp(STRIP_PARITY);
 		if (ch == '\r' || ch == '\n') {
 			put_crlf();
@@ -742,7 +740,7 @@ wait_here(void)
 			/* ignore control S, but tell me about it */
 			while (ch == 023 || ch == 021) {
 				ch = getchp(STRIP_PARITY);
-				if (i < sizeof(cc))
+				if (i < (int) sizeof(cc))
 					cc[++i] = ch;
 			}
 			put_str("\nThe terminal sent a ^S -");

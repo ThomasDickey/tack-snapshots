@@ -19,13 +19,9 @@
 **  enhanced as deemed necessary by the community.
 */
 
-#include <curses.h>
-#include <ctype.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include "term.h"
-#include "tack.h"
+#include <tack.h>
+
+MODULE_ID("$Id: menu.c,v 1.4 1997/12/27 18:00:55 tom Exp $")
 
 /*
    Menu control
@@ -52,7 +48,7 @@ menu_prompt(void)
 **
 **	This function implements the repeat test function.
 */
-void
+static void
 menu_test_loop(
 	struct test_list *test,
 	int *state,
@@ -293,9 +289,9 @@ generic_done_message(
 */
 void
 menu_clear_screen(
-	struct test_list *test,
-	int *state,
-	int *ch)
+	struct test_list *test GCC_UNUSED,
+	int *state GCC_UNUSED,
+	int *ch GCC_UNUSED)
 {
 	put_clear();
 }
@@ -307,9 +303,9 @@ menu_clear_screen(
 */
 void
 menu_reset_init(
-	struct test_list *test,
-	int *state,
-	int *ch)
+	struct test_list *test GCC_UNUSED,
+	int *state GCC_UNUSED,
+	int *ch GCC_UNUSED)
 {
 	reset_init();
 	put_crlf();
@@ -348,7 +344,7 @@ subtest_menu(
 */
 void
 menu_can_scan(
-	struct test_menu *menu)
+	const struct test_menu *menu)
 {
 	struct test_list *mt;
 
@@ -368,7 +364,7 @@ menu_can_scan(
 **
 **	Recursivly search the menu tree and execute any tests that use cap.
 */
-void
+static void
 menu_search(
 	struct test_menu *menu,
 	int *state,
@@ -407,7 +403,7 @@ menu_search(
 static void
 test_byname(
 	struct test_menu *menu,
-	int *state,
+	int *state GCC_UNUSED,
 	int *ch)
 {
 	int test_state = 0;

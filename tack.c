@@ -19,13 +19,9 @@
 **  enhanced as deemed necessary by the community.
 */
 
-#include <curses.h>
-#include <ctype.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include "term.h"
-#include "tack.h"
+#include <tack.h>
+
+MODULE_ID("$Id: tack.c,v 1.4 1997/12/27 18:00:54 tom Exp $")
 
 /*
    This program is designed to test terminfo, not curses.  Therefore
@@ -69,7 +65,6 @@ FILE *log_fp;			/* Terminal logfile */
 extern struct test_menu sync_menu;
 
 static void tools_hex_echo(struct test_list *, int *, int *);
-static void tools_handshake(struct test_list *, int *, int *);
 static void tools_debug(struct test_list *, int *, int *);
 
 static char hex_echo_menu_entry[80];
@@ -106,7 +101,7 @@ static char tty_trans_menu[80];
 static char enable_xon_xoff[] = {"x) enable xon/xoff"};
 static char disable_xon_xoff[] = {"x) disable xon/xoff"};
 
-struct test_list tty_test_list[] = {
+static struct test_list tty_test_list[] = {
 	{0, 0, 0, 0, tty_width_menu, tty_width, 0},
 	{0, 0, 0, 0, tty_delay_menu, tty_delay, 0},
 	{0, 0, 0, 0, tty_xon_menu, tty_xon, 0},
@@ -114,7 +109,7 @@ struct test_list tty_test_list[] = {
 	{MENU_LAST, 0, 0, 0, 0, 0, 0}
 };
 
-struct test_menu tty_menu = {
+static struct test_menu tty_menu = {
 	0, 'q', 0, "Terminal and driver configuration",
 	"tty", 0,
 	tty_show_state, tty_test_list, 0, 0, 0
@@ -138,7 +133,7 @@ struct test_menu mode_menu = {
 
 extern struct test_list acs_test_list[];
 
-struct test_menu acs_menu = {
+static struct test_menu acs_menu = {
 	0, 'n', 0,
 	"Alternate character set and graphics rendition test menu",
 	"acs", "n) run standard tests",
@@ -156,7 +151,7 @@ struct test_menu color_menu = {
 
 extern struct test_list crum_test_list[];
 
-struct test_menu crum_menu = {
+static struct test_menu crum_menu = {
 	0, 'n', 0,
 	"Cursor movement test menu",
 	"move", "n) run standard tests",
@@ -165,7 +160,7 @@ struct test_menu crum_menu = {
 
 extern struct test_list funkey_test_list[];
 
-struct test_menu funkey_menu = {
+static struct test_menu funkey_menu = {
 	0, 'n', 0,
 	"Function key test menu",
 	"fkey", "n) run standard tests",
@@ -174,7 +169,7 @@ struct test_menu funkey_menu = {
 
 extern struct test_list printer_test_list[];
 
-struct test_menu printer_menu = {
+static struct test_menu printer_menu = {
 	0, 'n', 0,
 	"Printer test menu",
 	"printer", "n) run standard tests",
@@ -184,14 +179,14 @@ struct test_menu printer_menu = {
 static void pad_gen(struct test_list *, int *, int *);
 extern struct test_list pad_test_list[];
 
-struct test_menu pad_menu = {
+static struct test_menu pad_menu = {
 	0, 'n', 0,
 	"Pad test menu",
 	"pad", "n) run standard tests",
 	sync_test, pad_test_list, 0, 0, 0
 };
 
-struct test_list normal_test_list[] = {
+static struct test_list normal_test_list[] = {
 	{0, 0, 0, 0, "e) edit terminfo", 0, &edit_menu},
 	{0, 0, 0, 0, "i) send reset and init", menu_reset_init, 0},
 	{MENU_NEXT, 0, 0, 0, "x) test modes and glitches", 0, &mode_menu},
@@ -236,7 +231,7 @@ struct test_menu start_menu = {
 	0, start_test_list, 0, 0, 0
 };
 
-struct test_list write_terminfo_list[] = {
+static struct test_list write_terminfo_list[] = {
 	{0, 0, 0, 0, "w) write the current terminfo to a file", save_info, 0},
 	{MENU_LAST, 0, 0, 0, 0, 0, 0}
 };
@@ -254,9 +249,9 @@ struct test_list write_terminfo_list[] = {
 */
 static void
 tools_hex_echo(
-	struct test_list *t,
-	int *state,
-	int *ch)
+	struct test_list *t GCC_UNUSED,
+	int *state GCC_UNUSED,
+	int *ch GCC_UNUSED)
 {
 	if (hex_out) {
 		hex_out = FALSE;
@@ -276,8 +271,8 @@ tools_hex_echo(
 */
 static void
 tools_debug(
-	struct test_list *t,
-	int *state,
+	struct test_list *t GCC_UNUSED,
+	int *state GCC_UNUSED,
 	int *ch)
 {
 	char buf[32];
@@ -299,9 +294,9 @@ tools_debug(
 */
 static void
 start_tools(
-	struct test_list *t,
-	int *state,
-	int *ch)
+	struct test_list *t GCC_UNUSED,
+	int *state GCC_UNUSED,
+	int *ch GCC_UNUSED)
 {
 	if (hex_out) {
 		strcpy(hex_echo_menu_entry,
@@ -320,7 +315,7 @@ start_tools(
 */
 static void
 tty_show_state(
-	struct test_menu *menu)
+	struct test_menu *menu GCC_UNUSED)
 {
 	put_crlf();
 	(void) sprintf(temp,
@@ -342,9 +337,9 @@ tty_show_state(
 */
 static void
 tty_width(
-	struct test_list *t,
-	int *state,
-	int *ch)
+	struct test_list *t GCC_UNUSED,
+	int *state GCC_UNUSED,
+	int *ch GCC_UNUSED)
 {
 	if (char_mask == STRIP_PARITY) {
 		char_mask = ALLOW_PARITY;
@@ -362,9 +357,9 @@ tty_width(
 */
 static void
 tty_delay(
-	struct test_list *t,
-	int *state,
-	int *ch)
+	struct test_list *t GCC_UNUSED,
+	int *state GCC_UNUSED,
+	int *ch GCC_UNUSED)
 {
 	if (select_delay_type) {
 		select_delay_type = FALSE;
@@ -384,9 +379,9 @@ tty_delay(
 */
 static void
 tty_xon(
-	struct test_list *t,
-	int *state,
-	int *ch)
+	struct test_list *t GCC_UNUSED,
+	int *state GCC_UNUSED,
+	int *ch GCC_UNUSED)
 {
 	if (select_xon_xoff) {
 		if (needs_xon_xoff) {
@@ -414,9 +409,9 @@ tty_xon(
 */
 static void
 tty_trans(
-	struct test_list *t,
-	int *state,
-	int *ch)
+	struct test_list *t GCC_UNUSED,
+	int *state GCC_UNUSED,
+	int *ch GCC_UNUSED)
 {
 	if (translate_mode) {
 		translate_mode = FALSE;
@@ -437,7 +432,7 @@ tty_trans(
 static void
 pad_gen(
 	struct test_list *t,
-	int *state,
+	int *state GCC_UNUSED,
 	int *ch)
 {
 	control_init();
@@ -456,9 +451,9 @@ pad_gen(
 */
 static void
 start_modes(
-	struct test_list *t,
-	int *state,
-	int *ch)
+	struct test_list *t GCC_UNUSED,
+	int *state GCC_UNUSED,
+	int *ch GCC_UNUSED)
 {
 
 	if (select_delay_type) {
@@ -498,8 +493,8 @@ start_modes(
 */
 static void
 start_basic(
-	struct test_list *t,
-	int *state,
+	struct test_list *t GCC_UNUSED,
+	int *state GCC_UNUSED,
 	int *ch)
 {
 	display_basic();
@@ -513,9 +508,9 @@ start_basic(
 */
 static void
 start_log(
-	struct test_list *t,
-	int *state,
-	int *ch)
+	struct test_list *t GCC_UNUSED,
+	int *state GCC_UNUSED,
+	int *ch GCC_UNUSED)
 {
 	if (logging_menu_entry[5] == 'a') {
 		ptextln("The log file will capture all characters sent to the terminal.");

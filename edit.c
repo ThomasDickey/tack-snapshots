@@ -19,15 +19,11 @@
 **  enhanced as deemed necessary by the community.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <tack.h>
 #include <time.h>
-#include <curses.h>
-#include <ctype.h>
-#include <string.h>
-#include "term.h"
-#include "tic.h"
-#include "tack.h"
+#include <tic.h>
+
+MODULE_ID("$Id: edit.c,v 1.4 1997/12/27 18:00:55 tom Exp $")
 
 /*
  * Terminfo edit features
@@ -83,20 +79,19 @@ static int start_display;		/* the display has just started */
 static int display_lines;		/* number of lines displayed */
 
 /* this deals with differences over whether 0x7f and 0x80..0x9f are controls */
-#define CHAR_OF(s) (*(unsigned char *)(s))
+#define CHAR_OF(s) (*(const unsigned char *)(s))
 #define REALCTL(s) (CHAR_OF(s) < 127 && iscntrl(CHAR_OF(s)))
 #define REALPRINT(s) (CHAR_OF(s) < 127 && isprint(CHAR_OF(s)))
 
-char *
-file_expand(char *srcp)
+static char *
+file_expand(const char *srcp)
 {
 	static char	buffer[1024];
 	int		bufp;
-	char		*ptr, *str = srcp;
+	const char	*str = srcp;
 	bool		islong = (strlen(str) > 3);
 
     	bufp = 0;
-    	ptr = str;
     	while (*str) {
 		if (*str == '%' && REALPRINT(str+1)) {
 	    		buffer[bufp++] = *str++;
@@ -150,7 +145,7 @@ file_expand(char *srcp)
 */
 static void
 send_info_string(
-	char *str,
+	const char *str,
 	int *ch)
 {
 	int len;
@@ -201,8 +196,8 @@ send_info_string(
 */
 static void
 show_info(
-	struct test_list *t,
-	int *state,
+	struct test_list *t GCC_UNUSED,
+	int *state GCC_UNUSED,
 	int *ch)
 {
 	int i;
@@ -239,7 +234,7 @@ show_info(
 */
 static void
 save_info_string(
-	char *str,
+	const char *str,
 	FILE *fp)
 {
 	int len;
@@ -323,14 +318,14 @@ save_info(
 static void
 show_value(
 	struct test_list *t,
-	int *state,
+	int *state GCC_UNUSED,
 	int *ch)
 {
 	struct name_table_entry const *nt;
 	char *s;
 	int n, op, b;
 	char buf[1024];
-	char new[1024];
+	char tmp[1024];
 
 	ptext("enter name: ");
 	read_string(buf, 80);
@@ -406,9 +401,9 @@ show_value(
 	switch (nt->nte_type) {
 	case STRING:
 		_nc_reset_input((FILE *) 0, buf);
-		_nc_trans_string(new);
-		s = malloc(strlen(new) + 1);
-		strcpy(s, new);
+		_nc_trans_string(tmp);
+		s = (char *)malloc(strlen(tmp) + 1);
+		strcpy(s, tmp);
 		CUR Strings[nt->nte_index] = s;
 		sprintf(temp, "new string value  %s", nt->nte_name);
 		ptextln(temp);
@@ -438,8 +433,8 @@ show_value(
 */
 char *
 get_string_cap_byname(
-	char *name,
-	char **long_name)
+	const char *name,
+	const char **long_name)
 {
 	struct name_table_entry const *nt;
 
@@ -461,7 +456,7 @@ get_string_cap_byname(
 */
 int
 get_string_cap_byvalue(
-	char *value)
+	const char *value)
 {
 	int i;
 
@@ -488,12 +483,13 @@ get_string_cap_byvalue(
 */
 static void
 show_changed(
-	struct test_list *t,
-	int *state,
+	struct test_list *t GCC_UNUSED,
+	int *state GCC_UNUSED,
 	int *ch)
 {
 	int i, header = 1, v;
-	char *a, *b;
+	const char *a;
+	const char *b;
 	static char title[] = "                     old value   cap  new value";
 	char abuf[1024];
 
@@ -550,7 +546,7 @@ show_changed(
 int
 user_modified(void)
 {
-	char *a, *b;
+	const char *a, *b;
 	int i, v;
 
 	for (i = 0; i < BOOLCOUNT; i++) {
@@ -624,7 +620,7 @@ mark_cap(
 */
 void
 can_test(
-	char *s,
+	const char *s,
 	int flags)
 {
 	int ch, i, j;
@@ -657,8 +653,8 @@ can_test(
 */
 void
 cap_index(
-	char *s,
-	int *index)
+	const char *s,
+	int *inx)
 {
 	struct name_table_entry const *nt;
 	int ch, i, j;
@@ -673,7 +669,7 @@ cap_index(
 					if ((nt = _nc_find_entry(name,
 						_nc_info_hash_table)) &&
 						(nt->nte_type == STRING)) {
-						*index++ = nt->nte_index;
+						*inx++ = nt->nte_index;
 					}
 				}
 				if (ch == 0) {
@@ -685,7 +681,7 @@ cap_index(
 			}
 		}
 	}
-	*index = -1;
+	*inx = -1;
 }
 
 /*
@@ -697,8 +693,8 @@ cap_index(
 */
 int
 cap_match(
-	char *names,
-	char *cap)
+	const char *names,
+	const char *cap)
 {
 	char *s;
 	int c, l, t;
@@ -729,12 +725,12 @@ cap_match(
 void
 show_report(
 	struct test_list *t,
-	int *state,
+	int *state GCC_UNUSED,
 	int *ch)
 {
 	int i, j, nc, flag;
-	char *s;
-	char *nx[BOOLCOUNT + NUMCOUNT + STRCOUNT];
+	const char *s;
+	const char *nx[BOOLCOUNT + NUMCOUNT + STRCOUNT];
 
 	flag = t->flags & 255;
 	nc = 0;
@@ -789,8 +785,8 @@ show_report(
 */
 static void
 show_untested(
-	struct test_list *t,
-	int *state,
+	struct test_list *t GCC_UNUSED,
+	int *state GCC_UNUSED,
 	int *ch)
 {
 	int i;
@@ -873,7 +869,7 @@ edit_init(void)
 			ptextln(temp);
 		}
 	}
-	if (nt = _nc_find_entry("xon", _nc_info_hash_table)) {
+	if ((nt = _nc_find_entry("xon", _nc_info_hash_table)) != 0) {
 		xon_index = nt->nte_index;
 	}
 	xon_shadow = xon_xoff;
@@ -892,7 +888,9 @@ change_one_entry(
 {
 	struct name_table_entry const *nt;
 	int i, j, x, star, slash,  v, dot, ch;
-	char *s, *t, *p, *current_string;
+	const char *s;
+	char *t, *p;
+	const char *current_string;
 	char buf[1024];
 	char pad[1024];
 
@@ -925,12 +923,12 @@ change_one_entry(
 		read_string(buf, sizeof(buf));
 		_nc_reset_input((FILE *) 0, buf);
 		_nc_trans_string(pad);
-		s = malloc(strlen(pad) + 1);
-		strcpy(s, pad);
-		CUR Strings[x] = s;
+		t = (char *)malloc(strlen(pad) + 1);
+		strcpy(t, pad);
+		CUR Strings[x] = t;
 		sprintf(temp, "new string value  %s", strnames[x]);
 		ptextln(temp);
-		ptextln(expand(s));
+		ptextln(expand(t));
 		return;
 	}
 	sprintf(buf, "Current value: (%s) %s", pad, file_expand(current_string));
@@ -989,11 +987,11 @@ change_one_entry(
 	if (pad[0]) {
 		sprintf(t, "$<%s>", pad);
 	}
-	if ((s = malloc(strlen(buf) + 1))) {
-		strcpy(s, buf);
-		CUR Strings[x] = s;
+	if ((t = (char *)malloc(strlen(buf) + 1))) {
+		strcpy(t, buf);
+		CUR Strings[x] = t;
 		if (i != 255) {
-			tx_cap[i] = s;
+			tx_cap[i] = t;
 		}
 	}
 	generic_done_message(test, state, chp);

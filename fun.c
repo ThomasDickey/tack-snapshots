@@ -19,11 +19,9 @@
 **  enhanced as deemed necessary by the community.
 */
 
-#include <curses.h>
-#include <string.h>
-#include <stdlib.h>
-#include "term.h"
-#include "tack.h"
+#include <tack.h>
+
+MODULE_ID("$Id: fun.c,v 1.4 1997/12/27 18:00:55 tom Exp $")
 
 /*
  * Test the function keys on the terminal.  The code for echo tests
@@ -66,7 +64,7 @@ extern char **scan_up, **scan_down, **scan_name;
 extern int *scan_tested, *scan_length;
 
 /* local definitions */
-static char *fk_name[MAX_STRINGS];
+static const char *fk_name[MAX_STRINGS];
 static char *fkval[MAX_STRINGS];
 static char *fk_label[MAX_STRINGS];	/* function key labels (if any) */
 static int fk_tested[MAX_STRINGS];
@@ -189,7 +187,7 @@ keys_tested(
 */
 void
 enter_key(
-	char *name,
+	const char *name,
 	char *value,
 	char *lab)
 {
@@ -415,7 +413,7 @@ found_exit(char *keybuf, int hx, int cc)
 	for (j = 0; j < MAX_FK_UNK; j++) {
 		if (j == funk) {
 			fk_length[funk] = expand_chars;
-			if ((fk_unknown[funk] = malloc(strlen(s) + 1))) {
+			if ((fk_unknown[funk] = (char *)malloc(strlen(s) + 1))) {
 				strcpy(fk_unknown[funk++], s);
 			}
 			break;
@@ -791,8 +789,8 @@ report_help(int crx)
 void
 tools_report(
 	struct test_list *t,
-	int *state,
-	int *pch)
+	int *state GCC_UNUSED,
+	int *pch GCC_UNUSED)
 {
 	int i, j, ch, crp, crx, high_bit, save_scan_mode, hex_display;
 	char buf[1024];
@@ -816,12 +814,12 @@ tools_report(
 		if (ch == EOF) {
 			break;
 		}
-		if (i >= sizeof(buf) - 1) {
+		if (i >= (int) sizeof(buf) - 1) {
 			i = 0;
 		}
 		buf[i++] = ch;
 		buf[i] = '\0';
-		for (j = 0; j < sizeof(txt) - 1; j++) {
+		for (j = 0; j < (int) sizeof(txt) - 1; j++) {
 			txt[j] = txt[j + 1];
 		}
 		txt[sizeof(txt) - 1] = ch & STRIP_PARITY;

@@ -19,10 +19,9 @@
 **  enhanced as deemed necessary by the community.
 */
 
-#include <curses.h>
-#include <string.h>
-#include "term.h"
-#include "tack.h"
+#include <tack.h>
+
+MODULE_ID("$Id: modes.c,v 1.4 1997/12/27 18:00:55 tom Exp $")
 
 /*
  * Tests boolean flags and terminal modes.
@@ -245,7 +244,7 @@ subtest_am(
 **	underline string for (ul) test
 */
 static void
-uprint(char *s)
+uprint(const char *s)
 {
 	if (s) {
 		while (*s) {
@@ -261,7 +260,7 @@ uprint(char *s)
 **	underline string for (uc) test
 */
 static void
-ucprint(char *s)
+ucprint(const char *s)
 {
 	if (s) {
 		while (*s) {

@@ -18,10 +18,39 @@
 **  all ideas to me. This software is going to be maintained and
 **  enhanced as deemed necessary by the community.
 */
+
+/* $Id: tack.h,v 1.3 1997/12/27 17:56:03 tom Exp $ */
+
+#ifndef _TACK_H
+#define _TACK_H 1
+
 /* terminfo action checker include file */
 
 #define MAJOR_VERSION 0
 #define MINOR_VERSION 2
+
+#ifdef HAVE_CONFIG_H
+#include <ncurses_cfg.h>
+#else
+#define RETSIGTYPE void
+#define GCC_UNUSED /*nothing*/
+#define HAVE_SELECT 1
+#endif
+
+#include <sys/types.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <ctype.h>
+#include <string.h>
+
+#include <curses.h>
+#include <term.h>
+
+#if USE_RCS_IDS
+#define MODULE_ID(id) static const char Ident[] = id;
+#else
+#define MODULE_ID(id) /*nothing*/
+#endif
 
 extern FILE *log_fp;
 extern FILE *debug_fp;
@@ -55,16 +84,16 @@ extern int raw_characters_sent;	/* Total output characters */
 #define SLOW_TERMINAL_EXIT if (!test_complete && !EXIT_CONDITION) { break; }
 #define CAP_NOT_FOUND if (auto_pad_mode) return
 
-extern char letters[26];
+extern char letters[26+1];
 #define NEXT_LETTER letter = letters[letter_number =\
 	letters[letter_number + 1] ? letter_number + 1 : 0]
 
 extern int test_complete;	/* counts number of tests completed */
 extern char letter;
 extern int letter_number;
-extern int augment, reps;
+extern int augment, repeats;
 extern long char_sent;
-extern char *pad_repeat_test;	/* commands that force repeat */
+extern const char *pad_repeat_test;	/* commands that force repeat */
 
 extern int replace_mode;
 extern int char_count, line_count, expand_chars;
@@ -107,9 +136,9 @@ extern int send_reset_init;
 
 /* translate mode default strings */
 struct default_string_list {
-	char *name;	/* terminfo name */
-	char *value;	/* value of default string */
-	int index;	/* index into the strfname[] array */
+	const char *name;	/* terminfo name */
+	const char *value;	/* value of default string */
+	int index;		/* index into the strfname[] array */
 };
 
 #define TM_last 8
@@ -117,10 +146,14 @@ extern struct default_string_list TM_string[TM_last];
 
 /* attribute structure definition */
 struct mode_list {
-	char *name;
-	char *begin_mode, *end_mode;
+	const char *name;
+	const char *begin_mode;
+	const char *end_mode;
 	int number;
 };
+
+extern const struct mode_list alt_modes[];
+extern const int mode_map[];
 
 /* Test data base */
 
@@ -136,14 +169,14 @@ struct mode_list {
 
 extern int tt_delay_max;	/* max number of milliseconds we can delay */
 extern int tt_delay_used;	/* number of milliseconds consumed in delay */
-extern char *tt_cap[TT_MAX];	/* value of string */
+extern const char *tt_cap[TT_MAX]; /* value of string */
 extern int tt_affected[TT_MAX];	/* lines or columns effected (repitition
 				   factor) */
 extern int tt_count[TT_MAX];	/* Number of times sent */
 extern int tt_delay[TT_MAX];	/* Number of milliseconds delay */
 extern int ttp;			/* number of entries used */
 
-extern char *tx_cap[TT_MAX];	/* value of string */
+extern const char *tx_cap[TT_MAX]; /* value of string */
 extern int tx_affected[TT_MAX];	/* lines or columns effected (repitition
 				   factor) */
 extern int tx_count[TT_MAX];	/* Number of times sent */
@@ -167,9 +200,9 @@ struct test_results {
 struct test_list {
 	int flags;		/* Test description flags */
 	int lines_needed;	/* Lines needed for test (0->no action) */
-	char *caps_done;	/* Caps shown in Done message */
-	char *caps_tested;	/* Other caps also being tested */
-	char *menu_entry;	/* Menu entry text (optional) */
+	const char *caps_done;	/* Caps shown in Done message */
+	const char *caps_tested; /* Other caps also being tested */
+	const char *menu_entry;	/* Menu entry text (optional) */
 				/* Function that does testing */
 	void (*test_procedure)(struct test_list *, int *, int *);
 	struct test_menu *sub_menu;	/* Nested sub-menu */
@@ -178,10 +211,10 @@ struct test_list {
 struct test_menu {
 	int flags;		/* Menu feature flag */
 	int default_action;	/* Default command if <cr> <lf> entered */
-	char *menu_text;	/* Describe this test_menu */
-	char *menu_title;	/* Title for the menu */
-	char *ident;		/* short menu name */
-	char *standard_tests;	/* Standard test text */
+	const char *menu_text;	/* Describe this test_menu */
+	const char *menu_title;	/* Title for the menu */
+	const char *ident;	/* short menu name */
+	const char *standard_tests;	/* Standard test text */
 				/* print current settings (optional) */
 	void (*menu_function)(struct test_menu *);
 	struct test_list *tests;	/* Pointer to the menu/function pairs */
@@ -243,22 +276,22 @@ extern void put_cr(void);
 extern void put_crlf(void);
 extern void put_clear(void);
 extern void put_dec(char *, int);
-extern void put_str(char *);
+extern void put_str(const char *);
 extern void put_lf(void);
 extern void put_ind(void);
 extern void put_newlines(int);
-extern void put_columns(char *, int, int);
+extern void put_columns(const char *, int, int);
 extern void put_this(int);
-extern void putln(char *);
-extern void ptext(char *);
-extern void ptextln(char *);
+extern void putln(const char *);
+extern void ptext(const char *);
+extern void ptextln(const char *);
 extern void home_down(void);
 extern void go_home(void);
 extern void three_digit(char *, int);
 extern int getchp(int);
-extern char *expand(char *);
+extern char *expand(const char *);
 extern char *expand_to(char *, int);
-extern char *expand_command(char *);
+extern char *expand_command(const char *);
 extern char *hex_expand_to(char *, int);
 extern char *print_expand(char *);
 extern void maybe_wait(int);
@@ -273,7 +306,7 @@ extern char *liberated(char *);
 extern void page_loop(void);
 extern void control_init(void);
 extern int msec_cost(const char *const, int);
-extern int skip_pad_test(struct test_list *, int *, int *, char *);
+extern int skip_pad_test(struct test_list *, int *, int *, const char *);
 extern void pad_test_startup(int);
 extern int still_testing(void);
 extern void pad_test_shutdown(struct test_list *, int);
@@ -304,7 +337,7 @@ extern void put_mode(char *);
 /* init.c */
 extern void reset_init(void);
 extern void display_basic(void);
-extern void put_name(char *, char *);
+extern void put_name(const char *, const char *);
 extern void charset_can_test(void);
 extern void curses_setup(char *);
 extern void bye_kids(int);
@@ -321,7 +354,7 @@ extern void tools_sgr(struct test_list *, int *, int *);
 /* pad.c */
 
 /* fun.c */
-extern void enter_key(char *, char *, char *);
+extern void enter_key(const char *, char *, char *);
 extern int tty_meta_prep(void);
 extern void tools_report(struct test_list *, int *, int *);
 
@@ -340,17 +373,17 @@ extern int initial_stty_query(int);
 /* edit.c */
 extern int user_modified(void);
 extern void save_info(struct test_list *, int *, int *);
-extern void can_test(char *, int);
-extern void cap_index(char *, int *);
-extern int cap_match(char *names, char *cap);
+extern void can_test(const char *, int);
+extern void cap_index(const char *, int *);
+extern int cap_match(const char *names, const char *cap);
 extern void edit_init(void);
-extern char *get_string_cap_byname(char *, char **);
-extern int get_string_cap_byvalue(char *);
+extern char *get_string_cap_byname(const char *, const char **);
+extern int get_string_cap_byvalue(const char *);
 extern void show_report(struct test_list *, int *, int *);
 
 /* menu.c */
 extern void menu_prompt(void);
-extern void menu_can_scan(struct test_menu *);
+extern void menu_can_scan(const struct test_menu *);
 extern void menu_display(struct test_menu *, int *);
 extern void generic_done_message(struct test_list *, int *, int *);
 extern void pad_done_message(struct test_list *, int *, int *);
@@ -358,6 +391,16 @@ extern void menu_clear_screen(struct test_list *, int *, int *);
 extern void menu_reset_init(struct test_list *, int *, int *);
 extern int subtest_menu(struct test_list *, int *, int *);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* definitions found in ncurses(3X) */
 extern int _nc_nulls_sent;		/* Add one for every null sent */
 extern char _nc_trans_string(char *);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* _TACK_H */

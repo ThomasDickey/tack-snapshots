@@ -19,13 +19,11 @@
 **  enhanced as deemed necessary by the community.
 */
 
-#include <unistd.h>
+#include <tack.h>
+
 #include <sys/time.h>	/* for sun */
-#include <curses.h>
-#include <string.h>
-#include <stdlib.h>
-#include "term.h"
-#include "tack.h"
+
+MODULE_ID("$Id: control.c,v 1.4 1997/12/27 18:00:55 tom Exp $")
 
 /* terminfo test program control subroutines */
 
@@ -47,14 +45,14 @@ char txt_shorter_augment[80];	/* <) use smaller augment */
 /* caps under test data base */
 int tt_delay_max;		/* max number of milliseconds we can delay */
 int tt_delay_used;		/* number of milliseconds consumed in delay */
-char *tt_cap[TT_MAX];		/* value of string */
+const char *tt_cap[TT_MAX];	/* value of string */
 int tt_affected[TT_MAX];	/* lines or columns effected (repitition factor) */
 int tt_count[TT_MAX];		/* Number of times sent */
 int tt_delay[TT_MAX];		/* Number of milliseconds delay */
 int ttp;			/* number of entries used */
 
 /* Saved value of the above data base */
-char *tx_cap[TT_MAX];		/* value of string */
+const char *tx_cap[TT_MAX];	/* value of string */
 int tx_affected[TT_MAX];	/* lines or columns effected (repitition factor) */
 int tx_count[TT_MAX];		/* Number of times sent */
 int tx_index[TT_MAX];		/* String index */
@@ -109,7 +107,7 @@ event_time(int n)
 **
 **	Get a results block for pad test data.
 */
-struct test_results *
+static struct test_results *
 get_next_block(void)
 {
 	if (blocks <= 0) {
@@ -160,13 +158,13 @@ msec_cost(
 	int affcnt)
 {
 	int dec, value, total, star, ch;
-	char *cp;
+	const char *cp;
 
 	if (!cap) {
 		return 0;
 	}
 	total = 0;
-	for (cp = (char *)cap; *cp; cp++) {
+	for (cp = cap; *cp; cp++) {
 		if (*cp == '$' && cp[1] == '<') {
 			star = 1;
 			value = dec = 0;
@@ -252,7 +250,7 @@ skip_pad_test(
 	struct test_list *test,
 	int *state,
 	int *ch,
-	char *text)
+	const char *text)
 {
 	char rep_text[16];
 
@@ -370,12 +368,12 @@ sliding_scale(
 */
 void
 pad_test_startup(
-	int clear)
+	int do_clear)
 {
-	if (clear) {
+	if (do_clear) {
 		put_clear();
 	}
-	reps = augment;
+	repeats = augment;
 	raw_characters_sent = 0;
 	test_complete = ttp = char_count = tt_delay_used = 0;
 	letter = letters[letter_number = 0];
@@ -418,7 +416,6 @@ pad_test_shutdown(
 	int bogus;			/* Time is inaccurate */
 	struct test_results *r;		/* Results of current test */
 	int ss_index[TT_MAX];		/* String index */
-	struct timeval test_stop_time;
 
 	if (tty_can_sync == SYNC_TESTED) {
 		bogus = tty_sync_error();
@@ -476,7 +473,7 @@ pad_test_shutdown(
 **
 **	Display the previous results
 */
-void
+static void
 show_cap_results(
 	int x)
 {
@@ -557,8 +554,8 @@ dump_test_stats(
 */
 void
 longer_test_time(
-	struct test_list *t,
-	int *state,
+	struct test_list *t GCC_UNUSED,
+	int *state GCC_UNUSED,
 	int *ch)
 {
 	pad_test_duration += 1;
@@ -578,8 +575,8 @@ longer_test_time(
 */
 void
 shorter_test_time(
-	struct test_list *t,
-	int *state,
+	struct test_list *t GCC_UNUSED,
+	int *state GCC_UNUSED,
 	int *ch)
 {
 	if (pad_test_duration > 1) {
@@ -603,7 +600,7 @@ shorter_test_time(
 void
 longer_augment(
 	struct test_list *t,
-	int *state,
+	int *state GCC_UNUSED,
 	int *ch)
 {
 	augment <<= 1;
@@ -626,7 +623,7 @@ longer_augment(
 void
 shorter_augment(
 	struct test_list *t,
-	int *state,
+	int *state GCC_UNUSED,
 	int *ch)
 {
 	if (augment > 1) {

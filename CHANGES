@@ -1,3 +1,26 @@
+1997-12-27  Thomas E. Dickey  <dickey@clark.net>
+
+	* ansi.c, charset.c, control.c, crum.c, edit.c, fun.c, init.c, menu.c, modes.c, output.c, scan.c, sync.c, sysdep.c, tack.c:
+	integration with ncurses: restructured includes, fix gcc warnings
+
+	* pad.c:
+	integration with ncurses: restructures includes, fix gcc warnings
+
+	* color.c: typo
+
+	* tack.h:
+	integration with ncurses: reordered headers, provide fallback definitions
+	for the stuff we get from ncurses_cfg.h, make some stuff const.
+
+	* Makefile.in: use HAVE_SELECT from configure-script
+
+	* color.c:
+	integration with ncurses: move most headers into tack.h, fix gcc warnings
+
+	* Makefile.in: we'll have a config.h (actually ncurses_cfg.h)
+
+	* modules: set base-subset
+
 1997-12-24  Daniel.Weaver
 
 	* HISTORY: ncurses-4.1-971220
