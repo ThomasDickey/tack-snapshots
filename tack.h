@@ -19,7 +19,7 @@
 **  enhanced as deemed necessary by the community.
 */
 
-/* $Id: tack.h,v 1.4 1997/12/28 20:26:31 tom Exp $ */
+/* $Id: tack.h,v 1.6 1998/01/03 19:59:35 tom Exp $ */
 
 #ifndef _TACK_H
 #define _TACK_H 1
@@ -34,8 +34,8 @@
 #else
 #define RETSIGTYPE void
 #define GCC_UNUSED /*nothing*/
-#define HAVE_SELECT 1
 #define HAVE_GETTIMEOFDAY 1
+#define HAVE_SELECT 1
 #define HAVE_SYS_TIME_H 1
 #define HAVE_SYS_TIME_SELECT 1
 #endif
@@ -172,14 +172,14 @@ extern const int mode_map[];
 
 extern int tt_delay_max;	/* max number of milliseconds we can delay */
 extern int tt_delay_used;	/* number of milliseconds consumed in delay */
-extern const char *tt_cap[TT_MAX]; /* value of string */
+extern char *tt_cap[TT_MAX]; 	/* value of string */
 extern int tt_affected[TT_MAX];	/* lines or columns effected (repitition
 				   factor) */
 extern int tt_count[TT_MAX];	/* Number of times sent */
 extern int tt_delay[TT_MAX];	/* Number of milliseconds delay */
 extern int ttp;			/* number of entries used */
 
-extern const char *tx_cap[TT_MAX]; /* value of string */
+extern char *tx_cap[TT_MAX]; 	/* value of string */
 extern int tx_affected[TT_MAX];	/* lines or columns effected (repitition
 				   factor) */
 extern int tx_count[TT_MAX];	/* Number of times sent */
@@ -274,7 +274,7 @@ extern void tt_putp(const char *);
 extern void tt_putparm(const char *, int, int, int);
 extern int tc_putp(const char *);
 extern int tc_putch(int);
-extern void putchp(char);
+extern void putchp(int);
 extern void put_cr(void);
 extern void put_crlf(void);
 extern void put_clear(void);
@@ -393,17 +393,5 @@ extern void pad_done_message(struct test_list *, int *, int *);
 extern void menu_clear_screen(struct test_list *, int *, int *);
 extern void menu_reset_init(struct test_list *, int *, int *);
 extern int subtest_menu(struct test_list *, int *, int *);
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* definitions found in ncurses(3X) */
-extern int _nc_nulls_sent;		/* Add one for every null sent */
-extern char _nc_trans_string(char *);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* _TACK_H */
