@@ -24,6 +24,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include "term.h"
 #include "tack.h"
 
 /*
@@ -52,7 +53,6 @@
 int debug_level;		/* debugging level */
 int translate_mode;		/* translate tab, bs, cr, lf, ff */
 int scan_mode;			/* use scan codes */
-int time_pad;			/* run the time tests */
 int char_mask;			/* either 0xFF else 0x7F, eight bit data mask */
 int select_delay_type;		/* set handler delays for <cr><lf> */
 int select_xon_xoff;		/* TTY driver XON/XOFF mode select */
@@ -69,6 +69,7 @@ FILE *log_fp;			/* Terminal logfile */
 extern struct test_menu sync_menu;
 
 static void tools_hex_echo(struct test_list *, int *, int *);
+static void tools_handshake(struct test_list *, int *, int *);
 static void tools_debug(struct test_list *, int *, int *);
 
 static char hex_echo_menu_entry[80];
@@ -81,6 +82,8 @@ struct test_list tools_test_list[] = {
 	{0, 0, 0, 0, "e) echo tool", tools_report, 0},
 	{1, 0, 0, 0, "r) reply tool", tools_report, 0},
 	{0, 0, 0, 0, "p) performance testing", 0, &sync_menu},
+	{0, 0, 0, 0, "i) send reset and init", menu_reset_init, 0},
+	{0, 0, "u8) (u9", 0, "u) test ENQ/ACK handshake", sync_handshake, 0},
 	{0, 0, 0, 0, "d) change debug level", tools_debug, 0},
 	{MENU_LAST, 0, 0, 0, 0, 0, 0}
 };
@@ -100,6 +103,8 @@ static char tty_width_menu[80];
 static char tty_delay_menu[80];
 static char tty_xon_menu[80];
 static char tty_trans_menu[80];
+static char enable_xon_xoff[] = {"x) enable xon/xoff"};
+static char disable_xon_xoff[] = {"x) disable xon/xoff"};
 
 struct test_list tty_test_list[] = {
 	{0, 0, 0, 0, tty_width_menu, tty_width, 0},
@@ -176,6 +181,7 @@ struct test_menu printer_menu = {
 	0, printer_test_list, 0, 0, 0
 };
 
+static void pad_gen(struct test_list *, int *, int *);
 extern struct test_list pad_test_list[];
 
 struct test_menu pad_menu = {
@@ -187,6 +193,7 @@ struct test_menu pad_menu = {
 
 struct test_list normal_test_list[] = {
 	{0, 0, 0, 0, "e) edit terminfo", 0, &edit_menu},
+	{0, 0, 0, 0, "i) send reset and init", menu_reset_init, 0},
 	{MENU_NEXT, 0, 0, 0, "x) test modes and glitches", 0, &mode_menu},
 	{MENU_NEXT, 0, 0, 0, "a) test alternate character sets", 0, &acs_menu},
 	{MENU_NEXT, 0, 0, 0, "c) test color", 0, &color_menu},
@@ -195,6 +202,8 @@ struct test_list normal_test_list[] = {
 	{MENU_NEXT, 0, 0, 0, "p) test string capabilities", 0, &pad_menu},
 	{0, 0, 0, 0, "P) test printer", 0, &printer_menu},
 	{MENU_MENU, 0, 0, 0, "/) test a specific capability", 0, 0},
+	{0, 0, 0, 0, "t) auto generate pad delays", pad_gen, &pad_menu},
+	{0, 0, "u8) (u9", 0, 0, sync_handshake, 0},
 	{MENU_LAST, 0, 0, 0, 0, 0, 0}
 };
 
@@ -380,14 +389,22 @@ tty_xon(
 	int *ch)
 {
 	if (select_xon_xoff) {
-		select_xon_xoff = FALSE;
-		strcpy(tty_xon_menu,
-			"x) enable xon/xoff in tty handler");
+		if (needs_xon_xoff) {
+			ptextln("This terminal is marked as needing XON/XOFF protocol with (nxon)");
+		}
+		if (exit_xon_mode) {
+			tc_putp(exit_xon_mode);
+		}
+		xon_xoff = select_xon_xoff = FALSE;
+		strcpy(tty_xon_menu, enable_xon_xoff);
 	} else {
-		select_xon_xoff = TRUE;
-		strcpy(tty_xon_menu,
-			"x) disable xon/xoff in tty handler");
+		if (enter_xon_mode) {
+			tc_putp(enter_xon_mode);
+		}
+		xon_xoff = select_xon_xoff = TRUE;
+		strcpy(tty_xon_menu, disable_xon_xoff);
 	}
+	tty_set();
 }
 
 /*
@@ -410,6 +427,26 @@ tty_trans(
 		strcpy(tty_trans_menu,
 			"t) override terminfo values for \\b\\f\\n\\r\\t");
 	}
+}
+
+/*
+**	pad_gen(testlist, state, ch)
+**
+**	Menu function for automatic pad generation
+*/
+static void
+pad_gen(
+	struct test_list *t,
+	int *state,
+	int *ch)
+{
+	control_init();
+	if (tty_can_sync == SYNC_NOT_TESTED) {
+		verify_time();
+	}
+	auto_pad_mode = TRUE;
+	menu_display(t->sub_menu, ch);
+	auto_pad_mode = FALSE;
 }
 
 /*
@@ -439,11 +476,9 @@ start_modes(
 			"8) treat terminal as 8-bit");
 	}
 	if (select_xon_xoff) {
-		strcpy(tty_xon_menu,
-			"x) disable xon/xoff in tty handler");
+		strcpy(tty_xon_menu, disable_xon_xoff);
 	} else {
-		strcpy(tty_xon_menu,
-			"x) enable xon/xoff in tty handler");
+		strcpy(tty_xon_menu, enable_xon_xoff);
 	}
 	if (translate_mode) {
 		strcpy(tty_trans_menu,

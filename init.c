@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <curses.h>
+#include "term.h"
 #include "tack.h"
 
 FILE *debug_fp;
@@ -63,13 +64,31 @@ reset_init(void)
 {				/* send the reset and init strings */
 	int i;
 
-	if (init_prog) {
-		(void) system(init_prog);
-	}
 	ptext("Terminal reset");
 	i = char_count;
 	put_name(reset_1string, " (rs1)");
 	put_name(reset_2string, " (rs2)");
+	/* run the reset file */
+	if (reset_file && reset_file[0]) {
+		FILE *fp;
+		int ch;
+
+		can_test("rf", FLAG_TESTED);
+		if ((fp = fopen(reset_file, "r"))) {	/* send the reset file */
+			sprintf(temp, " (rf) %s", reset_file);
+			ptextln(temp);
+			while (1) {
+				ch = getc(fp);
+				if (ch == EOF)
+					break;
+				put_this(ch);
+			}
+			fclose(fp);
+		} else {
+			sprintf(temp, "\nCannot open reset file (rf) %s", reset_file);
+			ptextln(temp);
+		}
+	}
 	put_name(reset_3string, " (rs3)");
 	if (i != char_count) {
 		put_crlf();
@@ -93,6 +112,7 @@ reset_init(void)
 		FILE *fp;
 		int ch;
 
+		can_test("if", FLAG_TESTED);
 		if ((fp = fopen(init_file, "r"))) {	/* send the init file */
 			sprintf(temp, " (if) %s", init_file);
 			ptextln(temp);
@@ -108,14 +128,23 @@ reset_init(void)
 			ptextln(temp);
 		}
 	}
+	if (init_prog) {
+		can_test("iprog", FLAG_TESTED);
+		(void) system(init_prog);
+	}
 	put_name(init_3string, " (is3)");
 
 	fflush(stdout);
 }
 
+/*
+**	display_basic()
+**
+**	display the basic terminal definitions
+*/
 void
 display_basic(void)
-{				/* display the basic terminal definitions */
+{
 	put_str("Name: ");
 	putln(ttytype);
 
@@ -124,7 +153,10 @@ display_basic(void)
 	report_cap("\\b ^H (cub1)", cursor_left);
 	report_cap("\\t ^I (ht)", tab);
 /*      report_cap("\\f ^L (ff)", form_feed);	*/
-	report_cap("      (nel)", newline);
+	if (newline) {
+		/* OK if missing */
+		report_cap("      (nel)", newline);
+	}
 	report_cap("      (clear)", clear_screen);
 	if (!cursor_home && cursor_address) {
 		report_cap("(cup) (home)", tparm(cursor_address, 0, 0));
@@ -153,7 +185,12 @@ curses_setup(
 
 	tty_init();
 
-	/* see if this terminal is in the terminfo data base */
+	/**
+	   See if the terminal is in the terminfo data base.  This call has
+	two useful benefits, 1) it returns the filename of the terminfo entry,
+	and 2) it searches only terminfo's.  This allows us to abort before
+	ncurses starts scanning the termcap file.
+	**/
 	if ((status = _nc_read_entry(tty_basename, tty_filename, &term)) == 0) {
 		fprintf(stderr, "Terminal not found: TERM=%s\n", tty_basename);
 		show_usage(exec_name);
@@ -164,18 +201,30 @@ curses_setup(
 		exit(1);
 	}
 
+	/**
+	   This call will load the terminfo data base and set the cur-term
+	variable.  Only terminals that actually exist will get here so its
+	OK to ignore errors.  This is a good thing since ncurses does not
+	permit (os) or (gn) to be set.
+	**/
 	setupterm(tty_basename, 1, &status);
-	/* ignore errors from setupterm() */
+
+	/**
+	   Get the current terminal definitions.  This must be done before
+	getting the baudrate.
+	**/
+	_nc_get_curterm(&cur_term->Nttyb);
+	tty_baud_rate = baudrate();
+	tty_cps = (tty_baud_rate << 1) / tty_frame_size;
 
 	/* set up the defaults */
 	replace_mode = TRUE;
 	scan_mode = 0;
-	time_pad = 0;
 	char_count = 0;
 	select_delay_type = debug_level = 0;
 	char_mask = (meta_on && meta_on[0] == '\0') ? ALLOW_PARITY : STRIP_PARITY;
 	/* Don't change the XON/XOFF modes yet. */
-	select_xon_xoff = initial_stty_query(TTY_XON_XOFF) ? 1 : 0;
+	select_xon_xoff = initial_stty_query(TTY_XON_XOFF) ? 1 : needs_xon_xoff;
 
 	fflush(stdout);	/* flush any output */
 	tty_set();
@@ -195,7 +244,7 @@ curses_setup(
 	fflush(stdout);	/* waste some time */
 	sleep(1);	/* waste more time */
 	charset_can_test();
-	can_test("(lines)(cols)(cr)(u8)(u9)", FLAG_CAN_TEST);
+	can_test("lines cols cr nxon rf if iprog rmp", FLAG_CAN_TEST);
 	edit_init();			/* initialize the edit data base */
 
 	if (send_reset_init && enter_ca_mode) {
@@ -212,12 +261,6 @@ curses_setup(
 	}
 
 	display_basic();
-
-	if (select_xon_xoff != needs_xon_xoff) {
-		fflush(stdout);	/* flush any output */
-		select_xon_xoff = needs_xon_xoff ? 1 : 0;
-		tty_set();
-	}
 }
 
 /*
