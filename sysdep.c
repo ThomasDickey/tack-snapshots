@@ -30,12 +30,20 @@
 #include <time.h>
 #endif
 
+#if HAVE_SELECT
+#if HAVE_SYS_TIME_H && HAVE_SYS_TIME_SELECT
 #include <sys/time.h>
+#endif
+#if HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
+#endif
+
 #include <signal.h>
 #include <termios.h>
 #include <errno.h>
 
-MODULE_ID("$Id: sysdep.c,v 1.4 1997/12/27 18:00:54 tom Exp $")
+MODULE_ID("$Id: sysdep.c,v 1.5 1997/12/28 20:15:20 tom Exp $")
 
 #if DECL_ERRNO
 extern int errno;
@@ -270,7 +278,7 @@ char_ready(void)
 	FD_SET(fileno(stdin), &ifds);
 	tv.tv_sec = 0;
 	tv.tv_usec = 200000;
-	n = select(20, &ifds, NULL, NULL, &tv);
+	n = select(fileno(stdin)+1, &ifds, NULL, NULL, &tv);
 	return (n != 0);
 }
 

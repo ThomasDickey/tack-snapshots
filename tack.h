@@ -19,7 +19,7 @@
 **  enhanced as deemed necessary by the community.
 */
 
-/* $Id: tack.h,v 1.3 1997/12/27 17:56:03 tom Exp $ */
+/* $Id: tack.h,v 1.4 1997/12/28 20:26:31 tom Exp $ */
 
 #ifndef _TACK_H
 #define _TACK_H 1
@@ -35,6 +35,9 @@
 #define RETSIGTYPE void
 #define GCC_UNUSED /*nothing*/
 #define HAVE_SELECT 1
+#define HAVE_GETTIMEOFDAY 1
+#define HAVE_SYS_TIME_H 1
+#define HAVE_SYS_TIME_SELECT 1
 #endif
 
 #include <sys/types.h>
