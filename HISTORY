@@ -1,0 +1,30 @@
+		TACK -- the terminfo action checker
+
+   The purpose of this program is to verify the correctness of
+terminfos and to calculate the pads needed for each capability.
+This program is not designed to test curses and therefore uses
+as little of curses as possible.
+
+   This program was originally called TED.  In 1991 it was
+released to USENET in comp.sources.  TED was originally written to
+test both terminfos and termcaps.  The original intent was to
+create a terminfo editor.  This code fell quite short of its goal.
+Tests were controled by command line switches and editing was done
+with pen and paper.
+
+   In 1995 Eric S. Raymond got interested in the program and added
+a first cut at making the program menu driven.  He also converted
+the code from K&R C to an ANSI/POSIX-conforming C.  He re-christened
+the program TAC (Terminfo Action Checker).  Eric also wrote a man
+page for TAC.
+
+   In 1997 I decided to dust off the code and make it easier to
+use by the novice.  I totally rewrote the menu system and added
+the editing features I originally planned for TED.  I also did
+a total rewrite of the code that does the timings.  In the process
+of rewriting the code I changed it to be more tightly coupled
+with ncurses.  By this time someone had taken the name TAC so
+I re-christened the program TACK.
+
+Daniel Weaver
+<dewmail@juno.com>
