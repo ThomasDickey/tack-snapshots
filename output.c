@@ -24,7 +24,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <curses.h>
-#include "tac.h"
+#include "tack.h"
 
 /* globals */
 long char_sent;			/* number of characters sent */
@@ -35,16 +35,28 @@ int replace_mode;		/* used to output replace mode padding */
 int can_go_home;		/* TRUE if we can fashion a home command */
 int can_clear_screen;		/* TRUE if we can somehow clear the screen */
 int raw_characters_sent;	/* Total output characters */
+int log_count;			/* Number of characters on a log line */
 
 /* translate mode default strings */
-char *TM_carriage_return = "\r";
-char *TM_cursor_down = "\n";
-char *TM_scroll_forward = "\n";
-char *TM_newline = "\r\n";
-char *TM_cursor_left = "\b";
-char *TM_bell = "\007";
-char *TM_form_feed = "\f";
-char *TM_tab = "\t";
+#define TM_carriage_return	TM_string[0].value
+#define TM_cursor_down		TM_string[1].value
+#define TM_scroll_forward	TM_string[2].value
+#define TM_newline		TM_string[3].value
+#define TM_cursor_left		TM_string[4].value
+#define TM_bell			TM_string[5].value
+#define TM_form_feed		TM_string[6].value
+#define TM_tab			TM_string[7].value
+
+struct default_string_list TM_string[TM_last] = {
+	{"cr", "\r", 0},
+	{"cud1", "\n", 0},
+	{"ind", "\n", 0},
+	{"nel", "\r\n", 0},
+	{"cub1", "\b", 0},
+	{"bel", "\007", 0},
+	{"ff", "\f", 0},
+	{"ht", "\t", 0}
+};
 
 static char *c0[32] = {
 	"NUL", "SOH", "STX", "ETX", "EOT", "ENQ", "ACK",
@@ -106,6 +118,27 @@ tc_putch(int c)
 	char_sent++;
 	raw_characters_sent++;
 	putchar(c);
+	if ((raw_characters_sent & 31) == 31) {
+		fflush(stdout);
+	}
+	if (log_fp) {
+		/* terminal output logging */
+		if (c < 32) {
+			fprintf(log_fp, "<%s>", c0[c]);
+			log_count += 5;
+		} else
+		if (c < 127) {
+			fprintf(log_fp, "%c", c);
+			log_count += 1;
+		} else {
+			fprintf(log_fp, "<%02x>", c);
+			log_count += 4;
+		}
+		if (c == '\n' || log_count >= 80) {
+			fprintf(log_fp, "\n");
+			log_count = 0;
+		}
+	}
 	return (c);
 }
 
@@ -210,9 +243,9 @@ void
 put_cr(void)
 {
 	if (translate_mode && carriage_return) {
-		tt_tputs(carriage_return, char_count);
+		tt_putp(carriage_return);
 	} else {
-		tt_tputs(TM_carriage_return, char_count);
+		tt_putp(TM_carriage_return);
 	}
 	char_count = 0;
 }
@@ -222,10 +255,11 @@ void
 put_lf(void)
 {				/* send a linefeed (only works in RAW or
 				   CBREAK mode) */
-	if (translate_mode && cursor_down)
+	if (translate_mode && cursor_down) {
 		tt_putp(cursor_down);
-	else
+	} else {
 		tt_putp(TM_cursor_down);
+	}
 	line_count++;
 }
 
@@ -234,17 +268,22 @@ void
 put_ind(void)
 {				/* scroll forward (only works in RAW or
 				   CBREAK mode) */
-	if (translate_mode && scroll_forward)
+	if (translate_mode && scroll_forward) {
 		tt_putp(scroll_forward);
-	else
+	} else {
 		tt_putp(TM_scroll_forward);
+	}
 	line_count++;
 }
 
-
+/*
+**	put_crlf()
+**
+**	Send (nel)  or <cr> <lf>
+*/
 void
 put_crlf(void)
-{				/* send carriage return, linefeed */
+{
 	if (translate_mode && newline) {
 		tt_putp(newline);
 	} else {
@@ -254,38 +293,50 @@ put_crlf(void)
 	line_count++;
 }
 
-
+/*
+**	put_new_lines(count)
+**
+**	Send a number of newlines. (nel)
+*/
 void
 put_newlines(int n)
-{				/* put n newlines */
+{
 	while (n-- > 0) {
 		put_crlf();
 	}
 }
 
-
+/*
+**	putchp(character)
+**
+**	Send one character to the terminal.
+**	This function does translation of control characters.
+*/
 void
 putchp(char c)
-{				/* send a character to the terminal */
+{
 	switch (c) {
 	case '\b':
-		if (translate_mode && cursor_left)
+		if (translate_mode && cursor_left) {
 			tt_putp(cursor_left);
-		else
+		} else {
 			tt_putp(TM_cursor_left);
+		}
 		char_count--;
 		break;
 	case 7:
-		if (translate_mode && bell)
+		if (translate_mode && bell) {
 			tt_putp(bell);
-		else
+		} else {
 			tt_putp(TM_bell);
+		}
 		break;
 	case '\f':
-		if (translate_mode && form_feed)
+		if (translate_mode && form_feed) {
 			tt_putp(form_feed);
-		else
+		} else {
 			tt_putp(TM_form_feed);
+		}
 		char_count = 0;
 		line_count++;
 		break;
@@ -296,10 +347,11 @@ putchp(char c)
 		put_cr();
 		break;
 	case '\t':
-		if (translate_mode && tab)
+		if (translate_mode && tab) {
 			tt_putp(tab);
-		else
+		} else {
 			tt_putp(TM_tab);
+		}
 		char_count = ((char_count / 8) + 1) * 8;
 		break;
 	default:
@@ -651,15 +703,21 @@ put_clear(void)
 	can_clear_screen = TRUE;
 }
 
+/*
+**	wait_here()
+**
+**	read one character from the input stream
+**	If the terminal is not in RAW mode then this function will
+**	wait for a <cr> or <lf>.
+*/
 int
 wait_here(void)
-{				/* read one character from the input stream */
+{
 	char ch, cc[64];
 	char message[16];
 	int i, j;
 
-	/* Wait for CR or LF if we are not in RAW mode */
-	for (i = 0;; i++) {
+	for (i = 0; i < sizeof(cc); i++) {
 		cc[i] = ch = getchp(STRIP_PARITY);
 		if (ch == '\r' || ch == '\n') {
 			put_crlf();
@@ -688,24 +746,23 @@ wait_here(void)
 			}
 			put_crlf();
 			i = -1;
-		} else if (ch != 021) {	/* Control Q */
+		} else if (ch != 021) {	/* Not Control Q */
 			/* could be abort character */
-			sleep(1);
-			if (tty_can_sync == 2)
+			if (tty_can_sync == SYNC_TESTED) {
+				sleep(1);
 				for (j = 1; j < 5; j++) {
-					if (!tty_sync_error(0))
+					if (!tty_sync_error(0)) {
 						break;
+					}
 					sleep(1);
 				}
-			put_str("\nHit 'c' to continue");
-			ch = getchp(STRIP_PARITY);
-			put_crlf();
-			if (ch != 'c' && ch != 'C')
-				bye_kids(1);
-			char_sent = 0;
-			return ch;
+			} else {
+				spin_flush();
+				put_str("\n? ");
+			}
 		}
 	}
+	return '?';
 }
 
 

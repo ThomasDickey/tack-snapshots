@@ -23,7 +23,7 @@
 #include <curses.h>
 #include <string.h>
 #include <stdlib.h>
-#include "tac.h"
+#include "tack.h"
 
 extern char *getenv();
 

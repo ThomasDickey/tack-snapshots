@@ -1,3 +1,7 @@
+1997-10-25  Daniel.Weaver
+
+	* pad.c, tack.1: ncurses-4.1-971101
+
 1997-10-19  Daniel.Weaver
 
 	* tack.c, sysdep.c, scan.c, output.c, modes.c, menu.c, init.c, crum.c, color.c, charset.c, ansi.c, HISTORY:

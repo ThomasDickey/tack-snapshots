@@ -24,7 +24,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include "tac.h"
+#include "tack.h"
 
 /*
    This program is designed to test terminfo, not curses.  Therefore
@@ -58,8 +58,7 @@ int select_delay_type;		/* set handler delays for <cr><lf> */
 int select_xon_xoff;		/* TTY driver XON/XOFF mode select */
 int hex_out;			/* Display output in hex */
 int send_reset_init;		/* Send the reset and initialization strings */
-
-static bool expert;		/* expert mode -- suppress verbose prompts */
+FILE *log_fp;			/* Terminal logfile */
 
 /*****************************************************************************
  *
@@ -67,12 +66,10 @@ static bool expert;		/* expert mode -- suppress verbose prompts */
  *
  *****************************************************************************/
 
-static void tools_status(struct test_list *, int *, int *);
-static void tools_sgr(struct test_list *, int *, int *);
-static void tools_charset(struct test_list *, int *, int *);
-static void tools_echo(struct test_list *, int *, int *);
-static void tools_reply(struct test_list *, int *, int *);
+extern struct test_menu sync_menu;
+
 static void tools_hex_echo(struct test_list *, int *, int *);
+static void tools_debug(struct test_list *, int *, int *);
 
 static char hex_echo_menu_entry[80];
 
@@ -81,17 +78,17 @@ struct test_list tools_test_list[] = {
 	{0, 0, 0, 0, "g) ANSI SGR modes (bold, underline, reverse)", tools_sgr, 0},
 	{0, 0, 0, 0, "c) ANSI character sets", tools_charset, 0},
 	{0, 0, 0, 0, hex_echo_menu_entry, tools_hex_echo, 0},
-	{0, 0, 0, 0, "e) echo tool", tools_echo, 0},
-	{0, 0, 0, 0, "r) reply tool", tools_reply, 0},
+	{0, 0, 0, 0, "e) echo tool", tools_report, 0},
+	{1, 0, 0, 0, "r) reply tool", tools_report, 0},
+	{0, 0, 0, 0, "p) performance testing", 0, &sync_menu},
+	{0, 0, 0, 0, "d) change debug level", tools_debug, 0},
 	{MENU_LAST, 0, 0, 0, 0, 0, 0}
 };
 
 struct test_menu tools_menu = {
-	0, "[q] > ", 0, "Tools Menu", "tools",
+	0, 'q', 0, "Tools Menu", "tools",
 	0, 0, tools_test_list, 0, 0, 0
 };
-
-extern struct test_menu sync_menu;
 
 static void tty_width(struct test_list *, int *, int *);
 static void tty_delay(struct test_list *, int *, int *);
@@ -109,12 +106,11 @@ struct test_list tty_test_list[] = {
 	{0, 0, 0, 0, tty_delay_menu, tty_delay, 0},
 	{0, 0, 0, 0, tty_xon_menu, tty_xon, 0},
 	{0, 0, 0, 0, tty_trans_menu, tty_trans, 0},
-	{0, 0, 0, 0, "p) performance testing", 0, &sync_menu},
 	{MENU_LAST, 0, 0, 0, 0, 0, 0}
 };
 
 struct test_menu tty_menu = {
-	0, "[q] > ", 0, "Terminal and driver configuration",
+	0, 'q', 0, "Terminal and driver configuration",
 	"tty", 0,
 	tty_show_state, tty_test_list, 0, 0, 0
 };
@@ -122,7 +118,7 @@ struct test_menu tty_menu = {
 extern struct test_list edit_test_list[];
 
 struct test_menu edit_menu = {
-	0, "[q] > ", 0, "Edit terminfo menu",
+	0, 'q', 0, "Edit terminfo menu",
 	"edit", 0,
 	0, edit_test_list, 0, 0, 0
 };
@@ -130,7 +126,7 @@ struct test_menu edit_menu = {
 extern struct test_list mode_test_list[];
 
 struct test_menu mode_menu = {
-	MENU_NEXT, "[n] > ", 0, "Mode test menu",
+	0, 'n', 0, "Mode test menu",
 	"mode", "n) run standard tests",
 	0, mode_test_list, 0, 0, 0
 };
@@ -138,7 +134,7 @@ struct test_menu mode_menu = {
 extern struct test_list acs_test_list[];
 
 struct test_menu acs_menu = {
-	MENU_NEXT, "[n] > ", 0,
+	0, 'n', 0,
 	"Alternate character set and graphics rendition test menu",
 	"acs", "n) run standard tests",
 	0, acs_test_list, 0, 0, 0
@@ -147,7 +143,7 @@ struct test_menu acs_menu = {
 extern struct test_list color_test_list[];
 
 struct test_menu color_menu = {
-	MENU_NEXT, "[n] > ", 0,
+	0, 'n', 0,
 	"Color test menu",
 	"color", "n) run standard tests",
 	0, color_test_list, 0, 0, 0
@@ -156,7 +152,7 @@ struct test_menu color_menu = {
 extern struct test_list crum_test_list[];
 
 struct test_menu crum_menu = {
-	MENU_NEXT, "[n] > ", 0,
+	0, 'n', 0,
 	"Cursor movement test menu",
 	"move", "n) run standard tests",
 	0, crum_test_list, 0, 0, 0
@@ -165,7 +161,7 @@ struct test_menu crum_menu = {
 extern struct test_list funkey_test_list[];
 
 struct test_menu funkey_menu = {
-	MENU_NEXT, "[n] > ", 0,
+	0, 'n', 0,
 	"Function key test menu",
 	"fkey", "n) run standard tests",
 	sync_test, funkey_test_list, 0, 0, 0
@@ -174,7 +170,7 @@ struct test_menu funkey_menu = {
 extern struct test_list printer_test_list[];
 
 struct test_menu printer_menu = {
-	0, "[n] > ", 0,
+	0, 'n', 0,
 	"Printer test menu",
 	"printer", "n) run standard tests",
 	0, printer_test_list, 0, 0, 0
@@ -183,7 +179,7 @@ struct test_menu printer_menu = {
 extern struct test_list pad_test_list[];
 
 struct test_menu pad_menu = {
-	MENU_NEXT, "[n] > ", 0,
+	0, 'n', 0,
 	"Pad test menu",
 	"pad", "n) run standard tests",
 	sync_test, pad_test_list, 0, 0, 0
@@ -196,14 +192,15 @@ struct test_list normal_test_list[] = {
 	{MENU_NEXT, 0, 0, 0, "c) test color", 0, &color_menu},
 	{MENU_NEXT, 0, 0, 0, "m) test cursor movement", 0, &crum_menu},
 	{MENU_NEXT, 0, 0, 0, "f) test function keys", 0, &funkey_menu},
-	{MENU_NEXT, 0, 0, 0, "p) test everything else", 0, &pad_menu},
+	{MENU_NEXT, 0, 0, 0, "p) test string capabilities", 0, &pad_menu},
 	{0, 0, 0, 0, "P) test printer", 0, &printer_menu},
+	{MENU_MENU, 0, 0, 0, "/) test a specific capability", 0, 0},
 	{MENU_LAST, 0, 0, 0, 0, 0, 0}
 };
 
 
 struct test_menu normal_menu = {
-	MENU_NEXT, "[n] > ", 0, "Main test menu",
+	0, 'n', 0, "Main test menu",
 	"test", "n) run standard tests",
 	0, normal_test_list, 0, 0, 0
 };
@@ -217,17 +214,17 @@ static char logging_menu_entry[80] = "l) start logging";
 
 struct test_list start_test_list[] = {
 	{0, 0, 0, 0, "b) display basic information", start_basic, 0},
-	{0, 0, 0, 0, "t) tools", start_tools, 0},
 	{0, 0, 0, 0, "m) change modes", start_modes, 0},
-	{0, 0, 0, 0, "n) begin testing", 0, &normal_menu},
+	{0, 0, 0, 0, "t) tools", start_tools, 0},
+	{MENU_COMPLETE, 0, 0, 0, "n) begin testing", 0, &normal_menu},
 	{0, 0, 0, 0, logging_menu_entry, start_log, 0},
 	{MENU_LAST, 0, 0, 0, 0, 0, 0}
 };
+	
 
 struct test_menu start_menu = {
-	0, "[n] > ", 0,
-	"Main Menu", "tack",
-	0, 0, start_test_list, 0, 0, 0
+	0, 'n', 0, "Main Menu", "tack", 0,
+	0, start_test_list, 0, 0, 0
 };
 
 struct test_list write_terminfo_list[] = {
@@ -242,85 +239,13 @@ struct test_list write_terminfo_list[] = {
  *****************************************************************************/
 
 /*
-**	tools_status(testlist, state, ch)
-**
-**	Run the ANSI status report tool
-*/
-static void
-tools_status(
-	struct test_list * t,
-	int *state,
-	int *ch)
-{
-	*ch = test_ansi_reports();
-}
-
-/*
-**	tools_sgr(testlist, state, ch)
-**
-**	Run the ANSI graphics rendition mode tool
-*/
-static void
-tools_sgr(
-	struct test_list * t,
-	int *state,
-	int *ch)
-{
-	*ch = test_ansi_sgr();
-}
-
-/*
-**	tools_charset(testlist, state, ch)
-**
-**	Run the ANSI alt-charset mode tool
-*/
-static void
-tools_charset(
-	struct test_list * t,
-	int *state,
-	int *ch)
-{
-	test_ansi_graphics();
-}
-
-/*
-**	tools_echo(testlist, state, ch)
-**
-**	Run the echo tool
-*/
-static void
-tools_echo(
-	struct test_list * t,
-	int *state,
-	int *ch)
-{
-	/* this call echo's all characters AS IS */
-	test_report(0, hex_out);
-}
-
-/*
-**	tools_reply(testlist, state, ch)
-**
-**	Run the reply tool
-*/
-static void
-tools_reply(
-	struct test_list * t,
-	int *state,
-	int *ch)
-{
-	/* this call echo's the first control character in ^E mode */
-	test_report(1, hex_out);
-}
-
-/*
 **	tools_hex_echo(testlist, state, ch)
 **
 **	Flip the hex echo flag.
 */
 static void
 tools_hex_echo(
-	struct test_list * t,
+	struct test_list *t,
 	int *state,
 	int *ch)
 {
@@ -336,13 +261,36 @@ tools_hex_echo(
 }
 
 /*
+**	tools_debug(testlist, state, ch)
+**
+**	Change the debug level.
+*/
+static void
+tools_debug(
+	struct test_list *t,
+	int *state,
+	int *ch)
+{
+	char buf[32];
+
+	ptext("Enter a new value: ");
+	read_string(buf, sizeof(buf));
+	if (buf[0]) {
+		sscanf(buf, "%d", &debug_level);
+	}
+	sprintf(temp, "Debug level is now %d", debug_level);
+	ptext(temp);
+	*ch = REQUEST_PROMPT;
+}
+
+/*
 **	start_tools(testlist, state, ch)
 **
 **	Run the generic test tools
 */
 static void
 start_tools(
-	struct test_list * t,
+	struct test_list *t,
 	int *state,
 	int *ch)
 {
@@ -385,14 +333,14 @@ tty_show_state(
 */
 static void
 tty_width(
-	struct test_list * t,
+	struct test_list *t,
 	int *state,
 	int *ch)
 {
-	if (*ch == '8') {
+	if (char_mask == STRIP_PARITY) {
 		char_mask = ALLOW_PARITY;
 		strcpy(tty_width_menu, "7) treat terminal as 7-bit");
-	} else if (*ch == '7') {
+	} else {
 		char_mask = STRIP_PARITY;
 		strcpy(tty_width_menu, "8) treat terminal as 8-bit");
 	}
@@ -405,7 +353,7 @@ tty_width(
 */
 static void
 tty_delay(
-	struct test_list * t,
+	struct test_list *t,
 	int *state,
 	int *ch)
 {
@@ -427,7 +375,7 @@ tty_delay(
 */
 static void
 tty_xon(
-	struct test_list * t,
+	struct test_list *t,
 	int *state,
 	int *ch)
 {
@@ -449,7 +397,7 @@ tty_xon(
 */
 static void
 tty_trans(
-	struct test_list * t,
+	struct test_list *t,
 	int *state,
 	int *ch)
 {
@@ -471,7 +419,7 @@ tty_trans(
 */
 static void
 start_modes(
-	struct test_list * t,
+	struct test_list *t,
 	int *state,
 	int *ch)
 {
@@ -515,11 +463,12 @@ start_modes(
 */
 static void
 start_basic(
-	struct test_list * t,
+	struct test_list *t,
 	int *state,
 	int *ch)
 {
 	display_basic();
+	*ch = REQUEST_PROMPT;
 }
 
 /*
@@ -529,16 +478,38 @@ start_basic(
 */
 static void
 start_log(
-	struct test_list * t,
+	struct test_list *t,
 	int *state,
 	int *ch)
 {
-	ptextln("running log");
 	if (logging_menu_entry[5] == 'a') {
-		strcpy(logging_menu_entry, "l) stop logging");
+		ptextln("The log file will capture all characters sent to the terminal.");
+		if ((log_fp = fopen("tack.log", "w"))) {
+			ptextln("Start logging to file: tack.log");
+			strcpy(logging_menu_entry, "l) stop logging");
+		} else {
+			ptextln("File open error: tack.log");
+		}
 	} else {
+		if (log_fp) {
+			fclose(log_fp);
+			log_fp = 0;
+		}
+		ptextln("Terminal output logging stopped.");
 		strcpy(logging_menu_entry, "l) start logging");
 	}
+}
+
+/*
+**	show_usage()
+**
+**	Tell the user how its done.
+*/
+void
+show_usage(
+	char *name)
+{
+	(void) fprintf(stderr, "usage: %s [-itV] [term]\n", name);
 }
 
 /*****************************************************************************
@@ -557,12 +528,15 @@ main(int argc, char *argv[])
 	send_reset_init = TRUE;
 	translate_mode = FALSE;
 	term_variable = getenv("TERM");
+	tty_can_sync = SYNC_NOT_TESTED;
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] == '-') {
 			for (j = 1; argv[i][j]; j++) {
 				switch (argv[i][j]) {
 				case 'V':
-					ptextln("tac version 0.0");
+					fprintf(stderr,
+						"tack version %d.%02d\n",
+						MAJOR_VERSION, MINOR_VERSION);
 					return (1);
 				case 'i':
 					send_reset_init = FALSE;
@@ -570,13 +544,8 @@ main(int argc, char *argv[])
 				case 't':
 					translate_mode = FALSE;
 					break;
-				case 'x':
-					expert = TRUE;
-					break;
 				default:
-					(void) fprintf(stderr,
-						"usage: %s [-itxV] [term]\n",
-						argv[0]);
+					show_usage(argv[0]);
 					return (0);
 				}
 			}
@@ -585,49 +554,10 @@ main(int argc, char *argv[])
 		}
 	}
 	(void) strcpy(tty_basename, term_variable);
-	tty_init();
-	char_count = 0;
-	setupterm(tty_basename, 1, (int *) 0);
 
-	/* set up the defaults */
-	replace_mode = TRUE;
-	scan_mode = 0;
-	time_pad = 0;
-	select_delay_type = debug_level = 0;
-	char_mask = (meta_on && meta_on[0] == '\0') ? ALLOW_PARITY : STRIP_PARITY;
-	select_xon_xoff = needs_xon_xoff ? 1 : 0;
+	curses_setup(argv[0]);
 
-	fflush(stdout);	/* flush any output */
-	tty_set();
-
-	go_home();	/* set can_go_home */
-	put_clear();	/* set can_clear_screen */
-
-	reset_init(send_reset_init);
-
-	tty_can_sync = SYNC_NOT_TESTED;
-
-	/*
-	   I assume that the reset and init strings may not have the correct
-	   pads.  (Because that part of the test comes much later.)  Because
-	   of this, I allow the terminal some time to catch up.
-	*/
-	fflush(stdout);	/* waste some time */
-	sleep(1);	/* waste more time */
 	menu_can_scan(&normal_menu);	/* extract which caps can be tested */
-	charset_can_test();
-	edit_init();			/* initialize the edit data base */
-
-	if (send_reset_init && enter_ca_mode) {
-		tc_putp(enter_ca_mode);
-		put_clear();	/* just in case we switched pages */
-	}
-	put_crlf();
-	ptextln("Welcome to tack.");
-
-	display_basic();
-
-	put_crlf();
 	menu_display(&start_menu, 0);
 
 	if (user_modified()) {

@@ -21,7 +21,7 @@
 
 #include <curses.h>
 #include <string.h>
-#include "tac.h"
+#include "tack.h"
 
 /*
  * Tests boolean flags and terminal modes.
@@ -418,7 +418,6 @@ subtest_hts(
 	int tabat;		/* the tab spacing we end up with */
 	int i;
 
-	put_clear();
 	tabat = init_tabs;
 	if (set_tab) {
 		ptext("Tabs set with (hts)");
@@ -486,19 +485,17 @@ subtest_xt(
 	int *ch)
 {
 	int tabat;		/* the tab spacing we end up with */
+	int cc;
 
 	tabat = set_tab ? 8 : init_tabs;
 	if (!over_strike && (tabat > 0)) {
 		ptext("(xt) should not ");
 		put_cr();
 		ptext("(xt) should");
-		while (char_count < 16) {
-			if (translate_mode && tab) {
-				tc_putp(tab);
-			} else {
-				tc_putp(TM_tab);
-			}
-			char_count = ((char_count / tabat) + 1) * tabat;
+		cc = char_count;
+		while (cc < 16) {
+			putchp('\t');
+			cc = ((cc / tabat) + 1) * tabat;
 		}
 		putln("be set.");
 		sprintf(temp, "(xt) Destructive-tab is %s in the data base.",
@@ -515,7 +512,7 @@ subtest_xt(
 */
 static void
 subtest_cbt(
-	struct test_list * t,
+	struct test_list *t,
 	int *state,
 	int *ch)
 {
@@ -540,12 +537,12 @@ subtest_cbt(
 			if (i % 8 == 1) {
 				putchp('T');
 			} else {
-				putchp('.');
+				putchp(' ');
 			}
 		}
 		go_home();
-		put_newlines(4);
-		ptextln("The last two lines should be the same.");
+		put_newlines(3);
+		ptextln("The preceding two lines should be the same.");
 	} else {
 		ptextln("(cbt) Back-tab not present");
 	}
@@ -559,7 +556,7 @@ subtest_cbt(
 */
 static void
 subtest_xenl(
-	struct test_list * t,
+	struct test_list *t,
 	int *state,
 	int *ch)
 {
@@ -656,7 +653,7 @@ subtest_xenl(
 */
 static void
 subtest_eo(
-	struct test_list * t,
+	struct test_list *t,
 	int *state,
 	int *ch)
 {
@@ -683,7 +680,7 @@ subtest_eo(
 */
 static void
 subtest_xmc(
-	struct test_list * t,
+	struct test_list *t,
 	int *state,
 	int *ch)
 {
@@ -719,7 +716,7 @@ subtest_xmc(
 */
 static void
 subtest_xhp(
-	struct test_list * t,
+	struct test_list *t,
 	int *state,
 	int *ch)
 {
@@ -744,7 +741,7 @@ subtest_xhp(
 */
 static void
 subtest_mir(
-	struct test_list * t,
+	struct test_list *t,
 	int *state,
 	int *ch)
 {
@@ -797,7 +794,7 @@ subtest_mir(
 */
 static void
 subtest_msgr(
-	struct test_list * t,
+	struct test_list *t,
 	int *state,
 	int *ch)
 {
@@ -849,7 +846,7 @@ subtest_msgr(
 */
 static void
 subtest_in(
-	struct test_list * t,
+	struct test_list *t,
 	int *state,
 	int *ch)
 {
@@ -877,7 +874,7 @@ subtest_in(
 */
 static void
 subtest_dadb(
-	struct test_list * t,
+	struct test_list *t,
 	int *state,
 	int *ch)
 {

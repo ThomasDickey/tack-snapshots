@@ -22,7 +22,7 @@
 #include <curses.h>
 #include <string.h>
 #include <ctype.h>
-#include "tac.h"
+#include "tack.h"
 
 /*
 	Menu definitions for alternate character set and SGR tests.
@@ -217,14 +217,16 @@ set_attr(int a)
 {				/* set the attribute from the bits in a */
 	int i, b[32];
 
-	if (magic_cookie_glitch > 0)
+	if (magic_cookie_glitch > 0) {
 		char_count += magic_cookie_glitch;
+	}
 	if (a == 0 && exit_attribute_mode) {
 		put_mode(exit_attribute_mode);
 		return;
 	}
-	for (i = 0; i < 31; i++)
+	for (i = 0; i < 31; i++) {
 		b[i] = (a >> i) & 1;
+	}
 	tc_putp(tparm(set_attributes, b[1], b[2], b[3], b[4], b[5],
 			b[6], b[7], b[8], b[9]));
 }
@@ -457,8 +459,9 @@ test_acs(
 	if (attr) {
 		set_attr(attr);
 	}
-	if (ena_acs)
+	if (ena_acs) {
 		tc_putp(ena_acs);
+	}
 	for (i = 0; glyph[i].name[0]; i++) {
 		if (valid_glyph[glyph[i].c]) {
 			put_mode(enter_alt_charset_mode);
@@ -482,8 +485,9 @@ test_acs(
 			}
 		}
 	}
-	if (char_count > 1)
+	if (char_count > 1) {
 		put_crlf();
+	}
 #ifdef ACS_ULCORNER
 	maybe_wait(5);
 	put_mode(enter_alt_charset_mode);

@@ -20,7 +20,7 @@
 */
 
 #include <curses.h>
-#include "tac.h"
+#include "tack.h"
 
 /*
  * Test cursor movement.
@@ -332,7 +332,7 @@ crum_move(
 
 	switch (n = (t->flags & 15)) {
 	case 0:
-		sprintf(buf, " (cr) (nel) (backspace)%s",
+		sprintf(buf, " (cr) (nel) (cub1)%s",
 			cursor_home ? " (home)" : (cursor_up ? " (cuu1)" : ""));
 		break;
 	case 1:
@@ -371,6 +371,7 @@ crum_move(
 	if (buf[0] == '\0') {
 		put_str("  Done. ");
 	} else {
+		can_test(buf, FLAG_TESTED);
 		strcpy(crum_text[n], &buf[2]);
 		crum_text[n][strlen(buf) - 3] = '\0';
 
