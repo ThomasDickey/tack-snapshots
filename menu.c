@@ -24,6 +24,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include "term.h"
 #include "tack.h"
 
 /*
@@ -409,8 +410,8 @@ test_byname(
 	int *state,
 	int *ch)
 {
+	int test_state = 0;
 	char cap[32];
-	int test_state;
 
 	if (tty_can_sync == SYNC_NOT_TESTED) {
 		verify_time();
