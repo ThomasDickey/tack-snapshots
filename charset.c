@@ -22,6 +22,7 @@
 #include <curses.h>
 #include <string.h>
 #include <ctype.h>
+#include "term.h"
 #include "tack.h"
 
 /*
@@ -88,7 +89,7 @@ static struct graphics_pair glyph[] = {
 	{',', "arrow pointing left"},
 	{'.', "arrow pointing down"},
 	{'0', "solid square block"},
-	{'I', "lantern symbol"},
+	{'i', "lantern symbol"},
 	{'-', "arrow pointing up"},
 	{'`', "diamond"},
 	{'a', "checker board (stipple)"},
@@ -287,9 +288,8 @@ charset_sgr(
 	put_crlf();
 
 	if (max_attributes >= 0) {
-		sprintf(temp, "(ma) Maximum attributes %d", max_attributes);
-		put_crlf();
-		ptextln(temp);
+		sprintf(temp, "(ma) Maximum attributes %d  ", max_attributes);
+		ptext(temp);
 	}
 	generic_done_message(t, state, ch);
 }

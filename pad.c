@@ -21,6 +21,7 @@
 
 #include <curses.h>
 #include <string.h>
+#include "term.h"
 #include "tack.h"
 
 /* test the pad counts on the terminal */
@@ -72,9 +73,9 @@ char *pad_repeat_test = {"ep-+<>"};
 struct test_list pad_test_list[] = {
 	{0, 0, 0, 0, "e) edit terminfo", 0, &edit_menu},
 	{0, 0, 0, 0, "p) change padding", 0, &change_pad_menu},
-	{0, 0, 0, 0, "@) Display statistics about the last test", dump_test_stats, 0},
-	{0, 0, 0, 0, "c) Clear screen", menu_clear_screen, 0},
-	{0, 0, 0, 0, "i) Send reset and init", menu_reset_init, 0},
+	{0, 0, 0, 0, "@) display statistics about the last test", dump_test_stats, 0},
+	{0, 0, 0, 0, "c) clear screen", menu_clear_screen, 0},
+	{0, 0, 0, 0, "i) send reset and init", menu_reset_init, 0},
 	{0, 0, 0, 0, txt_longer_test_time, longer_test_time, 0},
 	{0, 0, 0, 0, txt_shorter_test_time, shorter_test_time, 0},
 	{0, 0, 0, 0, txt_longer_augment, longer_augment, 0},
@@ -170,22 +171,12 @@ struct test_list pad_test_list[] = {
 
 extern int test_complete;	/* counts number of tests completed */
 
-#define SLOW_TERMINAL_EXIT if (!test_complete && !no_alarm_event) { break; }
-
 /* globals */
 int hzcc;			/* horizontal character count */
 char letter;			/* current character being displayed */
 int letter_number;		/* points into letters[] */
 int augment, reps;		/* number of characters (or lines) effected */
-int clear_select;		/* points into clr_test_value[] */
-int clr_test_value[CLEAR_TEST_MAX];
-int clr_test_reps[CLEAR_TEST_MAX];
 char letters[] = "AbCdefghiJklmNopQrStuVwXyZ";
-
-static char *clr_test_name[CLEAR_TEST_MAX] = {
-	"full page", "sparse page", "short lines", "one full line",
-	"one short line"
-};
 
 static char every_line[] = "This text should be on every line.";
 static char all_lines[] = "Each char on any line should be the same.  ";
@@ -205,7 +196,7 @@ pad_standard(
 {
 	char *long_name;
 	char *cap;
-	int full_page = 0;
+	int l = 2, i;
 	char tbuf[128];
 
 	if ((cap = get_string_cap_byname(t->caps_done, &long_name))) {
@@ -214,23 +205,27 @@ pad_standard(
 		if (skip_pad_test(t, state, ch, tbuf)) {
 			return;
 		}
+		i = 1;
 		pad_test_startup(1);
 		do {
-			if (char_count >= columns) {
+			if (i >= columns) {
 				page_loop();
-				full_page = TRUE;
+				l++;
+				i = 1;
 			}
 			tt_putp(cap);
 			putchp(letter);
-		} while(no_alarm_event);
+			i++;
+		} while(still_testing());
 		pad_test_shutdown(t, 0);
-		if (full_page) {
+		if (l >= lines) {
 			home_down();
 		} else {
 			put_crlf();
 		}
 		ptextln(no_visual);
 	} else {
+		CAP_NOT_FOUND;
 		/* Note: get_string_cap_byname() always sets long_name */
 		sprintf(temp, "(%s) %s, not present.  ", t->caps_done,
 			long_name);
@@ -324,7 +319,7 @@ pad_home1(
 			return;
 		}
 		pad_test_startup(1);
-		for ( ; no_alarm_event; test_complete++) {
+		do {
 			go_home();
 			for (j = 1; j < lines; j++) {
 				for (k = 0; k < columns; k++) {
@@ -337,7 +332,7 @@ pad_home1(
 				SLOW_TERMINAL_EXIT;
 			}
 			NEXT_LETTER;
-		}
+		} while(still_testing());
 		pad_test_shutdown(t, 0);
 		ptext("All the dots should line up.  ");
 		pad_done_message(t, state, ch);
@@ -364,7 +359,7 @@ pad_home2(
 			return;
 		}
 		pad_test_startup(1);
-		for ( ; no_alarm_event; test_complete++) {
+		do {
 			go_home();
 			for (j = 1; j < lines; j++) {
 				for (k = 2; k < columns; k++) {
@@ -378,7 +373,7 @@ pad_home2(
 				SLOW_TERMINAL_EXIT;
 			}
 			NEXT_LETTER;
-		}
+		} while(still_testing());
 		pad_test_shutdown(t, 0);
 		ptext("All the dots should line up.  ");
 		pad_done_message(t, state, ch);
@@ -391,6 +386,12 @@ pad_home2(
 **
 **	Test (clear) and (ed)
 **	run the clear screen tests (also clear-to-end-of-screen)
+**
+**	0) full page
+**	1) sparse page
+**	2) short lines
+**	3) one full line
+**	4) one short line
 */
 static void
 pad_clear(
@@ -400,15 +401,19 @@ pad_clear(
 {
 	char *end_message = (char *) NULL, *txt;
 	int j, k, is_clear;
+	int clear_select;		/* select the test number */
 
 	is_clear = t->flags & 1;
-	for (j = 0; j < CLEAR_TEST_MAX; j++) {
-		clr_test_value[j] = 32767;
-	}
 	clear_select = auto_right_margin ? 0 : 1;
 	if (is_clear) {
 		txt = "(clear) clear-screen start testing";
 	} else {
+		if (!clr_eos) {
+			CAP_NOT_FOUND;
+			ptext("(ed) erase-to-end-of-display, not present.  ");
+			pad_done_message(t, state, ch);
+			return;
+		}
 		txt = "(ed) erase-to-end-of-display start testing";
 	}
 	if (skip_pad_test(t, state, ch, txt)) {
@@ -418,12 +423,13 @@ pad_clear(
 		tc_putp(enter_am_mode);
 		clear_select = 0;
 	}
-	for (; clear_select < CLEAR_TEST_MAX; clear_select++) {
+	for (; clear_select < 5; clear_select++) {
 		if (augment > lines || is_clear || !cursor_address) {
 			augment = lines;
 		} else {
-			if (augment <= 1)
+			if (augment <= 1) {
 				augment = 2;
+			}
 			if (augment < lines) {
 				put_clear();
 				tt_putparm(cursor_address, 1,
@@ -438,13 +444,15 @@ pad_clear(
 			break;
 		case 1:
 			end_message = "Clear sparse screen.  ";
-			if (cursor_down)
+			if (cursor_down) {
 				break;
+			}
 			clear_select++;
 		case 2:
 			end_message = "Clear one character per line.  ";
-			if (newline)
+			if (newline) {
 				break;
+			}
 			clear_select++;
 		case 3:
 			end_message = "Clear one full line.  ";
@@ -454,7 +462,7 @@ pad_clear(
 			break;
 		}
 		pad_test_startup(0);
-		for ( ; no_alarm_event; test_complete++) {
+		do {
 			switch (clear_select) {
 			case 0:	/* full screen test */
 				for (j = 1; j < reps; j++) {
@@ -505,7 +513,7 @@ pad_clear(
 				tt_tputs(clr_eos, reps);
 			}
 			NEXT_LETTER;
-		}
+		} while(still_testing());
 		pad_test_shutdown(t, 1);
 		ptext(end_message);
 
@@ -514,24 +522,6 @@ pad_clear(
 		if (*ch != 0 && *ch != 'n') {
 			return;
 		}
-
-		if (clear_select < CLEAR_TEST_MAX && time_pad)
-			enq_ack();
-	}
-	k = 0;
-	for (j = 0; j < CLEAR_TEST_MAX; j++) {
-		if (clr_test_value[j] != 32767) {
-			k++;
-			sprintf(temp, "(%s) %s", "help me", clr_test_name[j]);
-			ptext(temp);
-			put_dec(" %d.%d milliseconds", clr_test_value[j]);
-			sprintf(temp, " %d reps", clr_test_reps[j]);
-			ptext(temp);
-			put_crlf();
-		}
-	}
-	if (k) {
-		pad_done_message(t, state, ch);
 	}
 }
 
@@ -549,6 +539,7 @@ pad_ech(
 	int i, j;
 
 	if (!erase_chars) {
+		CAP_NOT_FOUND;
 		ptext("(ech) Erase-characters, not present.  ");
 		pad_done_message(t, state, ch);
 		return;
@@ -561,7 +552,7 @@ pad_ech(
 		augment = columns - 2;
 	}
 	pad_test_startup(1);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		go_home();
 		for (i = 2; i < lines; i++) {
 			for (j = 0; j <= reps; j++) {
@@ -578,7 +569,7 @@ pad_ech(
 		putchp(letter);
 		put_crlf();
 		NEXT_LETTER;
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, 0);
 	ptext(all_lines);
 	pad_done_message(t, state, ch);
@@ -599,6 +590,7 @@ pad_el1(
 	int i, j;
 
 	if (!clr_bol) {
+		CAP_NOT_FOUND;
 		ptext("(el1) Erase-to-beginning-of-line, not present.  ");
 		pad_done_message(t, state, ch);
 		return;
@@ -611,7 +603,7 @@ pad_el1(
 		augment = columns - 2;
 	}
 	pad_test_startup(1);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		go_home();
 		for (i = 2; i < lines; i++) {
 			for (j = 0; j <= reps; j++) {
@@ -629,7 +621,7 @@ pad_el1(
 		putchp(letter);
 		put_crlf();
 		NEXT_LETTER;
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, 0);
 	ptext(all_lines);
 	pad_done_message(t, state, ch);
@@ -650,6 +642,7 @@ pad_el(
 	int i, j;
 
 	if (!clr_eol) {
+		CAP_NOT_FOUND;
 		ptext("(el) Clear-to-end-of-line, not present.  ");
 		pad_done_message(t, state, ch);
 		return;
@@ -663,7 +656,7 @@ pad_el(
 		augment = hzcc;
 	}
 	pad_test_startup(1);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		go_home();
 		for (i = 2; i < lines; i++) {
 			for (j = -1; j < augment; j++) {
@@ -678,7 +671,7 @@ pad_el(
 		putchp(letter);
 		put_crlf();
 		NEXT_LETTER;
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, 0);
 	ptext(all_lines);
 	pad_done_message(t, state, ch);
@@ -699,6 +692,7 @@ pad_smdc(
 	int i;
 
 	if (!enter_delete_mode) {
+		CAP_NOT_FOUND;
 		ptext("(smdc) Enter-delete-mode");
 		if (!exit_delete_mode) {
 			ptext(", (rmdc) Exit-delete-mode");
@@ -712,14 +706,14 @@ pad_smdc(
 		return;
 	}
 	pad_test_startup(1);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		page_loop();
 		for (i = 1; i < columns; i++) {
 			tt_putp(enter_delete_mode);
 			tt_putp(exit_delete_mode);
 			putchp(letter);
 		}
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, 0);
 	home_down();
 	ptext(no_visual);
@@ -741,6 +735,7 @@ pad_dch(
 	int i, j;
 
 	if (!parm_dch) {
+		CAP_NOT_FOUND;
 		ptext("(dch) Delete-characters, not present.  ");
 		pad_done_message(t, state, ch);
 		return;
@@ -754,7 +749,7 @@ pad_dch(
 		augment = hzcc;
 	}
 	pad_test_startup(1);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		go_home();
 		for (i = 2; i < lines; i++) {
 			for (j = 0; j <= reps; j++) {
@@ -770,7 +765,7 @@ pad_dch(
 		putchp(letter);
 		put_crlf();
 		NEXT_LETTER;
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, 0);
 	home_down();
 	ptext(all_lines);
@@ -796,6 +791,7 @@ pad_dch1(
 			/* if the other one is defined then its OK */
 			return;
 		}
+		CAP_NOT_FOUND;
 		ptext("(dch1) Delete-character, not present.  ");
 		pad_done_message(t, state, ch);
 		return;
@@ -809,7 +805,7 @@ pad_dch1(
 		augment = hzcc;
 	}
 	pad_test_startup(1);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		go_home();
 		for (i = 2; i < lines; i++) {
 			for (j = -1; j < augment; j++) {
@@ -827,7 +823,7 @@ pad_dch1(
 		putchp(letter);
 		put_crlf();
 		NEXT_LETTER;
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, 0);
 	ptext(all_lines);
 	pad_done_message(t, state, ch);
@@ -848,6 +844,7 @@ pad_smir(
 	int i;
 
 	if (!enter_insert_mode) {
+		CAP_NOT_FOUND;
 		ptext("(smir) Enter-insert-mode");
 		if (!exit_insert_mode) {
 			ptext(", (rmir) Exit-insert-mode");
@@ -861,14 +858,14 @@ pad_smir(
 		return;
 	}
 	pad_test_startup(1);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		page_loop();
 		for (i = 1; i < columns; i++) {
 			tt_putp(enter_insert_mode);
 			tt_putp(exit_insert_mode);
 			putchp(letter);
 		}
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, 0);
 	home_down();
 	ptext(no_visual);
@@ -890,6 +887,7 @@ pad_ich(
 	int i, j;
 
 	if (!parm_ich) {
+		CAP_NOT_FOUND;
 		ptext("(ich) Insert-characters, not present.  ");
 		pad_done_message(t, state, ch);
 		return;
@@ -903,7 +901,7 @@ pad_ich(
 		augment = j;
 	}
 	pad_test_startup(1);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		go_home();
 		for (i = 2; i < lines; i++) {
 			putchp(letter);
@@ -922,7 +920,7 @@ pad_ich(
 		putchp(letter);
 		NEXT_LETTER;
 		put_crlf();
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, 0);
 	ptext(all_lines);
 	pad_done_message(t, state, ch);
@@ -943,6 +941,7 @@ pad_ich1(
 	int i, j;
 
 	if (!insert_character) {
+		CAP_NOT_FOUND;
 		ptext("(ich1) Insert-character, not present.  ");
 		pad_done_message(t, state, ch);
 		return;
@@ -955,7 +954,7 @@ pad_ich1(
 		augment = columns - 2;
 	}
 	pad_test_startup(1);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		put_clear();
 		for (i = 2; i < lines; i++) {
 			putchp(letter);
@@ -985,7 +984,7 @@ pad_ich1(
 		putchp(letter);
 		NEXT_LETTER;
 		put_crlf();
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, 0);
 	ptext(all_lines);
 	pad_done_message(t, state, ch);
@@ -1020,10 +1019,10 @@ pad_xch1(
 	ptext(xch1);
 	put_cr();
 	pad_test_startup(0);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		tt_putp(insert_character);
 		tt_putp(delete_character);
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, 1);
 	ptextln(xch1);
 	ptext("The preceeding two lines should be the same.  ");
@@ -1044,6 +1043,7 @@ pad_rep(
 	int i, j;
 
 	if (!repeat_char) {
+		CAP_NOT_FOUND;
 		ptext("(rep) Repeat-character, not present.  ");
 		pad_done_message(t, state, ch);
 		return;
@@ -1059,7 +1059,7 @@ pad_rep(
 		augment = 2;
 	}
 	pad_test_startup(1);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		go_home();
 		for (i = 2; i < lines; i++) {
 			tt_putparm(repeat_char, reps, letter, reps);
@@ -1070,7 +1070,7 @@ pad_rep(
 		}
 		put_crlf();
 		NEXT_LETTER;
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, 0);
 	ptextln(all_lines);
 	pad_done_message(t, state, ch);
@@ -1090,6 +1090,7 @@ pad_cup(
 	int i, j, l, r, c;
 
 	if (!cursor_address) {
+		CAP_NOT_FOUND;
 		ptext("(cup) Cursor-address not present.  ");
 		pad_done_message(t, state, ch);
 		return;
@@ -1113,7 +1114,7 @@ pad_cup(
 	c = char_count;
 	l = (columns - 4) >> 1;
 	pad_test_startup(0);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		for (i = 1; i + i + r < lines; i++) {
 			for (j = 0; j <= l; j++) {
 				tt_putparm(cursor_address, 1, r + i, j);
@@ -1128,7 +1129,7 @@ pad_cup(
 			SLOW_TERMINAL_EXIT;
 		}
 		NEXT_LETTER;
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, 0);
 	tt_putparm(cursor_address, 1, line_count = r, char_count = c);
 	pad_done_message(t, state, ch);
@@ -1149,6 +1150,7 @@ pad_hd(
 	int i, j, k;
 
 	if (!down_half_line) {
+		CAP_NOT_FOUND;
 		ptext("(hd) Half-line-down not present.  ");
 		pad_done_message(t, state, ch);
 		return;
@@ -1158,7 +1160,7 @@ pad_hd(
 		return;
 	}
 	pad_test_startup(1);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		for (i = 1; i < columns; i += 2) {
 			for (j = 1; j < i; ++j) {
 				putchp(' ');
@@ -1175,9 +1177,10 @@ pad_hd(
 			SLOW_TERMINAL_EXIT;
 		}
 		NEXT_LETTER;
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, 0);
 	pad_done_message(t, state, ch);
+	put_clear();
 }
 
 /*
@@ -1194,6 +1197,7 @@ pad_hu(
 	int i, j, k;
 
 	if (!up_half_line) {
+		CAP_NOT_FOUND;
 		ptext("(hu) Half-line-up not present.  ");
 		pad_done_message(t, state, ch);
 		return;
@@ -1203,7 +1207,7 @@ pad_hu(
 		return;
 	}
 	pad_test_startup(1);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		for (i = 1; i < columns; i += 2) {
 			home_down();
 			for (j = 1; j < i; ++j) {
@@ -1221,9 +1225,10 @@ pad_hu(
 		}
 		go_home();
 		NEXT_LETTER;
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, 0);
 	pad_done_message(t, state, ch);
+	put_clear();
 }
 
 /*
@@ -1243,6 +1248,7 @@ pad_rin(
 	if (t->flags & 1) {
 		/* rin */
 		if (!parm_rindex) {
+			CAP_NOT_FOUND;
 			ptext("(rin) Scroll-reverse-n-lines not present.  ");
 			pad_done_message(t, state, ch);
 			return;
@@ -1251,6 +1257,7 @@ pad_rin(
 	} else {
 		/* ri */
 		if (!scroll_reverse) {
+			CAP_NOT_FOUND;
 			ptext("(ri) Scroll-reverse not present.  ");
 			pad_done_message(t, state, ch);
 			return;
@@ -1262,7 +1269,7 @@ pad_rin(
 		return;
 	}
 	pad_test_startup(1);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		sprintf(temp, "%d\r", test_complete);
 		put_str(temp);
 		if (scroll_reverse && augment == 1) {
@@ -1270,7 +1277,7 @@ pad_rin(
 		} else {
 			tt_putparm(parm_rindex, reps, reps, 0);
 		}
-	}
+	} while(still_testing());
 	put_str("This line should be on the bottom.\r");
 	if (scroll_reverse && augment == 1) {
 		for (i = 1; i < lines; i++) {
@@ -1305,6 +1312,7 @@ pad_il(
 	if (t->flags & 1) {
 		/* il */
 		if (!parm_insert_line) {
+			CAP_NOT_FOUND;
 			ptext("(il) Insert-lines not present.  ");
 			pad_done_message(t, state, ch);
 			return;
@@ -1313,6 +1321,7 @@ pad_il(
 	} else {
 		/* il1 */
 		if (!insert_line) {
+			CAP_NOT_FOUND;
 			ptext("(il1) Insert-line not present.  ");
 			pad_done_message(t, state, ch);
 			return;
@@ -1324,7 +1333,7 @@ pad_il(
 		return;
 	}
 	pad_test_startup(1);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		sprintf(temp, "%d\r", test_complete);
 		put_str(temp);
 		if (insert_line && reps == 1) {
@@ -1332,7 +1341,7 @@ pad_il(
 		} else {
 			tt_putparm(parm_insert_line, reps, reps, 0);
 		}
-	}
+	} while(still_testing());
 	put_str("This line should be on the bottom.\r");
 	if (scroll_reverse && augment == 1) {
 		for (i = 1; i < lines; i++) {
@@ -1367,6 +1376,7 @@ pad_indn(
 	if (t->flags & 1) {
 		/* indn */
 		if (!parm_index) {
+			CAP_NOT_FOUND;
 			ptext("(indn) Scroll-forward-n-lines not present.  ");
 			pad_done_message(t, state, ch);
 			return;
@@ -1374,6 +1384,12 @@ pad_indn(
 		start_message = "(indn) Scroll-forward-n-lines start testing";
 	} else {
 		/* ind */
+		if (!scroll_forward && over_strike) {
+			CAP_NOT_FOUND;
+			ptext("(ind) Scroll-forward not tested on overstrike terminals.  ");
+			pad_done_message(t, state, ch);
+			return;
+		}
 		start_message = "(ind) Scroll-forward start testing";
 		augment = 1;
 	}
@@ -1383,7 +1399,7 @@ pad_indn(
 	pad_test_startup(1);
 	/* go to the bottom of the screen */
 	home_down();
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		sprintf(temp, "%d\r", test_complete);
 		put_str(temp);
 		if (augment > 1) {
@@ -1391,7 +1407,7 @@ pad_indn(
 		} else {
 			put_ind();
 		}
-	}
+	} while(still_testing());
 	put_str("This line should be on the top.\r");
 	if (augment == 1) {
 		for (i = 1; i < lines; i++) {
@@ -1425,6 +1441,7 @@ pad_dl(
 	if (t->flags & 1) {
 		/* dl */
 		if (!parm_delete_line) {
+			CAP_NOT_FOUND;
 			ptext("(dl) Delete-lines not present.  ");
 			pad_done_message(t, state, ch);
 			return;
@@ -1433,6 +1450,7 @@ pad_dl(
 	} else {
 		/* dl1 */
 		if (!delete_line) {
+			CAP_NOT_FOUND;
 			ptext("(dl1) Delete-line not present.  ");
 			pad_done_message(t, state, ch);
 			return;
@@ -1444,7 +1462,7 @@ pad_dl(
 		return;
 	}
 	pad_test_startup(1);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		sprintf(temp, "%d\r", test_complete);
 		if ((i & 0x7f) == 0 && augment < lines - 1) {
 			go_home();
@@ -1456,7 +1474,7 @@ pad_dl(
 		} else {
 			tt_putp(delete_line);
 		}
-	}
+	} while(still_testing());
 	home_down();
 	put_str("This line should be on the top.");
 	go_home();
@@ -1512,11 +1530,11 @@ pad_xl(
 	go_home();
 	put_newlines(2);
 	pad_test_startup(0);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		tt_putp(insert_line);
 		put_cr();
 		tt_putp(delete_line);
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, 0);
 	home_down();
 	ptext("The top of the screen should have a paragraph of text.  ");
@@ -1537,6 +1555,7 @@ pad_scrc(
 	int i;
 
 	if (!save_cursor || !restore_cursor) {
+		CAP_NOT_FOUND;
 		if (save_cursor) {
 			ptext("(rc) Restore-cursor");
 		} else
@@ -1554,7 +1573,7 @@ pad_scrc(
 		return;
 	}
 	pad_test_startup(1);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		page_loop();
 		for (i = 1; i < columns; i++) {
 			tt_putp(save_cursor);
@@ -1562,7 +1581,7 @@ pad_scrc(
 			tt_putp(restore_cursor);
 			putchp('X');
 		}
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, 0);
 	home_down();
 	ptext(above_line);
@@ -1583,6 +1602,7 @@ pad_csrind(
 	int i;
 
 	if (!change_scroll_region) {
+		CAP_NOT_FOUND;
 		ptext("(csr) Change-scroll-region not present.  ");
 		pad_done_message(t, state, ch);
 		return;
@@ -1603,11 +1623,11 @@ pad_csrind(
 	/* go to the bottom of the screen */
 	home_down();
 	pad_test_startup(0);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		sprintf(temp, "%d\r", test_complete);
 		put_str(temp);
 		put_ind();
-	}
+	} while(still_testing());
 	ptextln("(csr) is broken.");
 	for (i = augment; i > 1; i--) {
 		put_ind();
@@ -1641,7 +1661,7 @@ pad_sccsrrc(
 		return;
 	}
 	pad_test_startup(1);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		page_loop();
 		for (i = 1; i < columns; i++) {
 			tt_putp(save_cursor);
@@ -1650,7 +1670,7 @@ pad_sccsrrc(
 			tt_putp(restore_cursor);
 			putchp('X');
 		}
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, 0);
 	home_down();
 	ptext(above_line);
@@ -1680,7 +1700,7 @@ pad_csr_nel(
 		return;
 	}
 	pad_test_startup(1);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		for (i = 0; i < lines; i++) {
 			for (j = lines - i; j > 0; j--) {
 				put_crlf();
@@ -1693,7 +1713,7 @@ pad_csr_nel(
 		tt_putp(save_cursor);
 		tt_putparm(change_scroll_region, 1, 0, lines - 1);
 		tt_putp(restore_cursor);
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, 0);
 	put_str("  ");
 	pad_done_message(t, state, ch);
@@ -1722,7 +1742,7 @@ pad_csr_cup(
 		return;
 	}
 	pad_test_startup(1);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		for (i = 0; i < lines; i++) {
 			for (j = lines - i; j > 0; j--) {
 				put_crlf();
@@ -1733,7 +1753,7 @@ pad_csr_cup(
 		}
 		tt_putparm(change_scroll_region, 1, 0, lines - 1);
 		tt_putparm(cursor_address, 1, lines - 1, strlen(every_line));
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, 0);
 	put_str("  ");
 	pad_done_message(t, state, ch);
@@ -1753,12 +1773,17 @@ pad_ht(
 {
 	int i, j;
 
-	if (skip_pad_test(t, state, ch,
-		"(ht) Tab start testing")) {
+	if (!set_tab && init_tabs <= 0) {
+		CAP_NOT_FOUND;
+		ptext("(ht) Tab not tested.  (hts) Set-tabs and (it) initial-tabs not present.  ");
+		pad_done_message(t, state, ch);
+		return;
+	}
+	if (skip_pad_test(t, state, ch, "(ht) Tab start testing")) {
 		return;
 	}
 	pad_test_startup(1);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		/*
 		   it is not always possible to test tabs with caps
 		   that do not already have padding. The following
@@ -1795,7 +1820,7 @@ pad_ht(
 			}
 			putln("N");
 		}
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, 0);
 	ptextln("Letters on the screen other than Ns at the right margin indicate failure.");
 	ptext("A-(am) D-(cud1) C-(cup) N-(nel)  ");
@@ -1816,6 +1841,7 @@ pad_smso(
 	int i, j;
 
 	if (!enter_standout_mode || !exit_standout_mode) {
+		CAP_NOT_FOUND;
 		ptext("(smso) (rmso) Enter/Exit-standout-mode not present.  ");
 		pad_done_message(t, state, ch);
 		return;
@@ -1831,7 +1857,7 @@ pad_smso(
 	   catch those delays
 	*/
 	pad_test_startup(1);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		page_loop();
 		j = magic_cookie_glitch > 0 ? magic_cookie_glitch : 0;
 		for (i = 2 + j + j; i < columns;) {
@@ -1841,7 +1867,7 @@ pad_smso(
 			put_mode(exit_standout_mode);
 			putchp('X');
 		}
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, 0);
 	home_down();
 	ptext(above_line);
@@ -1864,6 +1890,7 @@ pad_smacs(
 
 	/* test enter even if exit is missing */
 	if (!enter_alt_charset_mode) {
+		CAP_NOT_FOUND;
 		ptext("(smacs) Enter-altcharset-mode not present.  ");
 		pad_done_message(t, state, ch);
 		return;
@@ -1873,7 +1900,7 @@ pad_smacs(
 		return;
 	}
 	pad_test_startup(1);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		page_loop();
 		j = magic_cookie_glitch > 0 ? magic_cookie_glitch : 0;
 		for (i = 2 + j + j; i < columns;) {
@@ -1883,7 +1910,7 @@ pad_smacs(
 			put_mode(exit_alt_charset_mode);
 			putchp(letter);
 		}
-	}
+	} while(still_testing());
 	pad_test_shutdown(t, 0);
 	home_down();
 	ptext("Every other character is from the alternate character set.  ");
@@ -1918,10 +1945,10 @@ pad_crash(
 	save_xon_xoff = xon_xoff;
 	xon_xoff = 1;
 	pad_test_startup(0);
-	for ( ; no_alarm_event; test_complete++) {
+	do {
 		put_str("Erase this!");
 		tt_putp(clear_screen);
-	}
+	} while(still_testing());
 	xon_xoff = save_xon_xoff;
 	pad_test_shutdown(t, 1);
 	pad_done_message(t, state, ch);
