@@ -1,3 +1,8 @@
+1997-10-04  Daniel.Weaver
+
+	* control.c, fun.c, sync.c, init.c, pad.c, modes.c, sysdep.c:
+	ncurses-4.1-971011
+
 1997-10-03  Daniel.Weaver
 
 	* charset.c, output.c, edit.c, crum.c: ncurses-4.1-971011
