@@ -24,35 +24,28 @@
  * global has no effect.
  */
 
+#include <tack.h>
+
 #ifdef sun
 #include <time.h>
 #endif
 
 #include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <curses.h>
 #include <signal.h>
 #include <termios.h>
 #include <errno.h>
-#include "term.h"
-#include "tack.h"
 
-#ifndef TRUE
-#define	TRUE	1
-#endif				/* TRUE */
-#ifndef FALSE
-#define	FALSE	0
-#endif				/* FALSE */
+MODULE_ID("$Id: sysdep.c,v 1.4 1997/12/27 18:00:54 tom Exp $")
+
+#if DECL_ERRNO
+extern int errno;
+#endif
 
 /* globals */
 int tty_frame_size;		/* asynch frame size times 2 */
 unsigned long tty_baud_rate;	/* baud rate - bits per second */
 int not_a_tty;			/* TRUE if output is not a tty (i.e. pipe) */
 int nodelay_read;		/* TRUE if NDELAY is set */
-
-extern int errno;
 
 #define TTY_IS_NOECHO	!(new_modes.c_lflag & ECHO)
 #define TTY_IS_OUT_TRANS (new_modes.c_oflag & OPOST)
@@ -85,10 +78,10 @@ void catchsig(void);
 #endif
 
 void
-tty_raw(int minch, int mask)
+tty_raw(int minch GCC_UNUSED, int mask)
 {				/* set tty to raw noecho */
 	new_modes = old_modes;
-#ifdef SELECT
+#if HAVE_SELECT
 	new_modes.c_cc[VMIN] = 1;
 #else
 	new_modes.c_cc[VMIN] = minch;
@@ -265,8 +258,8 @@ initial_stty_query(int q)
 	return (-1);
 }
 
-#ifdef SELECT
-int
+#if HAVE_SELECT
+static int
 char_ready(void)
 {
 	int n;
@@ -387,8 +380,8 @@ ignoresig(void)
  */
 
 
-void 
-onintr(int sig)
+static RETSIGTYPE 
+onintr(int sig GCC_UNUSED)
 {
 	ignoresig();
 	tty_reset();
@@ -409,9 +402,6 @@ onintr(int sig)
 void 
 catchsig(void)
 {
-	/* EXTERNAL VARIABLE USED */
-	extern void onintr();
-
 	if ((signal(SIGINT, SIG_IGN)) == SIG_DFL)
 		signal(SIGINT, onintr);
 
@@ -431,9 +421,9 @@ catchsig(void)
 **
 **	Come here for an alarm event
 */
-void
+static void
 alarm_event(
-	int sig)
+	int sig GCC_UNUSED)
 {
 	no_alarm_event = 0;
 }

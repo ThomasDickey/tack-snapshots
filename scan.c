@@ -20,11 +20,9 @@
 */
 /* scan mode keyboard support */
 
-#include <curses.h>
-#include <string.h>
-#include <stdlib.h>
-#include "term.h"
-#include "tack.h"
+#include <tack.h>
+
+MODULE_ID("$Id: scan.c,v 1.4 1997/12/27 18:00:54 tom Exp $")
 
 int scan_max;			/* length of longest scan code */
 char **scan_up, **scan_down, **scan_name;
@@ -39,8 +37,8 @@ static int debug_char_count;
 #define META_KEY 0x400
 #define CAPS_LOCK 0x800
 
-struct {
-	char *name;
+static const struct {
+	const char *name;
 	int type;
 }  scan_special[] = {
 	{"<shift>", SHIFT_KEY},

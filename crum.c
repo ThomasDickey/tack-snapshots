@@ -19,9 +19,9 @@
 **  enhanced as deemed necessary by the community.
 */
 
-#include <curses.h>
-#include "term.h"
-#include "tack.h"
+#include <tack.h>
+
+MODULE_ID("$Id: crum.c,v 1.4 1997/12/27 18:00:55 tom Exp $")
 
 /*
  * Test cursor movement.

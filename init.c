@@ -20,20 +20,16 @@
 */
 /* initialization and wrapup code */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <curses.h>
-#include "term.h"
-#include "tack.h"
+#include <tack.h>
+
+MODULE_ID("$Id: init.c,v 1.4 1997/12/27 18:00:55 tom Exp $")
 
 FILE *debug_fp;
 char temp[1024];
 char tty_basename[64];
 
 void
-put_name(char *cap, char *name)
+put_name(const char *cap, const char *name)
 {				/* send the cap name followed by the cap */
 	if (cap) {
 		ptext(name);
@@ -41,8 +37,8 @@ put_name(char *cap, char *name)
 	}
 }
 
-void
-report_cap(char *tag, char *s)
+static void
+report_cap(const char *tag, const char *s)
 {				/* expand the cap or print *** missing *** */
 	int i;
 

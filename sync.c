@@ -19,12 +19,10 @@
 **  enhanced as deemed necessary by the community.
 */
 
-#include <stdlib.h>
-#include <unistd.h>
+#include <tack.h>
 #include <time.h>
-#include <curses.h>
-#include "term.h"
-#include "tack.h"
+
+MODULE_ID("$Id: sync.c,v 1.4 1997/12/27 18:00:54 tom Exp $")
 
 /* terminal-synchronization and performance tests */
 
@@ -58,7 +56,7 @@ int tty_cps;			/* The number of characters per second */
 
 int ACK_terminator;		/* terminating ACK character */
 int ACK_length;			/* length of ACK string */
-char *tty_ENQ;			/* enquire string */
+const char *tty_ENQ;		/* enquire string */
 char tty_ACK[TTY_ACK_SIZE];	/* ACK response, set by tty_sync_error() */
 
 /*****************************************************************************
@@ -73,7 +71,7 @@ char tty_ACK[TTY_ACK_SIZE];	/* ACK response, set by tty_sync_error() */
 int
 tty_sync_error(void)
 {
-	int ch, ct, trouble, ack;
+	int ch, trouble, ack;
 
 	trouble = FALSE;
 	for (;;) {
@@ -253,6 +251,7 @@ sync_home(
 	int *ch)
 {
 	int j, k;
+	unsigned long rate;
 
 	if (!cursor_home && !cursor_address && !row_address) {
 		ptext("Terminal can not home cursor.  ");
@@ -281,9 +280,9 @@ sync_home(
 	pad_test_shutdown(t, auto_right_margin == 0);
 	/* note:  tty_frame_size is the real framesize times two.
 	   This takes care of half bits. */
-	j = (tx_cps * tty_frame_size) >> 1;
-	if (j > tty_baud_rate) {
-		tty_baud_rate = j;
+	rate = (tx_cps * tty_frame_size) >> 1;
+	if (rate > tty_baud_rate) {
+		tty_baud_rate = rate;
 	}
 	if (tx_cps > tty_cps) {
 		tty_cps = tx_cps;
@@ -311,11 +310,11 @@ sync_lines(
 		return;
 	}
 	pad_test_startup(0);
-	reps = 100;
+	repeats = 100;
 	do {
 		sprintf(temp, "%d", test_complete);
 		put_str(temp);
-		put_newlines(reps);
+		put_newlines(repeats);
 	} while(still_testing());
 	pad_test_shutdown(t, 0);
 	j = sliding_scale(tx_count[0], 1000000, usec_run_time);
@@ -350,11 +349,11 @@ sync_clear(
 		return;
 	}
 	pad_test_startup(0);
-	reps = 20;
+	repeats = 20;
 	do {
 		sprintf(temp, "%d", test_complete);
 		put_str(temp);
-		for (j = 0; j < reps; j++) {
+		for (j = 0; j < repeats; j++) {
 			put_clear();
 		}
 	} while(still_testing());
@@ -416,9 +415,9 @@ sync_test(
 */
 void
 sync_handshake(
-	struct test_list *t,
-	int *state,
-	int *ch)
+	struct test_list *t GCC_UNUSED,
+	int *state GCC_UNUSED,
+	int *ch GCC_UNUSED)
 {
 	tty_can_sync = SYNC_NOT_TESTED;
 	verify_time();

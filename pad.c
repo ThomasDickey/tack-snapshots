@@ -19,10 +19,9 @@
 **  enhanced as deemed necessary by the community.
 */
 
-#include <curses.h>
-#include <string.h>
-#include "term.h"
-#include "tack.h"
+#include <tack.h>
+
+MODULE_ID("$Id: pad.c,v 1.4 1997/12/27 18:00:54 tom Exp $")
 
 /* test the pad counts on the terminal */
 
@@ -68,7 +67,7 @@ extern struct test_menu change_pad_menu;
    Any command found in this list, executed from a "Done" prompt
    will force the default action to repeat rather than next.
 */
-char *pad_repeat_test = {"ep-+<>"};
+const char *pad_repeat_test = {"ep-+<>"};
 
 struct test_list pad_test_list[] = {
 	{0, 0, 0, 0, "e) edit terminfo", 0, &edit_menu},
@@ -175,7 +174,7 @@ extern int test_complete;	/* counts number of tests completed */
 int hzcc;			/* horizontal character count */
 char letter;			/* current character being displayed */
 int letter_number;		/* points into letters[] */
-int augment, reps;		/* number of characters (or lines) effected */
+int augment, repeats;		/* number of characters (or lines) effected */
 char letters[] = "AbCdefghiJklmNopQrStuVwXyZ";
 
 static char every_line[] = "This text should be on every line.";
@@ -194,7 +193,7 @@ pad_standard(
 	int *state,
 	int *ch)
 {
-	char *long_name;
+	const char *long_name;
 	char *cap;
 	int l = 2, i;
 	char tbuf[128];
@@ -241,9 +240,9 @@ pad_standard(
 */
 static void
 init_xon_xoff(
-	struct test_list *t,
-	int *state,
-	int *ch)
+	struct test_list *t GCC_UNUSED,
+	int *state GCC_UNUSED,
+	int *ch GCC_UNUSED)
 {
 	/* the reset strings may dink with the XON/XOFF modes */
 	if (select_xon_xoff == 0 && exit_xon_mode) {
@@ -399,7 +398,8 @@ pad_clear(
 	int *state,
 	int *ch)
 {
-	char *end_message = (char *) NULL, *txt;
+	const char *end_message = 0;
+	const char *txt;
 	int j, k, is_clear;
 	int clear_select;		/* select the test number */
 
@@ -437,7 +437,7 @@ pad_clear(
 				ptextln("This line should not be erased (ed)");
 			}
 		}
-		reps = augment;
+		repeats = augment;
 		switch (clear_select) {
 		case 0:
 			end_message = "Clear full screen.  ";
@@ -465,7 +465,7 @@ pad_clear(
 		do {
 			switch (clear_select) {
 			case 0:	/* full screen test */
-				for (j = 1; j < reps; j++) {
+				for (j = 1; j < repeats; j++) {
 					for (k = 0; k < columns; k++) {
 						if (k & 0xF) {
 							put_this(letter);
@@ -477,16 +477,16 @@ pad_clear(
 				}
 				break;
 			case 1:	/* sparse screen test */
-				for (j = columns - reps; j > 2; j--) {
+				for (j = columns - repeats; j > 2; j--) {
 					put_this(letter);
 				}
-				for (j = 2; j < reps; j++) {
+				for (j = 2; j < repeats; j++) {
 					tt_putp(cursor_down);
 					put_this(letter);
 				}
 				break;
 			case 2:	/* short lines */
-				for (j = 2; j < reps; j++) {
+				for (j = 2; j < repeats; j++) {
 					put_this(letter);
 					tt_putp(newline);
 				}
@@ -508,9 +508,9 @@ pad_clear(
 					go_home();
 				} else {
 					tt_putparm(cursor_address, 1,
-						lines - reps, 0);
+						lines - repeats, 0);
 				}
-				tt_tputs(clr_eos, reps);
+				tt_tputs(clr_eos, repeats);
 			}
 			NEXT_LETTER;
 		} while(still_testing());
@@ -555,15 +555,15 @@ pad_ech(
 	do {
 		go_home();
 		for (i = 2; i < lines; i++) {
-			for (j = 0; j <= reps; j++) {
+			for (j = 0; j <= repeats; j++) {
 				putchp(letter);
 			}
 			put_cr();
-			tt_putparm(erase_chars, reps, reps, 0);
+			tt_putparm(erase_chars, repeats, repeats, 0);
 			put_crlf();
 			SLOW_TERMINAL_EXIT;
 		}
-		for (i = 1; i <= reps; i++) {
+		for (i = 1; i <= repeats; i++) {
 			putchp(' ');
 		}
 		putchp(letter);
@@ -606,16 +606,16 @@ pad_el1(
 	do {
 		go_home();
 		for (i = 2; i < lines; i++) {
-			for (j = 0; j <= reps; j++) {
+			for (j = 0; j <= repeats; j++) {
 				putchp(letter);
 			}
 			tt_putp(cursor_left);
 			tt_putp(cursor_left);
-			tt_tputs(clr_bol, reps);
+			tt_tputs(clr_bol, repeats);
 			put_crlf();
 			SLOW_TERMINAL_EXIT;
 		}
-		for (i = 1; i <= reps; i++) {
+		for (i = 1; i <= repeats; i++) {
 			putchp(' ');
 		}
 		putchp(letter);
@@ -752,12 +752,12 @@ pad_dch(
 	do {
 		go_home();
 		for (i = 2; i < lines; i++) {
-			for (j = 0; j <= reps; j++) {
+			for (j = 0; j <= repeats; j++) {
 				putchp(letter);
 			}
 			put_cr();
 			tt_putp(enter_delete_mode);
-			tt_putparm(parm_dch, reps, reps, 0);
+			tt_putparm(parm_dch, repeats, repeats, 0);
 			tt_putp(exit_delete_mode);
 			put_crlf();
 			SLOW_TERMINAL_EXIT;
@@ -908,13 +908,13 @@ pad_ich(
 			put_cr();
 			tt_putp(enter_insert_mode);
 			replace_mode = 0;
-			tt_putparm(parm_ich, reps, reps, 0);
+			tt_putparm(parm_ich, repeats, repeats, 0);
 			tt_putp(exit_insert_mode);
 			replace_mode = 1;
 			put_crlf();
 			SLOW_TERMINAL_EXIT;
 		}
-		for (i = 0; i < reps; i++) {
+		for (i = 0; i < repeats; i++) {
 			putchp(' ');
 		}
 		putchp(letter);
@@ -1062,10 +1062,10 @@ pad_rep(
 	do {
 		go_home();
 		for (i = 2; i < lines; i++) {
-			tt_putparm(repeat_char, reps, letter, reps);
+			tt_putparm(repeat_char, repeats, letter, repeats);
 			put_crlf();
 		}
-		for (j = 0; j < reps; j++) {
+		for (j = 0; j < repeats; j++) {
 			putchp(letter);
 		}
 		put_crlf();
@@ -1243,7 +1243,7 @@ pad_rin(
 	int *ch)
 {
 	int i;
-	char *start_message;
+	const char *start_message;
 
 	if (t->flags & 1) {
 		/* rin */
@@ -1275,7 +1275,7 @@ pad_rin(
 		if (scroll_reverse && augment == 1) {
 			tt_putp(scroll_reverse);
 		} else {
-			tt_putparm(parm_rindex, reps, reps, 0);
+			tt_putparm(parm_rindex, repeats, repeats, 0);
 		}
 	} while(still_testing());
 	put_str("This line should be on the bottom.\r");
@@ -1307,7 +1307,7 @@ pad_il(
 	int *ch)
 {
 	int i;
-	char *start_message;
+	const char *start_message;
 
 	if (t->flags & 1) {
 		/* il */
@@ -1336,10 +1336,10 @@ pad_il(
 	do {
 		sprintf(temp, "%d\r", test_complete);
 		put_str(temp);
-		if (insert_line && reps == 1) {
+		if (insert_line && repeats == 1) {
 			tt_putp(insert_line);
 		} else {
-			tt_putparm(parm_insert_line, reps, reps, 0);
+			tt_putparm(parm_insert_line, repeats, repeats, 0);
 		}
 	} while(still_testing());
 	put_str("This line should be on the bottom.\r");
@@ -1371,7 +1371,7 @@ pad_indn(
 	int *ch)
 {
 	int i;
-	char *start_message;
+	const char *start_message;
 
 	if (t->flags & 1) {
 		/* indn */
@@ -1403,7 +1403,7 @@ pad_indn(
 		sprintf(temp, "%d\r", test_complete);
 		put_str(temp);
 		if (augment > 1) {
-			tt_putparm(parm_index, reps, reps, 0);
+			tt_putparm(parm_index, repeats, repeats, 0);
 		} else {
 			put_ind();
 		}
@@ -1435,8 +1435,8 @@ pad_dl(
 	int *state,
 	int *ch)
 {
-	int i;
-	char *start_message;
+	int i = 0;
+	const char *start_message;
 
 	if (t->flags & 1) {
 		/* dl */
@@ -1469,8 +1469,8 @@ pad_dl(
 			putln(temp);
 		}
 		put_str(temp);
-		if (reps || !delete_line) {
-			tt_putparm(parm_delete_line, reps, reps, 0);
+		if (repeats || !delete_line) {
+			tt_putparm(parm_delete_line, repeats, repeats, 0);
 		} else {
 			tt_putp(delete_line);
 		}
@@ -1478,7 +1478,7 @@ pad_dl(
 	home_down();
 	put_str("This line should be on the top.");
 	go_home();
-	if (reps || !delete_line) {
+	if (repeats || !delete_line) {
 		tt_putparm(parm_delete_line, lines - 1, lines - 1, 0);
 	} else {
 		for (i = 1; i < lines; i++) {
