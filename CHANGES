@@ -1,3 +1,8 @@
+1998-01-09  Daniel.Weaver
+
+	* tack.c, Makefile.in, tack.h, control.c, color.c, charset.c, ansi.c, sysdep.c, sync.c, scan.c, pad.c, output.c, modes.c, menu.c, init.c, fun.c, edit.c, crum.c, HISTORY, COPYING:
+	tack-1.00
+
 1998-01-03  Thomas E. Dickey  <dickey@clark.net>
 
 	* tack.h: moved ncurses' externs to tic.h
