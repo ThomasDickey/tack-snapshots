@@ -15,13 +15,13 @@
 ** 
 ** You should have received a copy of the GNU General Public License
 ** along with TACK; see the file COPYING.  If not, write to
-** the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-** Boston, MA 02111-1307, USA.
+** the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+** Boston, MA 02110-1301, USA
 */
 
 #include <tack.h>
 
-MODULE_ID("$Id: menu.c,v 1.5 1998/01/10 00:29:30 Daniel.Weaver Exp $")
+MODULE_ID("$Id: menu.c,v 1.6 2005/09/17 19:49:16 tom Exp $")
 
 /*
    Menu control
@@ -85,7 +85,7 @@ menu_test_loop(
 		}
 		nch = 0;
 		if (test->test_procedure) {
-			/* The procedure takes precidence so I can pass
+			/* The procedure takes precedence so I can pass
 			   the menu entry as an argument.
 			*/
 			can_test(test->caps_done, FLAG_TESTED);
@@ -340,7 +340,7 @@ subtest_menu(
 /*
 **	menu_can_scan(menu-structure)
 **
-**	Recursivly scan the menu tree and find which cap names can be tested.
+**	Recursively scan the menu tree and find which cap names can be tested.
 */
 void
 menu_can_scan(
@@ -362,7 +362,7 @@ menu_can_scan(
 /*
 **	menu_search(menu-structure, cap)
 **
-**	Recursivly search the menu tree and execute any tests that use cap.
+**	Recursively search the menu tree and execute any tests that use cap.
 */
 static void
 menu_search(

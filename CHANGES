@@ -1,3 +1,11 @@
+2005-09-17  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* ansi.c, pad.c, sysdep.c: FROM_KEYS
+
+	* menu.c, scan.c, tack.c: from ncurses
+
+	* COPYING: fix address
+
 2003-11-29  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* install-sh: resync with my-autoconf

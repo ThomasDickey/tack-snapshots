@@ -15,20 +15,30 @@
 ** 
 ** You should have received a copy of the GNU General Public License
 ** along with TACK; see the file COPYING.  If not, write to
-** the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-** Boston, MA 02111-1307, USA.
+** the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+** Boston, MA 02110-1301, USA
 */
 /*
- * Operating system dependant functions.  We assume the POSIX API.
+ * Operating system dependent functions.  We assume the POSIX API.
  * Note: on strict-POSIX systems (including BSD/OS) the select_delay_type
  * global has no effect.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <ncurses_cfg.h>
+#endif
+#include <signal.h>	/* include before curses.h to work around glibc bug */
+
 #include <tack.h>
 
-#include <signal.h>
-#include <termios.h>
+#include <term.h>
 #include <errno.h>
+
+#if defined(__BEOS__)
+#undef false
+#undef true
+#include <OS.h>
+#endif
 
 #if HAVE_SELECT
 #if HAVE_SYS_TIME_H && HAVE_SYS_TIME_SELECT
@@ -39,25 +49,39 @@
 #endif
 #endif
 
-MODULE_ID("$Id: sysdep.c,v 1.7 1998/01/10 00:31:49 Daniel.Weaver Exp $")
+MODULE_ID("$Id: sysdep.c,v 1.15 2005/09/17 19:49:16 tom Exp $")
 
 #if DECL_ERRNO
 extern int errno;
 #endif
 
+#ifdef TERMIOS
+#define PUT_TTY(fd, buf) tcsetattr(fd, TCSAFLUSH, buf)
+#else
+#define PUT_TTY(fd, buf) stty(fd, buf)
+#endif
+
 /* globals */
 int tty_frame_size;		/* asynch frame size times 2 */
-unsigned long tty_baud_rate;	/* baud rate - bits per second */
+unsigned tty_baud_rate;		/* baud rate - bits per second */
 int not_a_tty;			/* TRUE if output is not a tty (i.e. pipe) */
 int nodelay_read;		/* TRUE if NDELAY is set */
 
+#ifdef TERMIOS
 #define TTY_IS_NOECHO	!(new_modes.c_lflag & ECHO)
 #define TTY_IS_OUT_TRANS (new_modes.c_oflag & OPOST)
 #define TTY_IS_CHAR_MODE !(new_modes.c_lflag & ICANON)
 #define TTY_WAS_CS8 ((old_modes.c_cflag & CSIZE) == CS8)
 #define TTY_WAS_XON_XOFF (old_modes.c_iflag & (IXON|IXOFF))
+#else
+#define TTY_IS_NOECHO	!(new_modes.sg_flags & (ECHO))
+#define TTY_IS_OUT_TRANS (new_modes.sg_flags & (CRMOD))
+#define TTY_IS_CHAR_MODE (new_modes.sg_flags & (RAW|CBREAK))
+#define TTY_WAS_CS8	 (old_modes.sg_flags & (PASS8))
+#define TTY_WAS_XON_XOFF (old_modes.sg_flags & (TANDEM|MDMBUF|DECCTQ))
+#endif
 
-struct termios old_modes, new_modes;
+static TTY old_modes, new_modes;
 
 void catchsig(void);
 
@@ -85,6 +109,7 @@ void
 tty_raw(int minch GCC_UNUSED, int mask)
 {				/* set tty to raw noecho */
 	new_modes = old_modes;
+#ifdef TERMIOS
 #if HAVE_SELECT
 	new_modes.c_cc[VMIN] = 1;
 #else
@@ -104,15 +129,19 @@ tty_raw(int minch GCC_UNUSED, int mask)
 	new_modes.c_iflag &=
 		~(IGNBRK | BRKINT | IGNPAR | PARMRK | INPCK | ISTRIP | INLCR | IGNCR | ICRNL |
 		IUCLC | IXON | IXANY | IXOFF);
+#else
+	new_modes.sg_flags |= RAW;
+#endif
 	if (not_a_tty)
 		return;
-	tcsetattr(fileno(stdin), TCSAFLUSH, &new_modes);
+	PUT_TTY(fileno(stdin), &new_modes);
 }
 
 void 
 tty_set(void)
 {				/* set tty to special modes */
 	new_modes = old_modes;
+#ifdef TERMIOS
 	new_modes.c_cc[VMIN] = 1;
 	new_modes.c_cc[VTIME] = 1;
 	new_modes.c_lflag &= ~(ISIG | ICANON | ECHO | ECHOE | ECHOK | ECHONL);
@@ -128,7 +157,7 @@ tty_set(void)
 		new_modes.c_iflag &= ~(IXON | IXOFF);
 		break;
 	case 1:
-#if sequent
+#if defined(sequent) && sequent
 		/* the sequent System V emulation is broken */
 		new_modes = old_modes;
 		new_modes.c_cc[VEOL] = 6;	/* control F  (ACK) */
@@ -153,11 +182,14 @@ tty_set(void)
 #endif	/* NL1 */
 		break;
 	}
-	if (!(new_modes.c_oflag & ~OPOST))
-		new_modes.c_oflag &= ~OPOST;
+	if (!(new_modes.c_oflag & (unsigned long) ~OPOST))
+		new_modes.c_oflag &= (unsigned long) ~OPOST;
+#else
+	new_modes.sg_flags |= RAW;
 	if (not_a_tty)
 		return;
-	tcsetattr(fileno(stdin), TCSAFLUSH, &new_modes);
+#endif
+	PUT_TTY(fileno(stdin), &new_modes);
 }
 
 
@@ -167,23 +199,23 @@ tty_reset(void)
 	fflush(stdout);
 	if (not_a_tty)
 		return;
-	tcsetattr(fileno(stdin), TCSAFLUSH, &old_modes);
+	PUT_TTY(fileno(stdin), &old_modes);
 }
 
 
 void 
 tty_init(void)
 {				/* ATT terminal init */
-#ifdef F_GETFL
+#if defined(F_GETFL) && defined(O_NDELAY)
 	int flags;
 
 	flags = fcntl(fileno(stdin), F_GETFL, 0);
 	nodelay_read = flags & O_NDELAY;
 #else
-	   nodelay_read = FALSE;
+	nodelay_read = FALSE;
 #endif
 	not_a_tty = FALSE;
-	if (tcgetattr(fileno(stdin), &old_modes) == -1) {
+	if (GET_TTY(fileno(stdin), &old_modes) == -1) {
 		if (errno == ENOTTY) {
 			tty_frame_size = 20;
 			not_a_tty = TRUE;
@@ -194,10 +226,12 @@ tty_init(void)
 	}
 	/* if TAB3 is set then setterm() wipes out tabs (ht) */
 	new_modes = old_modes;
+#ifdef TERMIOS
 #ifdef TABDLY
 	new_modes.c_oflag &= ~TABDLY;
 #endif	/* TABDLY */
-	if (tcsetattr(fileno(stdin), TCSAFLUSH, &new_modes) == -1) {
+#endif
+	if (PUT_TTY(fileno(stdin), &new_modes) == -1) {
 		printf("tcsetattr error: %d\n", errno);
 		exit(1);
 	}
@@ -207,23 +241,36 @@ tty_init(void)
 	old_modes.c_cflag |= CS7 | PARENB;
 #endif
 	catchsig();
+#ifdef TERMIOS
 	switch (old_modes.c_cflag & CSIZE) {
+#if defined(CS5) && (CS5 != 0)
 	case CS5:
 		tty_frame_size = 10;
 		break;
+#endif
+#if defined(CS6) && (CS6 != 0)
 	case CS6:
 		tty_frame_size = 12;
 		break;
+#endif
+#if defined(CS7) && (CS7 != 0)
 	case CS7:
 		tty_frame_size = 14;
 		break;
+#endif
+#if defined(CS8) && (CS8 != 0)
 	case CS8:
 		tty_frame_size = 16;
 		break;
+#endif
 	}
 	tty_frame_size += 2 +
 		((old_modes.c_cflag & PARENB) ? 2 : 0) +
 		((old_modes.c_cflag & CSTOPB) ? 4 : 2);
+#else
+	tty_frame_size = 6 +
+		(old_modes.sg_flags & PASS8) ? 16 : 14;
+#endif
 }
 
 /*
@@ -262,7 +309,7 @@ initial_stty_query(int q)
 	return (-1);
 }
 
-#if HAVE_SELECT
+#if HAVE_SELECT && defined(FD_ZERO)
 static int
 char_ready(void)
 {
@@ -295,7 +342,17 @@ char_ready(void)
 }
 
 #else
+#if defined(__BEOS__)
+int
+char_ready(void)
+{
+	int n = 0;
+	int howmany = ioctl(0, 'ichr', &n);
+	return (howmany >= 0 && n > 0);
+}
+#else
 #define char_ready() 1
+#endif
 #endif
 #endif
 
@@ -342,7 +399,7 @@ read_key(char *buf, int max)
 		if (ask > max) {
 			ask = max;
 		}
-		if ((got = read(fileno(stdin), s, ask))) {
+		if ((got = read(fileno(stdin), s, (unsigned) ask))) {
 			s += got;
 		} else {
 			break;
@@ -354,7 +411,7 @@ read_key(char *buf, int max)
 	for (s = buf, i = 0; i < l; i++) {
 		if ((*s & 0x7f) == 0) {
 			/* convert nulls to 0x80 */
-			*s = 128;
+			*(unsigned char *)s = 128;
 		} else {
 			/* strip high order bits (if any) */
 			*s &= char_mask;
@@ -443,5 +500,5 @@ set_alarm_clock(
 {
 	signal(SIGALRM, alarm_event);
 	no_alarm_event = 1;
-	(void) alarm(seconds);
+	(void) alarm((unsigned) seconds);
 }
