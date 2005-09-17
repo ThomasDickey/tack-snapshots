@@ -15,13 +15,13 @@
 ** 
 ** You should have received a copy of the GNU General Public License
 ** along with TACK; see the file COPYING.  If not, write to
-** the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-** Boston, MA 02111-1307, USA.
+** the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+** Boston, MA 02110-1301, USA
 */
 
 #include <tack.h>
 
-MODULE_ID("$Id: ansi.c,v 1.6 1998/01/10 00:32:51 Daniel.Weaver Exp $")
+MODULE_ID("$Id: ansi.c,v 1.10 2005/09/17 19:49:16 tom Exp $")
 
 /*
  * Standalone tests for ANSI terminals.  Three entry points:
@@ -45,10 +45,9 @@ MODULE_ID("$Id: ansi.c,v 1.6 1998/01/10 00:32:51 Daniel.Weaver Exp $")
 #define MAX_MODES 256
 
 static char default_bank[] = "\033(B\017";
-static int private_use, ape, terminal_class, got_escape;
+static int private_use, ape, terminal_class;
 static short ansi_value[256];
-static char ansi_buf[512], pack_buf[512];
-static char *ach, *pch;
+static unsigned char ansi_buf[512], pack_buf[512];
 
 struct ansi_reports {
 	int lvl, final;
@@ -71,7 +70,7 @@ static struct ansi_reports report_list[] = {
 	{63, 0, "(DECRQSS) Top and bottom margins", "\033P$qr\033\\"},
 	{63, 0, "(DECRQSS) Character attributes", "\033P$qm\033\\"},
 	{63, 0, "(DECRQSS) Illegal request", "\033P$q@\033\\"},
-	{63, 0, "(DECRQUPSS) User pref suplemental set", "\033[&u"},
+	{63, 0, "(DECRQUPSS) User pref supplemental set", "\033[&u"},
 	{63, 0, "(DECRQPSR) Cursor information", "\033[1$w"},
 	{63, 0, "(DECRQPSR) Tab stop information", "\033[2$w"},
 	{64, 0, "(DA) Tertiary device attributes", "\033[=0c"},
@@ -103,68 +102,26 @@ struct request_control {
 /* Request control function selection or setting */
 static const struct request_control rqss[] = {
 	{"Data sent to screen", "0", "$}", "\033[0$}", 0},
-	{"Data sent to disabled status line", "0", "$}"},
-	{"\033[0$~\033[1$}", "\033[0$}"},
-	{"Data sent to enabled status line", "1", "$}"},
-	{"\033[2$~\033[1$}", "\033[0$}"},
-	{"Disbale status line", "0", "$~", "\033[0$~", 0},
+	{"Data sent to disabled status line", "0", "$}", 0, 0},
+	{"\033[0$~\033[1$}", "\033[0$}", 0, 0, 0},
+	{"Data sent to enabled status line", "1", "$}", 0, 0},
+	{"\033[2$~\033[1$}", "\033[0$}", 0, 0, 0},
+	{"Disable status line", "0", "$~", "\033[0$~", 0},
 	{"Top status line", "1", "$~", "\033[1$~", 0},
 	{"Bottom status line", "2", "$~", "\033[2$~", 0},
-	{"Eraseable character", "0", "\"q", "\033[0\"q", 0},
-	{"Noneraseable character", "1", "\"q", "\033[1\"q", "\033[0\"q"},
-	{"Top and bottom margins", "3;10", "r", "\0337\033[3;10r"},
-	{"\033[r\0338"},
+	{"Erasable character", "0", "\"q", "\033[0\"q", 0},
+	{"Nonerasable character", "1", "\"q", "\033[1\"q", "\033[0\"q"},
+	{"Top and bottom margins", "3;10", "r", "\0337\033[3;10r", 0},
+	{"\033[r\0338", 0, 0, 0, 0},
 	{"Top and bottom margins", "default", "r", "\0337\033[r", "\0338"},
 	{"Character attributes, dim, bold", "1", "m", "\033[2;1m", "\033[m"},
 	{"Character attributes, bold, dim", "2", "m", "\033[1;2m", "\033[m"},
 	{"Character attributes, under, rev", "4;7", "m", "\033[4;7m", "\033[m"},
 	{"Character attributes, color", "35;42", "m", "\033[35;42m", "\033[m"},
-	{"All character attributes", "", "m", "\033[1;2;3;4;5;6;7;8;9m"},
-	{"\033[m"},
+	{"All character attributes", "", "m", "\033[1;2;3;4;5;6;7;8;9m", 0},
+	{"\033[m", 0, 0, 0, 0},
 	{0, 0, 0, 0, 0}
 };
-
-/*
-**	pack_ansi()
-**
-**	read and pack an ANSI character
-*/
-static int 
-pack_ansi(void)
-{
-	int ch;
-
-	if (*pch)
-		return *pch++;
-
-	while (1) {
-		ch = getchp(char_mask);
-		if (ch == EOF)
-			return EOF;
-		if (ch == A_DC1 || ch == A_DC3)
-			continue;
-		*ach++ = ch;
-		*ach = '\0';
-		if (got_escape && ch >= ' ') {
-			got_escape = 0;
-			if (ch < '@' || ch > '_') {
-				*pch++ = A_ESC;
-				*pch = ch;
-				pch[1] = '\0';
-				return A_ESC;
-			}
-			ch += 0x40;
-			break;
-		} else if (ch == A_ESC) {
-			got_escape = 1;
-		} else {
-			break;
-		}
-	}
-	*pch++ = ch;
-	*pch = '\0';
-	return ch;
-}
 
 
 /*
@@ -175,34 +132,36 @@ pack_ansi(void)
 static void
 read_ansi(void)
 {
-	int ch;
+	int ch, i, j, last_escape;
 
 	fflush(stdout);
-	ach = ansi_buf;
-	pch = pack_buf;
-	ansi_buf[0] = pack_buf[0] = '\0';
-	got_escape = 0;
-	ch = pack_ansi();
-	if (ch == A_ESC)
-		do {
-			ch = pack_ansi();
-			if (ch == EOF)
-				return;
-		} while (ch < '0' || ch > '~');
-	else
-	if (ch == A_CSI)
-		do {
-			ch = pack_ansi();
-			if (ch == EOF)
-				return;
-		} while (ch < '@' || ch > '~');
-	else
-	if (ch == A_DCS)
-		do {
-			ch = pack_ansi();
-			if (ch == EOF)
-				return;
-		} while (ch != A_ST);
+	read_key((char *)ansi_buf, sizeof(ansi_buf));
+	/* Throw away control characters inside CSI sequences.
+	   Convert two character 7-bit sequences into 8-bit sequences. */
+	for (i = j = last_escape = 0; (ch = ansi_buf[i]) != 0; i++) {
+		if (ch == A_ESC) {
+			if (last_escape == A_ESC) {
+				pack_buf[j++] = A_ESC;
+			}
+			last_escape = A_ESC;
+		} else
+		if (last_escape == A_ESC && ch >= '@' && ch <= '_') {
+			pack_buf[j++] = last_escape = ch + 0x40;
+		} else
+		if (last_escape != A_CSI || (ch > 0x20 && ch != 0x80)) {
+			if (last_escape == A_ESC) {
+				pack_buf[j++] = A_ESC;
+			}
+			if (ch > 0x80 && ch < 0xa0) {
+				last_escape = ch;
+			}
+			pack_buf[j++] = ch;
+		}
+	}
+	if (last_escape == A_ESC) {
+		pack_buf[j++] = A_ESC;
+	}
+	pack_buf[j] = '\0';
 	return;
 }
 
@@ -215,13 +174,13 @@ read_ansi(void)
 static int
 valid_mode(int expected)
 {
-	char *s;
+	unsigned char *s;
 	int ch, terminator;
 
 	read_ansi();
 
 	ape = 0;
-	ch = pack_buf[0] & 0xff;
+	ch = UChar(pack_buf[0]);
 	ansi_value[0] = 0;
 	if (ch != A_CSI && ch != A_DCS)
 		return FALSE;
@@ -257,6 +216,7 @@ read_reports(void)
 {
 	int i, j, k, tc, vcr, lc;
 	char *s;
+	const char *t;
 
 	lc = 5;
 	terminal_class = tc = 0;
@@ -265,11 +225,12 @@ read_reports(void)
 			tc < report_list[i].lvl) {
 			put_crlf();
 			menu_prompt();
-			ptext(" <return> to continue > ");
+			ptext("/status [q] > ");
 			j = wait_here();
-			if (j != 'c' && j != 'C')
-				return j;
+			if (j != 'n' && j != 'N')
+				return 0;
 			tc = report_list[i].lvl;
+			lc = 1;
 		} else if (lc + 2 >= lines) {
 			put_crlf();
 			ptext("Hit any key to continue ");
@@ -294,16 +255,20 @@ read_reports(void)
 				vcr = TRUE;
 				break;
 			}
-		j = pack_buf[0] & 0xff;
-		if (j == A_CSI || j == A_DCS) {
-			s = expand(ansi_buf);
-			if (char_count + expand_chars >= columns) {
-				put_str("\r\n        ");
-				lc++;
-			}
-			put_str(s);
+		j = UChar(pack_buf[0]);
+		if (j != A_CSI && j != A_DCS) {
+			put_crlf();
+			t = "*** The above request gives illegal response ***";
+			ptext(t);
+			for (j = strlen(t); j < 49; j++)
+				putchp(' ');
 		}
-		put_crlf();
+		s = expand((const char *)ansi_buf);
+		if (char_count + expand_chars >= columns) {
+			put_str("\r\n        ");
+			lc++;
+		}
+		putln(s);
 		if (vcr) {	/* find out how big the screen is */
 			tc_putp(report_list[i].request);
 			if (!valid_mode('R'))
@@ -324,7 +289,7 @@ read_reports(void)
 		}
 	}
 	menu_prompt();
-	ptext(" r->repeat test, <return> to continue > ");
+	ptext("/status r->repeat test, <return> to continue > ");
 	return wait_here();
 }
 
@@ -358,14 +323,14 @@ request_cfss(void)
 		putchp(' ');
 		for (j = 0; ansi_buf[j]; j++) {
 			if (ansi_buf[j] == 'r') {
-				for (k = j++; (ch = (ansi_buf[k] & 0xff)); k++)
+				for (k = j++; (ch = UChar(ansi_buf[k])) != 0; k++)
 					if (ch == A_ESC) {
 						break;
 					} else if (ch == A_ST) {
 						break;
 					}
 				ansi_buf[k] = '\0';
-				s = expand(&ansi_buf[j]);
+				s = expand((const char *)&ansi_buf[j]);
 				if (char_count + expand_chars >= columns)
 					put_str("\r\n        ");
 				put_str(s);
@@ -468,7 +433,7 @@ terminal_state(void)
 				tc_putp(temp);
 				if (!valid_mode(('$' << 8) | 'y')) {
 					/* not valid, save terminating value */
-					s = expand(ansi_buf);
+					s = expand((const char *)ansi_buf);
 					sprintf(tms, "%s%s%d %s  ", tms,
 						puc[i], j, s);
 					break;
@@ -610,7 +575,7 @@ ansi_report_help(void)
 	ptext("Begin ANSI status report testing. ");
 	ptext(" Parity bit set will be displayed in reverse video. ");
 	ptext(" If the terminal hangs, hit any alphabetic key. ");
-	ptextln(" Use c to continue testing.  Use any other letter to quit.");
+	ptextln(" Use n to continue testing.  Use q to quit.");
 	put_crlf();
 }
 
