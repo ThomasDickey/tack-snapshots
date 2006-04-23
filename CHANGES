@@ -1,3 +1,7 @@
+2006-04-22  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* tack.1: FROM_KEYS
+
 2005-09-17  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* ansi.c, pad.c, sysdep.c: FROM_KEYS
