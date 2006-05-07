@@ -15,14 +15,14 @@
 ** 
 ** You should have received a copy of the GNU General Public License
 ** along with TACK; see the file COPYING.  If not, write to
-** the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-** Boston, MA 02111-1307, USA.
+** the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+** Boston, MA 02110-1301, USA
 */
 
 #include <tack.h>
 #include <time.h>
 
-MODULE_ID("$Id: sync.c,v 1.5 1998/01/10 00:31:07 Daniel.Weaver Exp $")
+MODULE_ID("$Id: sync.c,v 1.9 2006/05/06 20:45:48 tom Exp $")
 
 /* terminal-synchronization and performance tests */
 
@@ -31,7 +31,7 @@ static void sync_lines(struct test_list *, int *, int *);
 static void sync_clear(struct test_list *, int *, int *);
 static void sync_summary(struct test_list *, int *, int *);
 
-struct test_list sync_test_list[] = {
+static struct test_list sync_test_list[] = {
 	{MENU_NEXT, 0, 0, 0, "b) baud rate test", sync_home, 0},
 	{MENU_NEXT, 0, 0, 0, "l) scroll performance", sync_lines, 0},
 	{MENU_NEXT, 0, 0, 0, "c) clear screen performance", sync_clear, 0},
@@ -48,16 +48,16 @@ struct test_menu sync_menu = {
 };
 
 int tty_can_sync;		/* TRUE if tty_sync_error() returned FALSE */
-int tty_newline_rate;		/* The number of newlines per second */
-int tty_clear_rate;		/* The number of clear-screens per second */
-int tty_cps;			/* The number of characters per second */
+static int tty_newline_rate;	/* The number of newlines per second */
+static int tty_clear_rate;	/* The number of clear-screens per second */
+unsigned long tty_cps;		/* The number of characters per second */
 
 #define TTY_ACK_SIZE 64
 
-int ACK_terminator;		/* terminating ACK character */
-int ACK_length;			/* length of ACK string */
-const char *tty_ENQ;		/* enquire string */
-char tty_ACK[TTY_ACK_SIZE];	/* ACK response, set by tty_sync_error() */
+static int ACK_terminator;	/* terminating ACK character */
+static int ACK_length;		/* length of ACK string */
+static const char *tty_ENQ;	/* enquire string */
+static char tty_ACK[TTY_ACK_SIZE]; /* ACK response, set by tty_sync_error() */
 
 /*****************************************************************************
  *
@@ -143,7 +143,11 @@ probe_enq_ok(void)
 	fflush(stdout);
 	can_test("u8 u9", FLAG_TESTED);
 
+#ifdef user9
 	tty_ENQ = user9 ? user9 : "\005";
+#else
+	tty_ENQ = "\005";
+#endif
 	tc_putp(tty_ENQ);
 	event_start(TIME_SYNC);	/* start the timer */
 	read_key(tty_ACK, TTY_ACK_SIZE - 1);
@@ -157,18 +161,24 @@ probe_enq_ok(void)
 		ptextln(" the terminal is overrun with data.");
 		ptext("\nENQ sequence from (u9): ");
 		putln(expand(tty_ENQ));
-		ptext("ACK recieved: ");
+		ptext("ACK received: ");
 		putln(expand(tty_ACK));
+#ifdef user8
 		len = user8 ? strlen(user8) : 0;
+#else
+		len = 0;
+#endif
 		sprintf(temp, "Length of ACK %d.  Expected length of ACK %d.",
 			(int) strlen(tty_ACK), len);
 		ptextln(temp);
+#ifdef user8
 		if (len) {
 			temp[0] = user8[len - 1];
 			temp[1] = '\0';
 			ptext("Terminating character found in (u8): ");
 			putln(expand(temp));
 		}
+#endif
 		return;
 	}
 
@@ -180,6 +190,7 @@ probe_enq_ok(void)
 		return;
 	}
 	tc = tty_ACK[len - 1];
+#ifdef user8
 	if (user8) {
 		ulen = strlen(user8);
 		if (tc == user8[ulen - 1]) {
@@ -189,6 +200,7 @@ probe_enq_ok(void)
 			return;
 		}
 	}
+#endif
 	/* fixed length acknowledge string */
 	ACK_length = len;
 	ACK_terminator = -2;
@@ -244,7 +256,7 @@ verify_time(void)
 **
 **	Baudrate test
 */
-void
+static void
 sync_home(
 	struct test_list *t,
 	int *state,
@@ -287,7 +299,7 @@ sync_home(
 	if (tx_cps > tty_cps) {
 		tty_cps = tx_cps;
 	}
-	sprintf(temp, "%d characters per second.  Baudrate %d  ", tx_cps, j);
+	sprintf(temp, "%lu characters per second.  Baudrate %d  ", tx_cps, j);
 	ptext(temp);
 	generic_done_message(t, state, ch);
 }
@@ -368,7 +380,7 @@ sync_clear(
 }
 
 /*
-**	sync_symmary(test_list, status, ch)
+**	sync_summary(test_list, status, ch)
 **
 **	Print out the test results.
 */
@@ -383,7 +395,7 @@ sync_summary(
 	put_crlf();
 	ptextln("Terminal  size    characters/sec linefeeds/sec  clears/sec");
 	sprintf(size, "%dx%d", columns, lines);
-	sprintf(temp, "%-10s%-11s%11d   %11d %11d", tty_basename, size,
+	sprintf(temp, "%-10s%-11s%11lu   %11d %11d", tty_basename, size,
 		tty_cps, tty_newline_rate, tty_clear_rate);
 	ptextln(temp);
 	generic_done_message(t, state, ch);
