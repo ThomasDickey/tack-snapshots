@@ -1,3 +1,7 @@
+2006-06-24  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* control.c, edit.c: FROM_KEYS
+
 2006-05-06  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* sync.c: FROM_KEYS

@@ -15,8 +15,8 @@
 ** 
 ** You should have received a copy of the GNU General Public License
 ** along with TACK; see the file COPYING.  If not, write to
-** the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-** Boston, MA 02111-1307, USA.
+** the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+** Boston, MA 02110-1301, USA
 */
 
 #include <tack.h>
@@ -25,7 +25,7 @@
 #include <sys/time.h>
 #endif
 
-MODULE_ID("$Id: control.c,v 1.7 1998/01/10 00:34:23 Daniel.Weaver Exp $")
+MODULE_ID("$Id: control.c,v 1.9 2006/06/24 21:27:53 tom Exp $")
 
 /* terminfo test program control subroutines */
 
@@ -40,11 +40,11 @@ int test_complete;		/* counts number of tests completed */
 
 char txt_longer_test_time[80];	/* +) use longer time */
 char txt_shorter_test_time[80];	/* -) use shorter time */
-int pad_test_duration = 1;	/* number of seconds for a pad test */
+static int pad_test_duration = 1;	/* number of seconds for a pad test */
 int auto_pad_mode;		/* run the time tests */
 int no_alarm_event;		/* TRUE if the alarm has not gone off yet */
-int usec_run_time;		/* length of last test in microseconds */
-MY_TIMER stop_watch[MAX_TIMERS]; /* Hold the start timers */
+unsigned long usec_run_time;	/* length of last test in microseconds */
+static MY_TIMER stop_watch[MAX_TIMERS]; /* Hold the start timers */
 
 char txt_longer_augment[80];	/* >) use bigger augment */
 char txt_shorter_augment[80];	/* <) use smaller augment */
@@ -52,30 +52,35 @@ char txt_shorter_augment[80];	/* <) use smaller augment */
 /* caps under test data base */
 int tt_delay_max;		/* max number of milliseconds we can delay */
 int tt_delay_used;		/* number of milliseconds consumed in delay */
-char *tt_cap[TT_MAX];		/* value of string */
-int tt_affected[TT_MAX];	/* lines or columns effected (repitition factor) */
+const char *tt_cap[TT_MAX];	/* value of string */
+int tt_affected[TT_MAX];	/* lines or columns effected (repetition factor) */
 int tt_count[TT_MAX];		/* Number of times sent */
 int tt_delay[TT_MAX];		/* Number of milliseconds delay */
 int ttp;			/* number of entries used */
 
 /* Saved value of the above data base */
-char *tx_cap[TT_MAX];		/* value of string */
-int tx_affected[TT_MAX];	/* lines or columns effected (repitition factor) */
+const char *tx_cap[TT_MAX];	/* value of string */
+int tx_affected[TT_MAX];	/* lines or columns effected (repetition factor) */
 int tx_count[TT_MAX];		/* Number of times sent */
 int tx_index[TT_MAX];		/* String index */
 int tx_delay[TT_MAX];		/* Number of milliseconds delay */
 int txp;			/* number of entries used */
 int tx_characters;		/* printing characters sent by test */
-int tx_cps;			/* characters per second */
-struct test_list *tx_source;	/* The test that generated this data */
-
-extern struct test_menu pad_menu;	/* Pad menu structure */
-extern struct test_list pad_test_list[];
+unsigned long tx_cps;		/* characters per second */
+static struct test_list *tx_source;	/* The test that generated this data */
 
 #define RESULT_BLOCK		1024
 static int blocks;		/* number of result blocks available */
 static struct test_results *results;	/* pointer to next available */
-struct test_results *pads[STRCOUNT];	/* save pad results here */
+static struct test_results **pads;	/* save pad results here */
+
+static void
+alloc_arrays(void)
+{
+    	if (pads == 0) {
+	    	pads = (struct test_results **)calloc(MAX_STRINGS, sizeof(struct test_results *));
+	}
+}
 
 /*
 **	event_start(number)
@@ -365,7 +370,7 @@ int
 sliding_scale(
 	int dividend,
 	int factor,
-	int divisor)
+	unsigned long divisor)
 {
 	double d = dividend;
 
@@ -432,6 +437,7 @@ pad_test_shutdown(
 	struct test_results *r;		/* Results of current test */
 	int ss_index[TT_MAX];		/* String index */
 
+	alloc_arrays();
 	if (tty_can_sync == SYNC_TESTED) {
 		bogus = tty_sync_error();
 	} else {
@@ -444,7 +450,7 @@ pad_test_shutdown(
 
 	/* save the data base */
 	for (txp = ss = counts = 0; txp < ttp; txp++) {
-		tx_cap[txp]   = (char *)tt_cap[txp];
+		tx_cap[txp]   = tt_cap[txp];
 		tx_count[txp] = tt_count[txp];
 		tx_delay[txp] = tt_delay[txp];
 		tx_affected[txp] = tt_affected[txp];
@@ -495,12 +501,13 @@ show_cap_results(
 	struct test_results *r;		/* a result */
 	int delay;
 
+	alloc_arrays();
 	if ((r = pads[x])) {
 		sprintf(temp, "(%s)", strnames[x]);
 		ptext(temp);
 		while (r) {
 			sprintf(temp, "$<%d>", r->delay / 1000);
-			put_columns(temp, strlen(temp), 10);
+			put_columns(temp, (int) strlen(temp), 10);
 			r = r->next;
 		}
 		r = pads[x];
@@ -508,7 +515,7 @@ show_cap_results(
 			if (r->reps > 1) {
 				delay = r->delay / (r->reps * 100);
 				sprintf(temp, "$<%d.%d*>", delay / 10, delay % 10);
-				put_columns(temp, strlen(temp), 10);
+				put_columns(temp, (int) strlen(temp), 10);
 			}
 			r = r->next;
 		}
@@ -544,9 +551,9 @@ dump_test_stats(
 			put_crlf();
 		}
 	}
-	sprintf(tbuf, "%011u", usec_run_time);
-	sprintf(temp, "Test time: %d.%s, characters per second %d, characters %d",
-		usec_run_time / 1000000, &tbuf[5], tx_cps, tx_characters);
+	sprintf(tbuf, "%011lu", usec_run_time);
+	sprintf(temp, "Test time: %lu.%s, characters per second %lu, characters %d",
+		usec_run_time / 1000000UL, &tbuf[5], tx_cps, tx_characters);
 	ptextln(temp);
 	for (i = 0; i < txp; i++) {
 		if ((j = get_string_cap_byvalue(tx_cap[i])) >= 0) {
