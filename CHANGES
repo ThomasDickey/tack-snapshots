@@ -1,3 +1,15 @@
+2006-11-25  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* output.c: FROM_KEYS
+
+	* modes.c: from ncurses
+
+	* init.c, fun.c: FROM_KEYS
+
+	* crum.c: from ncurses
+
+	* color.c, charset.c, tack.h: FROM_KEYS
+
 2006-06-24  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* control.c, edit.c: FROM_KEYS
