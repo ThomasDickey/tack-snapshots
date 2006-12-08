@@ -15,15 +15,15 @@
 ** 
 ** You should have received a copy of the GNU General Public License
 ** along with TACK; see the file COPYING.  If not, write to
-** the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-** Boston, MA 02111-1307, USA.
+** the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+** Boston, MA 02110-1301, USA
 */
 /* screen formatting and I/O utility functions */
 
 #include <tack.h>
 #include <time.h>
 
-MODULE_ID("$Id: output.c,v 1.6 1998/01/10 00:30:15 Daniel.Weaver Exp $")
+MODULE_ID("$Id: output.c,v 1.11 2006/11/26 00:16:49 tom Exp $")
 
 /* globals */
 long char_sent;			/* number of characters sent */
@@ -34,7 +34,7 @@ int replace_mode;		/* used to output replace mode padding */
 int can_go_home;		/* TRUE if we can fashion a home command */
 int can_clear_screen;		/* TRUE if we can somehow clear the screen */
 int raw_characters_sent;	/* Total output characters */
-int log_count;			/* Number of characters on a log line */
+static int log_count;		/* Number of characters on a log line */
 
 /* translate mode default strings */
 #define TM_carriage_return	TM_string[0].value
@@ -122,7 +122,7 @@ tc_putch(int c)
 	}
 	if (log_fp) {
 		/* terminal output logging */
-		c &= 0xff;
+		c = UChar(c);
 		if (c < 32) {
 			fprintf(log_fp, "<%s>", c0[c]);
 			log_count += 5;
@@ -156,7 +156,7 @@ tt_tputs(const char *string, int reps)
 	if (string) {
 		for (i = 0; i < TT_MAX; i++) {
 			if (i >= ttp) {
-				tt_cap[i] = (char *)string;
+				tt_cap[i] = string;
 				tt_affected[i] = reps;
 				tt_count[i] = 1;
 				tt_delay[i] = msec_cost(string, reps);
@@ -186,14 +186,14 @@ tt_putp(const char *string)
 }
 
 /*
-**	tt_putparm(string, reps, arg1, arg2, ...)
+**	tt_putparm(string, reps, arg1, arg2)
 **
-**	Send tt_tputs(tparm(string, args...), reps)
+**	Send tt_tputs(tparm(string, args1, arg2), reps)
 **	Use this function inside timing tests.
 */
 void
 tt_putparm(
-	const char *string,
+	NCURSES_CONST char *string,
 	int reps,
 	int arg1,
 	int arg2)
@@ -203,7 +203,7 @@ tt_putparm(
 	if (string) {
 		for (i = 0; i < TT_MAX; i++) {
 			if (i >= ttp) {
-				tt_cap[i] = (char *)string;
+				tt_cap[i] = string;
 				tt_affected[i] = reps;
 				tt_count[i] = 1;
 				tt_delay[i] = msec_cost(string, reps);
@@ -216,7 +216,7 @@ tt_putparm(
 				break;
 			}
 		}
-		(void) tputs(tparm(string, arg1, arg2), reps, tc_putch);
+		(void) tputs(TPARM_2((NCURSES_CONST char *)string, arg1, arg2), reps, tc_putch);
 	}
 }
 
@@ -409,8 +409,8 @@ put_columns(const char *s, int len, int w)
 **	ptext(string)
 **
 **	Output a string but do not assume the terminal will wrap to a
-**	new line.  Break the line at a word boundry then send a CR LF.
-**	This is more estetic on 40 column terminals.
+**	new line.  Break the line at a word boundary then send a CR LF.
+**	This is more esthetic on 40 column terminals.
 */
 void
 ptext(const char *s)
@@ -506,10 +506,10 @@ expand(const char *s)
 		for (; (ch = *s); s++) {
 			if ((ch & 0x80) && v) {	/* print it in reverse video
 						   mode */
-				strcpy(t, liberated(tparm(v)));
+				strcpy(t, liberated(TPARM_0(v)));
 				for (; *t; t++);
 				expand_one(ch & 0x7f, &t);
-				strcpy(t, liberated(tparm(exit_attribute_mode)));
+				strcpy(t, liberated(TPARM_0(exit_attribute_mode)));
 				for (; *t; t++);
 			} else {
 				expand_one(ch, &t);
@@ -561,7 +561,7 @@ hex_expand_to(char *s, int l)
 	char *t;
 
 	for (t = buf; *s; s++) {
-		sprintf(t, "%02X ", *s & 0xff);
+		sprintf(t, "%02X ", UChar(*s));
 		t += 3;
 		if (t - buf > (int) sizeof(buf) - 4) {
 			break;
@@ -584,13 +584,13 @@ expand_command(const char *c)
 	char *s;
 
 	s = buf;
-	for (i = FALSE; (ch = (*c & 0xff)); c++) {
+	for (i = FALSE; (ch = UChar(*c)) != 0; c++) {
 		if (i) {
 			*s++ = ' ';
 		}
 		i = TRUE;
 		if (ch < 32) {
-			j = c[1] & 0xff;
+			j = UChar(c[1]);
 			if (ch == '\033' && j >= '@' && j <= '_') {
 				ch = j - '@';
 				c++;
@@ -599,7 +599,7 @@ expand_command(const char *c)
 				for (j = 0; (*s = c0[ch][j++]); s++);
 		} else {
 			*s++ = ch;
-			j = c[1] & 0xff;
+			j = UChar(c[1]);
 			if (ch >= '0' && ch <= '9' &&
 				j >= '0' && j <= '9') {
 				i = FALSE;

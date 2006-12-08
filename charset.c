@@ -1,27 +1,27 @@
 /*
-** Copyright (C) 1991, 1997 Free Software Foundation, Inc.
-** 
+** Copyright (C) 1991, 1997-2000 Free Software Foundation, Inc.
+**
 ** This file is part of TACK.
-** 
+**
 ** TACK is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2, or (at your option)
 ** any later version.
-** 
+**
 ** TACK is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
 ** along with TACK; see the file COPYING.  If not, write to
-** the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-** Boston, MA 02111-1307, USA.
+** the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+** Boston, MA 02110-1301, USA
 */
 
 #include <tack.h>
 
-MODULE_ID("$Id: charset.c,v 1.5 1998/01/10 00:33:03 Daniel.Weaver Exp $")
+MODULE_ID("$Id: charset.c,v 1.11 2006/11/26 00:13:36 tom Exp $")
 
 /*
 	Menu definitions for alternate character set and SGR tests.
@@ -40,7 +40,7 @@ static void charset_smacs(struct test_list *t, int *state, int *ch);
 static void charset_attributes(struct test_list *t, int *state, int *ch);
 static void charset_sgr(struct test_list *t, int *state, int *ch);
 
-const struct test_list acs_test_list[] = {
+struct test_list acs_test_list[] = {
 	{0, 0, 0, 0, "e) edit terminfo", 0, &edit_menu},
 	{MENU_NEXT, 3, "bel", 0, 0, charset_bel, 0},
 	{MENU_NEXT, 3, "flash", 0, 0, charset_flash, 0},
@@ -159,7 +159,7 @@ charset_status(
 	ptextln(temp);
 
 	put_str("This line s");
-	s = tparm(to_status_line, 0);
+	s = TPARM_1(to_status_line, 0);
 	tc_putp(s);
 	for (i = 0; i < max; i++)
 		putchp(m[i]);
@@ -194,7 +194,7 @@ charset_dsl(
 }
 
 
-void 
+void
 eat_cookie(void)
 {				/* put a blank if this is not a magic cookie
 				   terminal */
@@ -203,11 +203,11 @@ eat_cookie(void)
 }
 
 
-void 
+void
 put_mode(char *s)
 {				/* send the attribute string (with or without
 				   % execution) */
-	tc_putp(tparm(s));		/* allow % execution */
+	tc_putp(TPARM_0(s));		/* allow % execution */
 }
 
 
@@ -226,7 +226,7 @@ set_attr(int a)
 	for (i = 0; i < 31; i++) {
 		b[i] = (a >> i) & 1;
 	}
-	tc_putp(tparm(set_attributes, b[1], b[2], b[3], b[4], b[5],
+	tc_putp(TPARM_9(set_attributes, b[1], b[2], b[3], b[4], b[5],
 			b[6], b[7], b[8], b[9]));
 }
 
@@ -285,10 +285,12 @@ charset_sgr(
 	}
 	put_crlf();
 
+#ifdef max_attributes
 	if (max_attributes >= 0) {
 		sprintf(temp, "(ma) Maximum attributes %d  ", max_attributes);
 		ptext(temp);
 	}
+#endif
 	generic_done_message(t, state, ch);
 }
 
@@ -369,7 +371,7 @@ charset_attributes(
 /*
 **	charset_smacs(test_list, status, ch)
 **
-**	display all posible acs characters
+**	display all possible acs characters
 **	(smacs) (rmacs)
 */
 static void
@@ -433,12 +435,12 @@ test_acs(
 					break;
 				}
 				if (glyph[j].name[0] == '\0') {
-					if (isgraph(acs_chars[i])) {
+					if (isgraph(UChar(acs_chars[i]))) {
 						sprintf(temp, "    %c",
 							acs_chars[i]);
 					} else {
 						sprintf(temp, " 0x%02x",
-							(acs_chars[i] & 0xff));
+							UChar(acs_chars[i]));
 					}
 					strcpy(&temp[5], " *** has no mapping ***");
 					putln(temp);
@@ -456,9 +458,7 @@ test_acs(
 	if (attr) {
 		set_attr(attr);
 	}
-	if (ena_acs) {
-		tc_putp(ena_acs);
-	}
+	_nc_init_acs();	/* puts 'ena_acs' and incidentally links acs_map[] */
 	for (i = 0; glyph[i].name[0]; i++) {
 		if (valid_glyph[glyph[i].c]) {
 			put_mode(enter_alt_charset_mode);
@@ -488,20 +488,20 @@ test_acs(
 #ifdef ACS_ULCORNER
 	maybe_wait(5);
 	put_mode(enter_alt_charset_mode);
-	put_this(ACS_ULCORNER);
-	put_this(ACS_TTEE);
-	put_this(ACS_URCORNER);
-	put_this(ACS_ULCORNER);
-	put_this(ACS_HLINE);
-	put_this(ACS_URCORNER);
+	put_that(ACS_ULCORNER);
+	put_that(ACS_TTEE);
+	put_that(ACS_URCORNER);
+	put_that(ACS_ULCORNER);
+	put_that(ACS_HLINE);
+	put_that(ACS_URCORNER);
 	char_count += 6;
 	put_mode(exit_alt_charset_mode);
 	put_crlf();
 	put_mode(enter_alt_charset_mode);
-	put_this(ACS_LTEE);
-	put_this(ACS_PLUS);
-	put_this(ACS_RTEE);
-	put_this(ACS_VLINE);
+	put_that(ACS_LTEE);
+	put_that(ACS_PLUS);
+	put_that(ACS_RTEE);
+	put_that(ACS_VLINE);
 	if (magic_cookie_glitch >= 1)
 		put_this(' ');
 	else {
@@ -509,18 +509,18 @@ test_acs(
 		put_this(' ');
 		put_mode(enter_alt_charset_mode);
 	}
-	put_this(ACS_VLINE);
+	put_that(ACS_VLINE);
 	char_count += 6;
 	put_mode(exit_alt_charset_mode);
 	put_str("   Here are 2 boxes");
 	put_crlf();
 	put_mode(enter_alt_charset_mode);
-	put_this(ACS_LLCORNER);
-	put_this(ACS_BTEE);
-	put_this(ACS_LRCORNER);
-	put_this(ACS_LLCORNER);
-	put_this(ACS_HLINE);
-	put_this(ACS_LRCORNER);
+	put_that(ACS_LLCORNER);
+	put_that(ACS_BTEE);
+	put_that(ACS_LRCORNER);
+	put_that(ACS_LLCORNER);
+	put_that(ACS_HLINE);
+	put_that(ACS_LRCORNER);
 	char_count += 6;
 	put_mode(exit_alt_charset_mode);
 	put_crlf();
