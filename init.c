@@ -1,28 +1,28 @@
 /*
 ** Copyright (C) 1991, 1997 Free Software Foundation, Inc.
-** 
+**
 ** This file is part of TACK.
-** 
+**
 ** TACK is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2, or (at your option)
 ** any later version.
-** 
+**
 ** TACK is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
 ** along with TACK; see the file COPYING.  If not, write to
-** the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-** Boston, MA 02111-1307, USA.
+** the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+** Boston, MA 02110-1301, USA
 */
 /* initialization and wrapup code */
 
 #include <tack.h>
 
-MODULE_ID("$Id: init.c,v 1.6 1999/02/07 19:19:42 tom Exp $")
+MODULE_ID("$Id: init.c,v 1.7 2006/11/26 00:16:01 tom Exp $")
 
 #if NCURSES_VERSION_MAJOR >= 5 || NCURSES_VERSION_PATCH >= 981219
 #define _nc_get_curterm(p) _nc_get_tty_mode(p)
@@ -159,14 +159,22 @@ display_basic(void)
 	}
 	report_cap("      (clear)", clear_screen);
 	if (!cursor_home && cursor_address) {
-		report_cap("(cup) (home)", tparm(cursor_address, 0, 0));
+		report_cap("(cup) (home)", TPARM_2(cursor_address, 0, 0));
 	} else {
 		report_cap("      (home)", cursor_home);
 	}
+#ifdef user9
 	report_cap("ENQ   (u9)", user9);
+#endif
+#ifdef user8
 	report_cap("ACK   (u8)", user8);
+#endif
 
-	sprintf(temp, "\nTerminal size: %d x %d.  Baud rate: %ld.  Frame size: %d.%d", columns, lines, tty_baud_rate, tty_frame_size >> 1, (tty_frame_size & 1) * 5);
+	sprintf(temp, "\nTerminal size: %d x %d.  Baud rate: %u.  Frame size: %d.%d",
+		columns, lines,
+		tty_baud_rate,
+		tty_frame_size >> 1,
+		(tty_frame_size & 1) * 5);
 	putln(temp);
 }
 
@@ -180,7 +188,7 @@ curses_setup(
 	char *exec_name)
 {
 	int status;
-	TERMTYPE term;
+	static TERMTYPE term;
 	char tty_filename[2048];
 
 	tty_init();
@@ -192,9 +200,17 @@ curses_setup(
 	ncurses starts scanning the termcap file.
 	**/
 	if ((status = _nc_read_entry(tty_basename, tty_filename, &term)) == 0) {
-		fprintf(stderr, "Terminal not found: TERM=%s\n", tty_basename);
-		show_usage(exec_name);
-		exit(1);
+		const TERMTYPE *fallback = _nc_fallback(tty_basename);
+
+		if (fallback) {
+		    term = *fallback;
+		    sprintf(tty_filename, "(fallback)%s", tty_basename);
+		    status = 1;
+		} else {
+		    fprintf(stderr, "Terminal not found: TERM=%s\n", tty_basename);
+		    show_usage(exec_name);
+		    exit(1);
+		}
 	}
 	if (status == -1) {
 		fprintf(stderr, "Terminfo database is inaccessible\n");
@@ -244,7 +260,7 @@ curses_setup(
 	fflush(stdout);	/* waste some time */
 	sleep(1);	/* waste more time */
 	charset_can_test();
-	can_test("lines cols cr nxon rf if iprog rmp", FLAG_CAN_TEST);
+	can_test("lines cols cr nxon rf if iprog rmp smcup rmcup", FLAG_CAN_TEST);
 	edit_init();			/* initialize the edit data base */
 
 	if (send_reset_init && enter_ca_mode) {

@@ -1,3 +1,7 @@
+2006-12-08  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.sub: RCS_BASE
+
 2006-11-25  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* output.c: FROM_KEYS
