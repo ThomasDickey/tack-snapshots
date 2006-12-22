@@ -1,3 +1,7 @@
+2006-12-22  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.guess: RCS_BASE
+
 2006-12-08  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* config.sub: RCS_BASE
