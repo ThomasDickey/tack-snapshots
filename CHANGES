@@ -1,3 +1,15 @@
+2007-01-13  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* Makefile.in: FROM_KEYS
+
+	* configure: RCS_BASE
+
+	* configure.in, aclocal.m4: FROM_KEYS
+
+2006-12-23  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* modules: FROM_KEYS
+
 2006-12-22  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* config.guess: RCS_BASE
