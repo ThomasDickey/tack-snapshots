@@ -1,3 +1,15 @@
+2007-01-28  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* HISTORY: tack's out of ncurses now.
+
+	* Makefile.in: make install rule work
+
+	* tack.h: bump to 1.03
+
+	* Makefile.in: first cut of installing manpage
+
+	* Makefile.in: tweaks to work after chopping out of ncurses tree
+
 2007-01-27  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* HISTORY: update to 1.03

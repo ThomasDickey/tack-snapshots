@@ -1,4 +1,4 @@
-# $Id: Makefile.in,v 1.41 2007/01/14 00:07:45 tom Exp $
+# $Id: Makefile.in,v 1.44 2007/01/28 18:52:02 tom Exp $
 ##############################################################################
 # Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.                #
 #                                                                            #
@@ -75,8 +75,7 @@ CC		= @CC@
 CPP		= @CPP@
 CFLAGS		= @CFLAGS@
 
-INCDIR		= $(srcdir)/../include
-CPPFLAGS	= -DHAVE_CONFIG_H -I../tack -I$(srcdir) @CPPFLAGS@
+CPPFLAGS	= -DHAVE_CONFIG_H -I. -I$(srcdir) @CPPFLAGS@
 
 CCFLAGS		= $(CPPFLAGS) $(CFLAGS)
 
@@ -109,7 +108,8 @@ LINT		= @LINT@
 LINT_OPTS	= @LINT_OPTS@
 LINT_LIBS	= -lncurses@LIB_SUFFIX@ @LIBS@
 
-PROGS = tack$x
+PROGS		= tack$x
+mymandir	= $(mandir)/man1
 
 @NCURSES_TREE@# Default library, for linking applications
 @NCURSES_TREE@DEPS_CURSES = ../lib/@LIB_PREFIX@ncurses@DFT_DEP_SUFFIX@
@@ -127,21 +127,19 @@ libs \
 install.libs \
 uninstall.libs:
 
-EDITARGS = $(DESTDIR)$(mandir) $(srcdir) $(srcdir)/*.[0-9]*
-
 install.tack: $(PROGS) \
 	$(DESTDIR)$(bindir) \
-	$(DESTDIR)$(mandir)
+	$(DESTDIR)$(mymandir)
 	$(LIBTOOL_INSTALL) $(INSTALL_PROG) tack$x $(DESTDIR)$(bindir)/tack$x
-	sh ../edit_man.sh normal installing $(EDITARGS)
+	$(INSTALL_DATA) tack.1 $(DESTDIR)$(mymandir)/tack.1
 
 uninstall.tack:
 	-@$(LIBTOOL_UNINSTALL) rm -f $(DESTDIR)$(bindir)/tack$x
-	-sh ../edit_man.sh normal removing $(EDITARGS)
+	rm -f $(DESTDIR)$(mymandir)/tack.1
 
 $(DESTDIR)$(bindir) \
-$(DESTDIR)$(mandir) :
-	sh $(srcdir)/../mkinstalldirs $@
+$(DESTDIR)$(mymandir) :
+	sh $(srcdir)/mkinstalldirs $@
 
 #
 # Rules for building tack
@@ -189,7 +187,7 @@ clean :: mostlyclean
 
 distclean :: clean
 	-rm -f ncurses_cfg.h
-	-rm -f config.* *.log *.out
+	-rm -f config.cache config.status *.log *.out
 	-rm -f Makefile
 
 realclean :: distclean
