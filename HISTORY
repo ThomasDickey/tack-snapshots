@@ -1,6 +1,17 @@
 
 Current history:
 
+2007/01/27	1.03	Update README to tell how to build tack after removal.
+2006/11/25		Fixes for ncurses tparm() prototype.
+2006/06/24	1.02	Modify to support ncurses extended string capabilities.
+2003/10/18	1.01	Fix some logic in pad.c, improve bce test.
+2003/09/20		Modified to allow running from compiled-in terminfo.
+2001/10/20		Make menu titles agree with descriptions.
+2000/03/04		Fix a few spelling errors
+1999/09/04		Minor fix to build/link on BeOS
+1999/05/16		Minor fix to build/link on CLIX
+1999/05/09		Update to build/link on NeXT
+1999/04/17		Update to work with ncurses 5.0 beta1 (TERMTYPE struct)
 1999/02/07		Build with ncurses 4.2 981219 (renamed function)
 1998/01/09	1.00	First release under GPL
 1997/12/24	0.02	First version that requires ncurses
@@ -18,7 +29,7 @@ as little of curses as possible.
 released to USENET in comp.sources.  TED was originally written to
 test both terminfos and termcaps.  The original intent was to
 create a terminfo editor.  This code fell quite short of its goal.
-Tests were controled by command line switches and editing was done
+Tests were controlled by command line switches and editing was done
 with pen and paper.
 
    In 1995 Eric S. Raymond got interested in the program and added
