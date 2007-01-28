@@ -1,3 +1,9 @@
+2007-01-27  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* HISTORY: update to 1.03
+
+	* README: FROM_KEYS
+
 2007-01-13  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* Makefile.in: FROM_KEYS
