@@ -1,3 +1,7 @@
+2007-03-25  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* mkdirs.sh: RCS_BASE
+
 2007-01-28  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* HISTORY: tack's out of ncurses now.
