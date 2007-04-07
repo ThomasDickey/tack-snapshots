@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: ansi.c,v 1.10 2005/09/17 19:49:16 tom Exp $")
+MODULE_ID("$Id: ansi.c,v 1.11 2007/04/07 14:49:53 tom Exp $")
 
 /*
  * Standalone tests for ANSI terminals.  Three entry points:
@@ -309,6 +309,8 @@ request_cfss(void)
 	put_crlf();
 	for (i = 0; rqss[i].text; i++) {
 		ptext(rqss[i].text);
+		if (rqss[i].expect == 0)
+			continue;
 		j = strlen(rqss[i].text) + strlen(rqss[i].expect);
 		putchp(' ');
 		for (j++; j < 40; j++)
@@ -600,10 +602,11 @@ tools_status(
 		i = read_reports();
 		if (i != 'r' && i != 'R') {
 			*ch = i;
-			return;
+			break;
 		}
 	} while (i);
 
+	/* VT320, VT420, etc. */
 	if (terminal_class >= 63) {
 		do {
 			i = request_cfss();
@@ -841,7 +844,7 @@ tools_charset(
 			bank[j] = ch;
 			if (ch < ' ' || ch > '/')
 				break;
-			if (j + 1 >= (int) sizeof(bank))
+			if (j + 2 >= (int) sizeof(bank))
 				break;
 		}
 		if (j == 1)

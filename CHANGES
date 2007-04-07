@@ -1,3 +1,7 @@
+2007-04-07  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* ansi.c, output.c: fixes from Coverity report
+
 2007-03-25  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* mkdirs.sh: RCS_BASE

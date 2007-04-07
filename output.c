@@ -23,7 +23,7 @@
 #include <tack.h>
 #include <time.h>
 
-MODULE_ID("$Id: output.c,v 1.11 2006/11/26 00:16:49 tom Exp $")
+MODULE_ID("$Id: output.c,v 1.12 2007/04/07 14:39:05 tom Exp $")
 
 /* globals */
 long char_sent;			/* number of characters sent */
@@ -740,7 +740,9 @@ wait_here(void)
 			/* ignore control S, but tell me about it */
 			while (ch == 023 || ch == 021) {
 				ch = getchp(STRIP_PARITY);
-				if (i < (int) sizeof(cc))
+				if (ch == EOF)
+				    break;
+				if (i + 1 < (int) sizeof(cc))
 					cc[++i] = ch;
 			}
 			put_str("\nThe terminal sent a ^S -");
@@ -778,7 +780,7 @@ read_string(
 
 	for (i = 0; i < length - 1; ) {
 		ch = getchp(STRIP_PARITY);
-		if (ch == '\r' || ch == '\n') {
+		if (ch == '\r' || ch == '\n' || ch == EOF) {
 			break;
 		}
 		if (ch == '\b' || ch == 127) {
