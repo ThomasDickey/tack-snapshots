@@ -1,3 +1,49 @@
+2007-04-08  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* configure: regen'd
+
+	* Makefile.in: define $(INCDIR) - needed for building in ncurses tree
+
+	* tack.h:
+	expand the ExitProgram() macro into a function which can call the ncurses-
+	and tack-specific leak-auditing functions.
+
+	* configure.in:
+	check for _nc_free_tic() function, since that's what tack needs.
+
+	* edit.c: add tack_edit_leaks(), to help audit memory leaks
+
+	* tack.c:
+	add ExitProgram() function, to free all application memory on exit to simplify
+	leak-checking.
+
+	* fun.c: add tack_fun_leaks(), to help audit memory leaks
+
+	* init.c: free the TERMTYPE used just for error-checking (memory leak)
+
+	* tack.h:
+	define ExitProgram() macro to hide details of memory audit on exit().
+
+	* tack.c, init.c, sysdep.c: use ExitProgram() macro
+
+	* configure.in: add "--disable-leaks" and related testing options.
+
+	* aclocal.m4:
+	add macros used for "--disable-leaks" and related testing options
+
+	* configure.in:
+	use CF_NCURSES_CONFIG to find ncurses5-config, etc., fixing rpath issues.
+	add check for ticlib, if needed.  remove check for pdcurses (this will
+	never work with anything except for ncurses), and add checks for select()
+	and gettimeofday().
+
+	* aclocal.m4:
+	modify CF_XOPEN_SOURCE to add FreeBSD/GNU (kFreeBSD) pattern
+
+	* Makefile.in: rename mkinstalldirs to mkdirs.sh
+
+	* HISTORY: 1.04
+
 2007-04-07  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* ansi.c, output.c: fixes from Coverity report

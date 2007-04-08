@@ -21,8 +21,9 @@
 /* initialization and wrapup code */
 
 #include <tack.h>
+#include <tic.h>
 
-MODULE_ID("$Id: init.c,v 1.7 2006/11/26 00:16:01 tom Exp $")
+MODULE_ID("$Id: init.c,v 1.9 2007/04/08 15:03:45 tom Exp $")
 
 #if NCURSES_VERSION_MAJOR >= 5 || NCURSES_VERSION_PATCH >= 981219
 #define _nc_get_curterm(p) _nc_get_tty_mode(p)
@@ -30,7 +31,7 @@ MODULE_ID("$Id: init.c,v 1.7 2006/11/26 00:16:01 tom Exp $")
 
 FILE *debug_fp;
 char temp[1024];
-char tty_basename[64];
+char tty_basename[MAX_ALIAS * 2];
 
 void
 put_name(const char *cap, const char *name)
@@ -188,17 +189,17 @@ curses_setup(
 	char *exec_name)
 {
 	int status;
-	static TERMTYPE term;
+	TERMTYPE term;
 	char tty_filename[2048];
 
 	tty_init();
 
-	/**
-	   See if the terminal is in the terminfo data base.  This call has
-	two useful benefits, 1) it returns the filename of the terminfo entry,
-	and 2) it searches only terminfo's.  This allows us to abort before
-	ncurses starts scanning the termcap file.
-	**/
+	/*
+	 * See if the terminal is in the terminfo data base.  This call has two
+	 * useful benefits, 1) it returns the filename of the terminfo entry,
+	 * and 2) it searches only terminfo's.  This allows us to abort before
+	 * ncurses starts scanning the termcap file.
+	 */
 	if ((status = _nc_read_entry(tty_basename, tty_filename, &term)) == 0) {
 		const TERMTYPE *fallback = _nc_fallback(tty_basename);
 
@@ -209,26 +210,29 @@ curses_setup(
 		} else {
 		    fprintf(stderr, "Terminal not found: TERM=%s\n", tty_basename);
 		    show_usage(exec_name);
-		    exit(1);
+		    ExitProgram(1);
 		}
 	}
 	if (status == -1) {
 		fprintf(stderr, "Terminfo database is inaccessible\n");
-		exit(1);
+		ExitProgram(1);
 	}
+#if NO_LEAKS
+	_nc_free_termtype(&term);
+#endif
 
 	/**
-	   This call will load the terminfo data base and set the cur-term
-	variable.  Only terminals that actually exist will get here so its
-	OK to ignore errors.  This is a good thing since ncurses does not
-	permit (os) or (gn) to be set.
-	**/
+	 * This call will load the terminfo data base and set the cur-term
+	 * variable.  Only terminals that actually exist will get here so its
+	 * OK to ignore errors.  This is a good thing since ncurses does not
+	 * permit (os) or (gn) to be set.
+	 */
 	setupterm(tty_basename, 1, &status);
 
 	/**
-	   Get the current terminal definitions.  This must be done before
-	getting the baudrate.
-	**/
+	 * Get the current terminal definitions.  This must be done before
+	 * getting the baudrate.
+	 */
 	_nc_get_curterm(&cur_term->Nttyb);
 	tty_baud_rate = baudrate();
 	tty_cps = (tty_baud_rate << 1) / tty_frame_size;
@@ -253,10 +257,10 @@ curses_setup(
 	}
 
 	/*
-	   I assume that the reset and init strings may not have the correct
-	   pads.  (Because that part of the test comes much later.)  Because
-	   of this, I allow the terminal some time to catch up.
-	*/
+	 * I assume that the reset and init strings may not have the correct
+	 * pads.  (Because that part of the test comes much later.)  Because
+	 * of this, I allow the terminal some time to catch up.
+	 */
 	fflush(stdout);	/* waste some time */
 	sleep(1);	/* waste more time */
 	charset_can_test();
@@ -312,5 +316,5 @@ bye_kids(int n)
 	fclose(stderr);
 	if (not_a_tty)
 		sleep(1);
-	exit(n);
+	ExitProgram(n);
 }

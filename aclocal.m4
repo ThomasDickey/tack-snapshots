@@ -26,7 +26,7 @@ dnl sale, use or other dealings in this Software without prior written       *
 dnl authorization.                                                           *
 dnl***************************************************************************
 dnl
-dnl $Id: aclocal.m4,v 1.2 2007/01/13 23:57:11 tom Exp $
+dnl $Id: aclocal.m4,v 1.4 2007/04/08 13:58:18 tom Exp $
 dnl
 dnl Author: Thomas E. Dickey
 dnl
@@ -486,6 +486,28 @@ dnl CF_DIRNAME version: 4 updated: 2002/12/21 19:25:52
 dnl ----------
 dnl "dirname" is not portable, so we fake it with a shell script.
 AC_DEFUN([CF_DIRNAME],[$1=`echo $2 | sed -e 's%/[[^/]]*$%%'`])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_DISABLE_LEAKS version: 4 updated: 2006/12/16 15:10:42
+dnl ----------------
+dnl Combine no-leak checks with the libraries or tools that are used for the
+dnl checks.
+AC_DEFUN([CF_DISABLE_LEAKS],[
+
+AC_REQUIRE([CF_WITH_DMALLOC])
+AC_REQUIRE([CF_WITH_DBMALLOC])
+AC_REQUIRE([CF_WITH_VALGRIND])
+
+AC_MSG_CHECKING(if you want to perform memory-leak testing)
+AC_ARG_ENABLE(leaks,
+	[  --disable-leaks         test: free permanent memory, analyze leaks],
+	[with_no_leaks=yes],
+	: ${with_no_leaks:=no})
+AC_MSG_RESULT($with_no_leaks)
+
+if test "$with_no_leaks" = yes ; then
+	AC_DEFINE(NO_LEAKS)
+fi
+])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_ENABLE_WARNINGS version: 3 updated: 2003/05/24 14:24:29
 dnl ------------------
@@ -1243,6 +1265,35 @@ EOF
 test "$cf_cv_ncurses_version" = no || AC_DEFINE(NCURSES)
 ])dnl
 dnl ---------------------------------------------------------------------------
+dnl CF_NO_LEAKS_OPTION version: 4 updated: 2006/12/16 14:24:05
+dnl ------------------
+dnl see CF_WITH_NO_LEAKS
+AC_DEFUN([CF_NO_LEAKS_OPTION],[
+AC_MSG_CHECKING(if you want to use $1 for testing)
+AC_ARG_WITH($1,
+	[$2],
+	[AC_DEFINE($3)ifelse([$4],,[
+	 $4
+])
+	: ${with_cflags:=-g}
+	: ${with_no_leaks:=yes}
+	 with_$1=yes],
+	[with_$1=])
+AC_MSG_RESULT(${with_$1:-no})
+
+case .$with_cflags in #(vi
+.*-g*)
+	case .$CFLAGS in #(vi
+	.*-g*) #(vi
+		;;
+	*)
+		CF_ADD_CFLAGS([-g])
+		;;
+	esac
+	;;
+esac
+])dnl
+dnl ---------------------------------------------------------------------------
 dnl CF_PATH_SYNTAX version: 11 updated: 2006/09/02 08:55:46
 dnl --------------
 dnl Check the argument to see that it looks like a pathname.  Rewrite it if it
@@ -1605,7 +1656,45 @@ AC_ARG_WITH(curses-dir,
 	[cf_cv_curses_dir=no])
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_XOPEN_SOURCE version: 24 updated: 2006/04/02 16:41:09
+dnl CF_WITH_DBMALLOC version: 6 updated: 2006/12/16 14:24:05
+dnl ----------------
+dnl Configure-option for dbmalloc.  The optional parameter is used to override
+dnl the updating of $LIBS, e.g., to avoid conflict with subsequent tests.
+AC_DEFUN([CF_WITH_DBMALLOC],[
+CF_NO_LEAKS_OPTION(dbmalloc,
+	[  --with-dbmalloc         test: use Conor Cahill's dbmalloc library],
+	[USE_DBMALLOC])
+
+if test "$with_dbmalloc" = yes ; then
+	AC_CHECK_HEADER(dbmalloc.h,
+		[AC_CHECK_LIB(dbmalloc,[debug_malloc]ifelse($1,,[],[,$1]))])
+fi
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_WITH_DMALLOC version: 6 updated: 2006/12/16 14:24:05
+dnl ---------------
+dnl Configure-option for dmalloc.  The optional parameter is used to override
+dnl the updating of $LIBS, e.g., to avoid conflict with subsequent tests.
+AC_DEFUN([CF_WITH_DMALLOC],[
+CF_NO_LEAKS_OPTION(dmalloc,
+	[  --with-dmalloc          test: use Gray Watson's dmalloc library],
+	[USE_DMALLOC])
+
+if test "$with_dmalloc" = yes ; then
+	AC_CHECK_HEADER(dmalloc.h,
+		[AC_CHECK_LIB(dmalloc,[dmalloc_debug]ifelse($1,,[],[,$1]))])
+fi
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_WITH_VALGRIND version: 1 updated: 2006/12/14 18:00:21
+dnl ----------------
+AC_DEFUN([CF_WITH_VALGRIND],[
+CF_NO_LEAKS_OPTION(valgrind,
+	[  --with-valgrind         test: use valgrind],
+	[USE_VALGRIND])
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_XOPEN_SOURCE version: 25 updated: 2007/01/29 18:36:38
 dnl ---------------
 dnl Try to get _XOPEN_SOURCE defined properly that we can use POSIX functions,
 dnl or adapt to the vendor's definitions to get equivalent functionality,
@@ -1639,7 +1728,7 @@ hpux*) #(vi
 irix[[56]].*) #(vi
 	CPPFLAGS="$CPPFLAGS -D_SGI_SOURCE"
 	;;
-linux*|gnu*) #(vi
+linux*|gnu*|k*bsd*-gnu) #(vi
 	CF_GNU_SOURCE
 	;;
 mirbsd*) #(vi

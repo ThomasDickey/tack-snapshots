@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: tack.c,v 1.6 2005/09/17 19:49:16 tom Exp $")
+MODULE_ID("$Id: tack.c,v 1.8 2007/04/08 15:17:36 tom Exp $")
 
 /*
    This program is designed to test terminfo, not curses.  Therefore
@@ -565,7 +565,7 @@ main(int argc, char *argv[])
 				switch (argv[i][j]) {
 				case 'V':
 					print_version();
-					return (1);
+					ExitProgram (1);
 				case 'i':
 					send_reset_init = FALSE;
 					break;
@@ -574,7 +574,7 @@ main(int argc, char *argv[])
 					break;
 				default:
 					show_usage(argv[0]);
-					return (0);
+					ExitProgram (0);
 				}
 			}
 		} else {
@@ -599,5 +599,15 @@ main(int argc, char *argv[])
 
 	put_str("\nTerminal test complete\n");
 	bye_kids(0);
-	return (0);
+	ExitProgram(0);
 }
+
+#if NO_LEAKS
+void ExitProgram(int code)
+{
+    del_curterm(cur_term);
+    tack_edit_leaks();
+    tack_fun_leaks();
+    _nc_free_tic(code);
+}
+#endif

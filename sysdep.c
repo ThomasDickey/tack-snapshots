@@ -49,7 +49,7 @@
 #endif
 #endif
 
-MODULE_ID("$Id: sysdep.c,v 1.15 2005/09/17 19:49:16 tom Exp $")
+MODULE_ID("$Id: sysdep.c,v 1.16 2007/04/08 14:05:10 tom Exp $")
 
 #if DECL_ERRNO
 extern int errno;
@@ -222,7 +222,7 @@ tty_init(void)
 			return;
 		}
 		printf("tcgetattr error: %d\n", errno);
-		exit(1);
+		ExitProgram(1);
 	}
 	/* if TAB3 is set then setterm() wipes out tabs (ht) */
 	new_modes = old_modes;
@@ -233,7 +233,7 @@ tty_init(void)
 #endif
 	if (PUT_TTY(fileno(stdin), &new_modes) == -1) {
 		printf("tcsetattr error: %d\n", errno);
-		exit(1);
+		ExitProgram(1);
 	}
 #ifdef sequent
 	/* the sequent ATT emulation is broken soooo. */
@@ -446,7 +446,7 @@ onintr(int sig GCC_UNUSED)
 {
 	ignoresig();
 	tty_reset();
-	exit(1);
+	ExitProgram(1);
 }
 
 
