@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.17 2007/01/28 18:45:47 tom Exp $ */
+/* $Id: tack.h,v 1.19 2007/04/08 15:28:14 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -60,6 +60,19 @@
 extern char *_nc_strstr(const char *, const char *);
 #define strstr(h,n) _nc_strstr(h,n)
 #endif
+
+#if NO_LEAKS && defined(HAVE__NC_FREE_TIC)
+extern void _nc_free_tic(int);
+extern void tack_edit_leaks(void);
+extern void tack_fun_leaks(void);
+extern void ExitProgram(int);
+#else
+#define ExitProgram(code) exit(code)
+#undef  NO_LEAKS
+#define NO_LEAKS 0
+#endif
+
+#define FreeIfNeeded(p) if (p) { free(p); p = 0; }
 
 #define CUR_TP      (&(cur_term->type))
 #define MAX_STRINGS NUM_STRINGS(CUR_TP)

@@ -23,7 +23,7 @@
 #include <time.h>
 #include <tic.h>
 
-MODULE_ID("$Id: edit.c,v 1.11 2006/06/24 21:22:42 tom Exp $")
+MODULE_ID("$Id: edit.c,v 1.12 2007/04/08 15:24:23 tom Exp $")
 
 /*
  * Terminfo edit features
@@ -828,7 +828,7 @@ edit_init(void)
 		xon_index = nt->nte_index;
 	}
 	xon_shadow = xon_xoff;
-	free(label_strings);
+	FreeIfNeeded(label_strings);
 }
 
 /*
@@ -990,3 +990,24 @@ build_change_menu(
 		ptextln(m->menu_title);
 	}
 }
+
+#if NO_LEAKS
+void
+tack_edit_leaks(void)
+{
+	/*
+	 * 2007/4/8 -
+	 * _nc_copy_termtype() does not copy str_table and ext_str_table.
+	 * The call to del_curterm() frees those - so we have to cancel
+	 * these pointers to prevent a double-free.
+	 */
+    	original_term.str_table = 0;
+#if NCURSES_XNAMES
+    	original_term.ext_str_table = 0;
+#endif
+	_nc_free_termtype(&original_term);
+
+	FreeIfNeeded(label_strings);
+	FreeIfNeeded(flag_strings);
+}
+#endif

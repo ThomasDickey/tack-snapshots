@@ -28,7 +28,7 @@ dnl***************************************************************************
 dnl
 dnl Author: Thomas E. Dickey	2007
 dnl
-dnl $Id: configure.in,v 1.2 2007/01/14 00:02:41 tom Exp $
+dnl $Id: configure.in,v 1.5 2007/04/08 15:27:21 tom Exp $
 dnl This is a simple configuration-script for tack which makes it simpler to
 dnl build outside the ncurses tree (provided that ncurses was configured using
 dnl the --with-ticlib option).
@@ -96,14 +96,6 @@ CF_ENABLE_WARNINGS
 CF_GCC_ATTRIBUTES
 CF_XOPEN_SOURCE
 
-CF_WITH_CURSES_DIR
-
-dnl SunOS 4.x
-AC_ARG_WITH(5lib,
-	[  --with-5lib             use SunOS sysv-libraries],
-	[LIBS="-L/usr/5lib $LIBS"
-	 CPPFLAGS="$CPPFLAGS -I/usr/5include"])
-
 dnl ---------------------------------------------------------------------------
 dnl NcursesW, installed in conventional location
 AC_ARG_WITH(ncursesw,
@@ -113,38 +105,36 @@ AC_ARG_WITH(ncursesw,
 dnl Ncurses, installed in conventional location
 AC_ARG_WITH(ncurses,
 	[  --with-ncurses          use ncurses-libraries (installed)],
-	[cf_cv_screen=ncurses],[
-
-AC_ARG_WITH(pdcurses,
-	[  --with-pdcurses         compile/link with pdcurses X11 library],
-	[cf_cv_screen=pdcurses])])])
+	[cf_cv_screen=ncurses])])
 
 case $cf_cv_screen in
-curses)
-	CF_CURSES_CPPFLAGS
-	CF_NCURSES_VERSION
-	CF_CURSES_LIBS
-	;;
 ncurses)
-	CF_NCURSES_CPPFLAGS
-	CF_NCURSES_LIBS
+	CF_NCURSES_CONFIG
 	;;
 ncursesw)
 	cf_cv_libtype=w
-	CF_NCURSES_CPPFLAGS(ncursesw)
-	CF_NCURSES_LIBS(ncursesw)
+	CF_NCURSES_CONFIG(ncursesw)
+	;;
+*)
+	CF_CURSES_CONFIG
 	;;
 esac
 
-dnl If we've not specified a library, assume we're using sysvr4 libraries
-dnl installed conventionally (e.g., SunOS 5.x - solaris).
+case $cf_cv_screen in
+ncurses*)
+	AC_CHECK_FUNC(_nc_tic_expand,,[
+		AC_CHECK_LIB(tic,_nc_tic_expand,[LIBS="-ltic $LIBS"])])
+	;;
+esac
 
-dnl Autoconf builds up the $LIBS in reverse order
+CF_DISABLE_LEAKS
 
 # look for curses-related headers
 AC_CHECK_HEADERS( \
 	nc_alloc.h \
+	nc_tparm.h \
 	nomacros.h \
+	term_entry.h \
 	)
 
 AC_TYPE_SIGNAL
@@ -163,9 +153,9 @@ unistd.h \
 )
 
 AC_CHECK_FUNCS( \
-tgetent \
-tigetnum \
-tigetstr \
+_nc_free_tic \
+gettimeofday \
+select \
 strstr \
 )
 

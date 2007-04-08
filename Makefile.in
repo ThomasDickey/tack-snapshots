@@ -1,4 +1,4 @@
-# $Id: Makefile.in,v 1.44 2007/01/28 18:52:02 tom Exp $
+# $Id: Makefile.in,v 1.46 2007/04/08 15:57:15 tom Exp $
 ##############################################################################
 # Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.                #
 #                                                                            #
@@ -46,16 +46,22 @@ CF_MFLAGS 	= @cf_cv_makeflags@
 x		= @EXEEXT@
 o		= .@OBJEXT@
 
-MODEL		= ../@DFT_OBJ_SUBDIR@
 DESTDIR		= @DESTDIR@
+
+top_srcdir	= @top_srcdir@
 srcdir		= @srcdir@
+
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
+
 bindir		= @bindir@
 libdir		= @libdir@
 mandir		= @mandir@
 includedir	= @includedir@
 datadir		= @datadir@
+
+MODEL		= ../@DFT_OBJ_SUBDIR@
+INCDIR		= $(top_srcdir)/include
 
 LIBTOOL		= @LIBTOOL@
 LIBTOOL_CLEAN	= @LIB_CLEAN@
@@ -139,7 +145,7 @@ uninstall.tack:
 
 $(DESTDIR)$(bindir) \
 $(DESTDIR)$(mymandir) :
-	sh $(srcdir)/mkinstalldirs $@
+	sh $(srcdir)/mkdirs.sh $@
 
 #
 # Rules for building tack

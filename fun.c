@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: fun.c,v 1.9 2006/11/26 00:15:53 tom Exp $")
+MODULE_ID("$Id: fun.c,v 1.10 2007/04/08 15:10:40 tom Exp $")
 
 /*
  * Test the function keys on the terminal.  The code for echo tests
@@ -923,3 +923,14 @@ tools_report(
 		ptextln("End of echo test.");
 	}
 }
+
+#if NO_LEAKS
+void
+tack_fun_leaks(void)
+{
+	FreeIfNeeded(fk_name);
+	FreeIfNeeded(fkval);
+	FreeIfNeeded(fk_label);
+	FreeIfNeeded(fk_tested);
+}
+#endif
