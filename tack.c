@@ -1,18 +1,18 @@
 /*
 ** Copyright (C) 1991, 1997 Free Software Foundation, Inc.
-** 
+**
 ** This file is part of TACK.
-** 
+**
 ** TACK is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2, or (at your option)
 ** any later version.
-** 
+**
 ** TACK is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
 ** along with TACK; see the file COPYING.  If not, write to
 ** the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: tack.c,v 1.8 2007/04/08 15:17:36 tom Exp $")
+MODULE_ID("$Id: tack.c,v 1.9 2007/04/29 23:39:38 tom Exp $")
 
 /*
    This program is designed to test terminfo, not curses.  Therefore
@@ -207,7 +207,7 @@ static struct test_list start_test_list[] = {
 	{0, 0, 0, 0, logging_menu_entry, start_log, 0},
 	{MENU_LAST, 0, 0, 0, 0, 0, 0}
 };
-	
+
 
 static struct test_menu start_menu = {
 	0, 'n', 0, "Main Menu", "tack", 0,
@@ -565,7 +565,8 @@ main(int argc, char *argv[])
 				switch (argv[i][j]) {
 				case 'V':
 					print_version();
-					ExitProgram (1);
+					ExitProgram (EXIT_FAILURE);
+					/* NOTREACHED */
 				case 'i':
 					send_reset_init = FALSE;
 					break;
@@ -574,7 +575,8 @@ main(int argc, char *argv[])
 					break;
 				default:
 					show_usage(argv[0]);
-					ExitProgram (0);
+					ExitProgram (EXIT_SUCCESS);
+					/* NOTREACHED */
 				}
 			}
 		} else {
@@ -598,8 +600,8 @@ main(int argc, char *argv[])
 	}
 
 	put_str("\nTerminal test complete\n");
-	bye_kids(0);
-	ExitProgram(0);
+	bye_kids(EXIT_SUCCESS);
+	ExitProgram(EXIT_SUCCESS);
 }
 
 #if NO_LEAKS

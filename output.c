@@ -1,18 +1,18 @@
 /*
 ** Copyright (C) 1991, 1997 Free Software Foundation, Inc.
-** 
+**
 ** This file is part of TACK.
-** 
+**
 ** TACK is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2, or (at your option)
 ** any later version.
-** 
+**
 ** TACK is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
 ** along with TACK; see the file COPYING.  If not, write to
 ** the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
@@ -23,7 +23,7 @@
 #include <tack.h>
 #include <time.h>
 
-MODULE_ID("$Id: output.c,v 1.12 2007/04/07 14:39:05 tom Exp $")
+MODULE_ID("$Id: output.c,v 1.13 2007/04/29 23:18:46 tom Exp $")
 
 /* globals */
 long char_sent;			/* number of characters sent */
@@ -80,7 +80,7 @@ getnext(int mask)
 
 	tc_putp(req_for_input);
 	fflush(stdout);
-	if (nodelay_read)
+	if (nodelay_read) {
 		while (1) {
 			ch = read(fileno(stdin), &buf, 1);
 			if (ch == -1)
@@ -88,6 +88,7 @@ getnext(int mask)
 			if (ch == 1)
 				return buf;
 		}
+	}
 	ch = getchar();
 	if (ch == EOF)
 		return EOF;
@@ -805,7 +806,7 @@ read_string(
 **
 **	wait if near the end of the screen, then clear screen
 */
-void 
+void
 maybe_wait(int n)
 {
 	if (line_count + n >= lines) {

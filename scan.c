@@ -1,18 +1,18 @@
 /*
 ** Copyright (C) 1991, 1997 Free Software Foundation, Inc.
-** 
+**
 ** This file is part of TACK.
-** 
+**
 ** TACK is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2, or (at your option)
 ** any later version.
-** 
+**
 ** TACK is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
 ** along with TACK; see the file COPYING.  If not, write to
 ** the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
@@ -22,7 +22,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: scan.c,v 1.6 2005/09/17 19:49:16 tom Exp $")
+MODULE_ID("$Id: scan.c,v 1.7 2007/04/29 23:17:32 tom Exp $")
 
 unsigned scan_max;		/* length of longest scan code */
 char **scan_up, **scan_down, **scan_name;
@@ -128,16 +128,16 @@ scan_init(char *fn)
 	if (!fp) {
 		ptext("Unable to open scanfile: ");
 		ptextln(temp);
-		bye_kids(1);
+		bye_kids(EXIT_FAILURE);
 		return;
 	}
 	/*
 	   scan file format:
-	
+
 	<down value> <up value> <name>
-	
+
 	values are in hex. <name> may be any string of characters
-	
+
 	*/
 	scan_up = (char **) malloc(sizeof(char *) * MAX_SCAN);
 	scan_down = (char **) malloc(sizeof(char *) * MAX_SCAN);

@@ -26,7 +26,7 @@ dnl sale, use or other dealings in this Software without prior written       *
 dnl authorization.                                                           *
 dnl***************************************************************************
 dnl
-dnl $Id: aclocal.m4,v 1.4 2007/04/08 13:58:18 tom Exp $
+dnl $Id: aclocal.m4,v 1.5 2007/04/29 23:09:14 tom Exp $
 dnl
 dnl Author: Thomas E. Dickey
 dnl
@@ -1203,7 +1203,7 @@ CF_UPPER(cf_nculib_ROOT,HAVE_LIB$cf_nculib_root)
 AC_DEFINE_UNQUOTED($cf_nculib_ROOT)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_NCURSES_VERSION version: 11 updated: 2003/11/06 19:59:57
+dnl CF_NCURSES_VERSION version: 12 updated: 2007/04/28 09:15:55
 dnl ------------------
 dnl Check for the version of ncurses, to aid in reporting bugs, etc.
 dnl Call CF_CURSES_CPPFLAGS first, or CF_NCURSES_CPPFLAGS.  We don't use
@@ -1234,7 +1234,7 @@ int main()
 	make an error
 # endif
 #endif
-	exit(0);
+	${cf_cv_main_return-return}(0);
 }],[
 	cf_cv_ncurses_version=`cat $cf_tempfile`],,[
 
@@ -1492,6 +1492,41 @@ define([CF_REMOVE_DEFINE],
 $1=`echo "$2" | \
 	sed	-e 's/-[[UD]]$3\(=[[^ 	]]*\)\?[[ 	]]/ /g' \
 		-e 's/-[[UD]]$3\(=[[^ 	]]*\)\?[$]//g'`
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_SIG_ATOMIC_T version: 2 updated: 2005/09/18 17:27:12
+dnl ---------------
+dnl signal handler, but there are some gcc depedencies in that recommendation.
+dnl Try anyway.
+AC_DEFUN([CF_SIG_ATOMIC_T],
+[
+AC_MSG_CHECKING(for signal global datatype)
+AC_CACHE_VAL(cf_cv_sig_atomic_t,[
+	for cf_type in \
+		"volatile sig_atomic_t" \
+		"sig_atomic_t" \
+		"int"
+	do
+	AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <signal.h>
+#include <stdio.h>
+
+extern $cf_type x;
+$cf_type x;
+static void handler(int sig)
+{
+	x = 5;
+}],
+		[signal(SIGINT, handler);
+		 x = 1],
+		[cf_cv_sig_atomic_t=$cf_type],
+		[cf_cv_sig_atomic_t=no])
+		test "$cf_cv_sig_atomic_t" != no && break
+	done
+	])
+AC_MSG_RESULT($cf_cv_sig_atomic_t)
+test "$cf_cv_sig_atomic_t" != no && AC_DEFINE_UNQUOTED(SIG_ATOMIC_T, $cf_cv_sig_atomic_t)
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_SUBDIR_PATH version: 4 updated: 2006/11/18 17:13:19

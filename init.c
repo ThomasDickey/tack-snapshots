@@ -23,7 +23,7 @@
 #include <tack.h>
 #include <tic.h>
 
-MODULE_ID("$Id: init.c,v 1.9 2007/04/08 15:03:45 tom Exp $")
+MODULE_ID("$Id: init.c,v 1.10 2007/04/29 23:16:11 tom Exp $")
 
 #if NCURSES_VERSION_MAJOR >= 5 || NCURSES_VERSION_PATCH >= 981219
 #define _nc_get_curterm(p) _nc_get_tty_mode(p)
@@ -210,12 +210,12 @@ curses_setup(
 		} else {
 		    fprintf(stderr, "Terminal not found: TERM=%s\n", tty_basename);
 		    show_usage(exec_name);
-		    ExitProgram(1);
+		    ExitProgram(EXIT_FAILURE);
 		}
 	}
 	if (status == -1) {
 		fprintf(stderr, "Terminfo database is inaccessible\n");
-		ExitProgram(1);
+		ExitProgram(EXIT_FAILURE);
 	}
 #if NO_LEAKS
 	_nc_free_termtype(&term);
