@@ -1205,7 +1205,7 @@ LIBTOOL=""
 LIB_CLEAN=""				
 LIB_COMPILE=""				
 LIB_INSTALL=""				
-LIB_LINK=""				
+LIB_LINK='$(CC)'			
 LIB_SUFFIX=""				
 LIB_UNINSTALL=""			
 LINK_PROGS=""				
@@ -2754,7 +2754,7 @@ int main()
 	make an error
 # endif
 #endif
-	exit(0);
+	${cf_cv_main_return-return}(0);
 }
 EOF
 if { (eval echo configure:2761: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
@@ -3678,7 +3678,7 @@ int main()
 	make an error
 # endif
 #endif
-	exit(0);
+	${cf_cv_main_return-return}(0);
 }
 EOF
 if { (eval echo configure:3685: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
@@ -4304,7 +4304,7 @@ int main()
 	make an error
 # endif
 #endif
-	exit(0);
+	${cf_cv_main_return-return}(0);
 }
 EOF
 if { (eval echo configure:4311: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
@@ -5713,6 +5713,58 @@ fi
 echo "$ac_t""$cf_cv_sys_time_select" 1>&6
 test "$cf_cv_sys_time_select" = yes && cat >> confdefs.h <<\EOF
 #define HAVE_SYS_TIME_SELECT 1
+EOF
+
+
+
+echo $ac_n "checking for signal global datatype""... $ac_c" 1>&6
+echo "configure:5722: checking for signal global datatype" >&5
+if eval "test \"`echo '$''{'cf_cv_sig_atomic_t'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  
+	for cf_type in \
+		"volatile sig_atomic_t" \
+		"sig_atomic_t" \
+		"int"
+	do
+	cat > conftest.$ac_ext <<EOF
+#line 5733 "configure"
+#include "confdefs.h"
+
+#include <sys/types.h>
+#include <signal.h>
+#include <stdio.h>
+
+extern $cf_type x;
+$cf_type x;
+static void handler(int sig)
+{
+	x = 5;
+}
+int main() {
+signal(SIGINT, handler);
+		 x = 1
+; return 0; }
+EOF
+if { (eval echo configure:5751: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+  rm -rf conftest*
+  cf_cv_sig_atomic_t=$cf_type
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  cf_cv_sig_atomic_t=no
+fi
+rm -f conftest*
+		test "$cf_cv_sig_atomic_t" != no && break
+	done
+	
+fi
+
+echo "$ac_t""$cf_cv_sig_atomic_t" 1>&6
+test "$cf_cv_sig_atomic_t" != no && cat >> confdefs.h <<EOF
+#define SIG_ATOMIC_T $cf_cv_sig_atomic_t
 EOF
 
 

@@ -28,7 +28,7 @@ dnl***************************************************************************
 dnl
 dnl Author: Thomas E. Dickey	2007
 dnl
-dnl $Id: configure.in,v 1.5 2007/04/08 15:27:21 tom Exp $
+dnl $Id: configure.in,v 1.7 2007/04/29 23:47:26 tom Exp $
 dnl This is a simple configuration-script for tack which makes it simpler to
 dnl build outside the ncurses tree (provided that ncurses was configured using
 dnl the --with-ticlib option).
@@ -69,7 +69,7 @@ LIBTOOL=""				AC_SUBST(LIBTOOL)
 LIB_CLEAN=""				AC_SUBST(LIB_CLEAN)
 LIB_COMPILE=""				AC_SUBST(LIB_COMPILE)
 LIB_INSTALL=""				AC_SUBST(LIB_INSTALL)
-LIB_LINK=""				AC_SUBST(LIB_LINK)
+LIB_LINK='$(CC)'			AC_SUBST(LIB_LINK)
 LIB_SUFFIX=""				AC_SUBST(LIB_SUFFIX)
 LIB_UNINSTALL=""			AC_SUBST(LIB_UNINSTALL)
 LINK_PROGS=""				AC_SUBST(LINK_PROGS)
@@ -160,6 +160,7 @@ strstr \
 )
 
 CF_SYS_TIME_SELECT
+CF_SIG_ATOMIC_T
 
 TICS_ARGS="$LIBS"
 LIBS=

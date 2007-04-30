@@ -1,25 +1,25 @@
 /*
 ** Copyright (C) 1991, 1997 Free Software Foundation, Inc.
-** 
+**
 ** This file is part of TACK.
-** 
+**
 ** TACK is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2, or (at your option)
 ** any later version.
-** 
+**
 ** TACK is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
 ** along with TACK; see the file COPYING.  If not, write to
 ** the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.19 2007/04/08 15:28:14 tom Exp $ */
+/* $Id: tack.h,v 1.22 2007/04/29 23:52:34 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -27,7 +27,7 @@
 /* terminfo action checker include file */
 
 #define MAJOR_VERSION 1
-#define MINOR_VERSION 3
+#define MINOR_VERSION 5
 
 #ifdef HAVE_CONFIG_H
 #include <ncurses_cfg.h>
@@ -45,6 +45,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <string.h>
+#include <signal.h>	/* include before curses.h to work around glibc bug */
 
 #include <curses.h>
 #include <term_entry.h>
@@ -96,7 +97,7 @@ extern int tty_can_sync;
 extern int total_pads_sent;	/* count pad characters sent */
 extern int total_caps_sent;	/* count caps sent */
 extern int total_printing_characters; /* count printing characters sent */
-extern int no_alarm_event;	/* TRUE if the alarm has not gone off yet */
+extern SIG_ATOMIC_T no_alarm_event; /* TRUE if the alarm has not gone off yet */
 extern unsigned long usec_run_time; /* length of last test in microseconds */
 extern int raw_characters_sent;	/* Total output characters */
 
@@ -149,7 +150,8 @@ extern int select_xon_xoff;
 extern int tty_frame_size;
 extern unsigned tty_baud_rate;
 extern unsigned long tty_cps;	/* The number of characters per second */
-extern int not_a_tty, nodelay_read;
+extern SIG_ATOMIC_T not_a_tty;
+extern int nodelay_read;
 extern int send_reset_init;
 
 /* definitions for stty_query() and initial_stty_query() */

@@ -1,18 +1,18 @@
 /*
 ** Copyright (C) 1991, 1997 Free Software Foundation, Inc.
-** 
+**
 ** This file is part of TACK.
-** 
+**
 ** TACK is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2, or (at your option)
 ** any later version.
-** 
+**
 ** TACK is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
 ** along with TACK; see the file COPYING.  If not, write to
 ** the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
@@ -23,11 +23,6 @@
  * Note: on strict-POSIX systems (including BSD/OS) the select_delay_type
  * global has no effect.
  */
-
-#ifdef HAVE_CONFIG_H
-#include <ncurses_cfg.h>
-#endif
-#include <signal.h>	/* include before curses.h to work around glibc bug */
 
 #include <tack.h>
 
@@ -49,7 +44,7 @@
 #endif
 #endif
 
-MODULE_ID("$Id: sysdep.c,v 1.16 2007/04/08 14:05:10 tom Exp $")
+MODULE_ID("$Id: sysdep.c,v 1.18 2007/04/29 23:45:23 tom Exp $")
 
 #if DECL_ERRNO
 extern int errno;
@@ -64,7 +59,7 @@ extern int errno;
 /* globals */
 int tty_frame_size;		/* asynch frame size times 2 */
 unsigned tty_baud_rate;		/* baud rate - bits per second */
-int not_a_tty;			/* TRUE if output is not a tty (i.e. pipe) */
+SIG_ATOMIC_T not_a_tty;		/* TRUE if output is not a tty (i.e. pipe) */
 int nodelay_read;		/* TRUE if NDELAY is set */
 
 #ifdef TERMIOS
@@ -137,7 +132,7 @@ tty_raw(int minch GCC_UNUSED, int mask)
 	PUT_TTY(fileno(stdin), &new_modes);
 }
 
-void 
+void
 tty_set(void)
 {				/* set tty to special modes */
 	new_modes = old_modes;
@@ -182,7 +177,7 @@ tty_set(void)
 #endif	/* NL1 */
 		break;
 	}
-	if (!(new_modes.c_oflag & (unsigned long) ~OPOST))
+	if ((new_modes.c_oflag & (unsigned long) ~OPOST) == 0)
 		new_modes.c_oflag &= (unsigned long) ~OPOST;
 #else
 	new_modes.sg_flags |= RAW;
@@ -193,7 +188,7 @@ tty_set(void)
 }
 
 
-void 
+void
 tty_reset(void)
 {				/* reset the tty to the original modes */
 	fflush(stdout);
@@ -203,7 +198,7 @@ tty_reset(void)
 }
 
 
-void 
+void
 tty_init(void)
 {				/* ATT terminal init */
 #if defined(F_GETFL) && defined(O_NDELAY)
@@ -222,7 +217,7 @@ tty_init(void)
 			return;
 		}
 		printf("tcgetattr error: %d\n", errno);
-		ExitProgram(1);
+		ExitProgram(EXIT_FAILURE);
 	}
 	/* if TAB3 is set then setterm() wipes out tabs (ht) */
 	new_modes = old_modes;
@@ -233,7 +228,7 @@ tty_init(void)
 #endif
 	if (PUT_TTY(fileno(stdin), &new_modes) == -1) {
 		printf("tcsetattr error: %d\n", errno);
-		ExitProgram(1);
+		ExitProgram(EXIT_FAILURE);
 	}
 #ifdef sequent
 	/* the sequent ATT emulation is broken soooo. */
@@ -382,7 +377,7 @@ spin_flush(void)
 **	read one function key from the input stream.
 **	A null character is converted to 0x80.
 */
-void 
+void
 read_key(char *buf, int max)
 {
 	int got, ask, i, l;
@@ -420,7 +415,7 @@ read_key(char *buf, int max)
 }
 
 
-void 
+void
 ignoresig(void)
 {
 	/* ignore signals */
@@ -431,36 +426,32 @@ ignoresig(void)
 	signal(SIGALRM, SIG_IGN);
 }
 
- /*
-    onintr( )
- 
- is the interrupt handling routine onintr turns off interrupts while doing
-    clean-up
- 
- onintr always exits fatally
+/*
+ * onintr( )
+ *
+ * is the interrupt handling routine.
+ * onintr turns off interrupts while doing clean-up.
+ *
+ * onintr always exits fatally
  */
-
-
-static RETSIGTYPE 
+static RETSIGTYPE
 onintr(int sig GCC_UNUSED)
 {
 	ignoresig();
 	tty_reset();
-	ExitProgram(1);
+	ExitProgram(EXIT_FAILURE);
 }
 
 
- /*
-    catchsig( )
- 
- set up to field interrupts (via function onintr( )) so that if interrupted
-    we can restore the correct terminal modes
- 
- catchsig simply returns
+/*
+ * catchsig( )
+ *
+ * set up to field interrupts (via function onintr( )) so that if interrupted
+ * we can restore the correct terminal modes
+ *
+ * catchsig simply returns
  */
-
-
-void 
+void
 catchsig(void)
 {
 	if ((signal(SIGINT, SIG_IGN)) == SIG_DFL)

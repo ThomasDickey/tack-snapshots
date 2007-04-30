@@ -1,3 +1,35 @@
+2007-04-29  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* HISTORY, tack.h: mark 1.05
+
+	* configure: regen'd
+
+	* configure.in: update LIB_LINK symbol to match CF_WITH_LIBTOOL change
+
+	* tack.h: use SIG_ATOMIC_T
+
+	* sysdep.c:
+	move include of <signal.h> to tack.h so SIG_ATOMIC_T definition works.
+
+	* tack.c: use EXIT_FAILURE/EXIT_SUCCESS
+
+	* sysdep.c: use EXIT_FAILURE/EXIT_SUCCESS
+	use SIG_ATOMIC_T
+
+	* output.c: add braces for readability
+
+	* tack.h: trim whitespace
+
+	* scan.c, init.c: use EXIT_FAILURE/EXIT_SUCCESS
+
+	* configure.in, aclocal.m4: add CF_SIG_ATOMIC_T
+
+	* control.c: use SIG_ATOMIC_T
+
+	* Makefile.in:
+	update $(LINK) to work with ncurses after importing CF_WITH_LIBTOOL change
+	that moved $(CC) into $(LIBTOOL_LINK) symbol.
+
 2007-04-08  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* configure: regen'd

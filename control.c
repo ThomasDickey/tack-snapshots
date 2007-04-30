@@ -25,7 +25,7 @@
 #include <sys/time.h>
 #endif
 
-MODULE_ID("$Id: control.c,v 1.9 2006/06/24 21:27:53 tom Exp $")
+MODULE_ID("$Id: control.c,v 1.10 2007/04/29 23:08:35 tom Exp $")
 
 /* terminfo test program control subroutines */
 
@@ -42,7 +42,7 @@ char txt_longer_test_time[80];	/* +) use longer time */
 char txt_shorter_test_time[80];	/* -) use shorter time */
 static int pad_test_duration = 1;	/* number of seconds for a pad test */
 int auto_pad_mode;		/* run the time tests */
-int no_alarm_event;		/* TRUE if the alarm has not gone off yet */
+SIG_ATOMIC_T no_alarm_event;	/* TRUE if the alarm has not gone off yet */
 unsigned long usec_run_time;	/* length of last test in microseconds */
 static MY_TIMER stop_watch[MAX_TIMERS]; /* Hold the start timers */
 
