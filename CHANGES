@@ -1,3 +1,8 @@
+2007-08-11  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* HISTORY:
+	tweak to build with latest ncurses (does not rely on new api's)
+
 2007-04-29  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* HISTORY, tack.h: mark 1.05
