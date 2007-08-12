@@ -23,7 +23,7 @@
 #include <time.h>
 #include <tic.h>
 
-MODULE_ID("$Id: edit.c,v 1.12 2007/04/08 15:24:23 tom Exp $")
+MODULE_ID("$Id: edit.c,v 1.13 2007/08/12 14:22:25 tom Exp $")
 
 /*
  * Terminfo edit features
@@ -285,7 +285,7 @@ show_value(
 		put_clear();
 	}
 	op = t->flags & 255;
-	if ((nt = _nc_find_entry(buf, _nc_info_hash_table))) {
+	if ((nt = _nc_find_entry(buf, _nc_get_hash_table(FALSE)))) {
 		switch (nt->nte_type) {
 		case BOOLEAN:
 			if (op == SHOW_DELETE) {
@@ -386,7 +386,7 @@ get_string_cap_byname(
 {
 	struct name_table_entry const *nt;
 
-	if ((nt = _nc_find_entry(name, _nc_info_hash_table))) {
+	if ((nt = _nc_find_entry(name, _nc_get_hash_table(FALSE)))) {
 		if (nt->nte_type == STRING) {
 			*long_name = strfnames[nt->nte_index];
 			return (CUR Strings[nt->nte_index]);
@@ -537,7 +537,7 @@ mark_cap(
 	struct name_table_entry const *nt;
 
 	alloc_arrays();
-	if ((nt = _nc_find_entry(name, _nc_info_hash_table))) {
+	if ((nt = _nc_find_entry(name, _nc_get_hash_table(FALSE)))) {
 		switch (nt->nte_type) {
 		case BOOLEAN:
 			flag_boolean[nt->nte_index] |= flag;
@@ -616,7 +616,7 @@ cap_index(
 				if (j) {
 					name[j] = '\0';
 					if ((nt = _nc_find_entry(name,
-						_nc_info_hash_table)) &&
+						_nc_get_hash_table(FALSE))) &&
 						(nt->nte_type == STRING)) {
 						*inx++ = nt->nte_index;
 					}
@@ -816,7 +816,7 @@ edit_init(void)
 	/* Lookup the translated strings */
 	for (i = 0; i < TM_last; i++) {
 		if ((nt = _nc_find_entry(TM_string[i].name,
-			_nc_info_hash_table)) && (nt->nte_type == STRING)) {
+			_nc_get_hash_table(FALSE))) && (nt->nte_type == STRING)) {
 			TM_string[i].index = nt->nte_index;
 		} else {
 			sprintf(temp, "TM_string lookup failed for: %s",
@@ -824,7 +824,7 @@ edit_init(void)
 			ptextln(temp);
 		}
 	}
-	if ((nt = _nc_find_entry("xon", _nc_info_hash_table)) != 0) {
+	if ((nt = _nc_find_entry("xon", _nc_get_hash_table(FALSE))) != 0) {
 		xon_index = nt->nte_index;
 	}
 	xon_shadow = xon_xoff;
@@ -859,7 +859,7 @@ change_one_entry(
 			*chp = pad[0];
 			return;
 		}
-		if ((nt = _nc_find_entry(pad, _nc_info_hash_table)) &&
+		if ((nt = _nc_find_entry(pad, _nc_get_hash_table(FALSE))) &&
 			(nt->nte_type == STRING)) {
 			x = nt->nte_index;
 			current_string = CUR Strings[x];
