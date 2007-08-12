@@ -1,3 +1,9 @@
+2007-08-12  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* edit.c:
+	as of 2007/8/12, ncurses no longer exports the data _nc_info_hash_table.
+	Instead, use the function _nc_get_hash_table(), which is in ncurses 5.0
+
 2007-08-11  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* HISTORY:
