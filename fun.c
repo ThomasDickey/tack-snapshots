@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: fun.c,v 1.10 2007/04/08 15:10:40 tom Exp $")
+MODULE_ID("$Id: fun.c,v 1.11 2009/12/26 21:36:34 tom Exp $")
 
 /*
  * Test the function keys on the terminal.  The code for echo tests
@@ -61,9 +61,9 @@ static const char **fk_name;
 static char **fkval;
 static char **fk_label;		/* function key labels (if any) */
 static int *fk_tested;
-static int num_strings = 0;
+static size_t num_strings = 0;
 
-static int fkmax = 1;		/* length of longest key */
+static unsigned fkmax = 1;	/* length of longest key */
 static int got_labels = 0;	/* true if we have some labels */
 static int key_count = 0;
 static int end_state;
@@ -146,7 +146,7 @@ keys_tested(
 					strcat(outbuf, expand(scan_up[i]));
 				}
 				expand_chars += l;
-				l = strlen(scan_name[i]);
+				l = (int) strlen(scan_name[i]);
 				if (((char_count + 16) & ~15) +
 					((expand_chars + 7) & ~7) + l >= columns) {
 					put_crlf();
@@ -168,7 +168,7 @@ keys_tested(
 				} else {
 					strcpy(outbuf, expand(fkval[i]));
 				}
-				l = strlen(fk_name[i]);
+				l = (int) strlen(fk_name[i]);
 				if (((char_count + 16) & ~15) +
 					((expand_chars + 7) & ~7) + l >= columns) {
 					put_crlf();
@@ -202,14 +202,14 @@ enter_key(
 	char *value,
 	char *lab)
 {
-	int j;
+	unsigned j;
 
 	alloc_strings();
 	if (value) {
 		j = strlen(value);
 		fkmax = fkmax > j ? fkmax : j;
 		/* do not permit duplicates */
-		for (j = 0; j < key_count; j++) {
+		for (j = 0; (int) j < key_count; j++) {
 			if (!strcmp(fk_name[j], name)) {
 				return;
 			}
@@ -619,7 +619,7 @@ funkey_prog(
 		sprintf(temp, "Hit function key %d\n", fk);
 		ptextln(temp);
 		for (i = 0; i < 4; ++i)
-			mm[i] = getchp(STRIP_PARITY);
+			mm[i] = (char) getchp(STRIP_PARITY);
 		mm[i] = '\0';
 		put_crlf();
 		if (mm[0] != 'a' || mm[1] != 'b' || mm[2] != 'c') {
@@ -830,12 +830,12 @@ tools_report(
 		if (i >= (int) sizeof(buf) - 1) {
 			i = 0;
 		}
-		buf[i++] = ch;
+		buf[i++] = (char) ch;
 		buf[i] = '\0';
 		for (j = 0; j < (int) sizeof(txt) - 1; j++) {
 			txt[j] = txt[j + 1];
 		}
-		txt[sizeof(txt) - 1] = ch & STRIP_PARITY;
+		txt[sizeof(txt) - 1] = (char) (ch & STRIP_PARITY);
 		if (crx == 0) {	/* echo test */
 			if (hex_display) {
 				ptext(hex_expand_to(&buf[i - 1], 3));

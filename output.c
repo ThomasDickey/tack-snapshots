@@ -23,7 +23,7 @@
 #include <tack.h>
 #include <time.h>
 
-MODULE_ID("$Id: output.c,v 1.13 2007/04/29 23:18:46 tom Exp $")
+MODULE_ID("$Id: output.c,v 1.14 2009/12/26 21:19:34 tom Exp $")
 
 /* globals */
 long char_sent;			/* number of characters sent */
@@ -469,20 +469,20 @@ expand_one(int ch, char **v)
 
 	if (ch & 0x80) {	/* dump it in octal (yuck) */
 		*t++ = '\\';
-		*t++ = '0' + ((ch >> 6) & 3);
-		*t++ = '0' + ((ch >> 3) & 7);
-		*t++ = '0' + (ch & 7);
+		*t++ = (char) ('0' + ((ch >> 6) & 3));
+		*t++ = (char) ('0' + ((ch >> 3) & 7));
+		*t++ = (char) ('0' + (ch & 7));
 		expand_chars += 4;
 	} else if (ch == 127) {	/* DEL */
 		*t++ = '^';
 		*t++ = '?';
 		expand_chars += 2;
 	} else if (ch >= ' ') {
-		*t++ = ch;
+		*t++ = (char) ch;
 		expand_chars++;
 	} else {	/* control characters */
 		*t++ = '^';
-		*t++ = ch + '@';
+		*t++ = (char) (ch + '@');
 		expand_chars += 2;
 	}
 	*v = t;
@@ -599,7 +599,7 @@ expand_command(const char *c)
 			} else
 				for (j = 0; (*s = c0[ch][j++]); s++);
 		} else {
-			*s++ = ch;
+			*s++ = (char) ch;
 			j = UChar(c[1]);
 			if (ch >= '0' && ch <= '9' &&
 				j >= '0' && j <= '9') {
@@ -723,7 +723,7 @@ wait_here(void)
 	int i, j;
 
 	for (i = 0; i < (int) sizeof(cc); i++) {
-		cc[i] = ch = getchp(STRIP_PARITY);
+		cc[i] = ch = (char) getchp(STRIP_PARITY);
 		if (ch == '\r' || ch == '\n') {
 			put_crlf();
 			char_sent = 0;
@@ -740,7 +740,7 @@ wait_here(void)
 		if (ch == 023) {	/* Control S */
 			/* ignore control S, but tell me about it */
 			while (ch == 023 || ch == 021) {
-				ch = getchp(STRIP_PARITY);
+				ch = (char) getchp(STRIP_PARITY);
 				if (ch == EOF)
 				    break;
 				if (i + 1 < (int) sizeof(cc))
@@ -792,7 +792,7 @@ read_string(
 				i--;
 			}
 		} else {
-			buf[i++] = ch;
+			buf[i++] = (char) ch;
 			putchp(ch);
 		}
 	}

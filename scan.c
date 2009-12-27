@@ -22,14 +22,14 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: scan.c,v 1.7 2007/04/29 23:17:32 tom Exp $")
+MODULE_ID("$Id: scan.c,v 1.8 2009/12/26 21:29:01 tom Exp $")
 
 unsigned scan_max;		/* length of longest scan code */
 char **scan_up, **scan_down, **scan_name;
 unsigned *scan_tested, *scan_length;
 static unsigned *scan_value;
 
-static int shift_state;
+static unsigned shift_state;
 static char *str;
 static int debug_char_count;
 
@@ -87,10 +87,10 @@ smash(void)
 		else
 			continue;
 		if (i) {
-			*s |= j;
+			*s = (char) (*s | j);
 			s++;
 		} else
-			*s = j << 4;
+			*s = (char) (j << 4);
 		i ^= 1;
 	}
 	*s = '\0';
@@ -153,7 +153,7 @@ scan_init(char *fn)
 		for (s = str; (ch = getc(fp)) != EOF;) {
 			if (ch == '\n' || ch == '\r')
 				break;
-			*s++ = ch;
+			*s++ = (char) ch;
 		}
 		*s++ = '\0';
 		if (ch == EOF)
@@ -220,7 +220,7 @@ scan_key(void)
 				debug_char_count = 0;
 			}
 		}
-		buf[i - 1] = ch;
+		buf[i - 1] = (char) ch;
 		buf[i] = '\0';
 		if (buf[0] & 0x80) {	/* scan up */
 			for (j = 0; scan_up[j]; j++) {
@@ -237,7 +237,7 @@ scan_key(void)
 			if (i == scan_length[j] && !strcmp(buf, scan_down[j])) {
 				i = 0;
 				shift_state |= scan_value[j];
-				ch = scan_value[j];
+				ch = (int) scan_value[j];
 				if (ch == CAPS_LOCK)
 					shift_state ^= SHIFT_KEY;
 				if (ch >= 256)

@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: menu.c,v 1.6 2005/09/17 19:49:16 tom Exp $")
+MODULE_ID("$Id: menu.c,v 1.7 2009/12/26 21:18:29 tom Exp $")
 
 /*
    Menu control
@@ -128,7 +128,7 @@ menu_display(
 	int repeat_state = 0;
 	int prompt_length;
 
-	prompt_length = strlen(prompt_string);
+	prompt_length = (int) strlen(prompt_string);
 	if (menu->ident) {
 		sprintf(&prompt_string[prompt_length], "/%s", menu->ident);
 	}

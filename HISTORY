@@ -1,6 +1,7 @@
 
 Current history:
 
+2009/12/26	1.07	Fix an allocation-size.
 2007/08/11	1.06	Updates to build with ncurses 5.6 patch 20070811
 2007/04/29	1.05	Updates to build with ncurses 5.6 patch 20070428
 2007/04/08	1.04	Fixes from Coverity scan for ncurses 5.6

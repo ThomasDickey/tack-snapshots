@@ -25,7 +25,7 @@
 #include <sys/time.h>
 #endif
 
-MODULE_ID("$Id: control.c,v 1.10 2007/04/29 23:08:35 tom Exp $")
+MODULE_ID("$Id: control.c,v 1.11 2009/12/26 21:48:54 tom Exp $")
 
 /* terminfo test program control subroutines */
 
@@ -432,7 +432,7 @@ pad_test_shutdown(
 	int counts;			/* total counts */
 	int ss;				/* Save string index */
 	int cpo;			/* characters per operation */
-	int delta;			/* difference in characters */
+	long delta;			/* difference in characters */
 	int bogus;			/* Time is inaccurate */
 	struct test_results *r;		/* Results of current test */
 	int ss_index[TT_MAX];		/* String index */
@@ -443,10 +443,10 @@ pad_test_shutdown(
 	} else {
 		bogus = 1;
 	}
-	usec_run_time = event_time(TIME_TEST);
+	usec_run_time = (unsigned long) event_time(TIME_TEST);
 	tx_source = t;
 	tx_characters = raw_characters_sent;
-	tx_cps = sliding_scale(tx_characters, 1000000, usec_run_time);
+	tx_cps = (unsigned long) sliding_scale(tx_characters, 1000000, usec_run_time);
 
 	/* save the data base */
 	for (txp = ss = counts = 0; txp < ttp; txp++) {
@@ -471,7 +471,7 @@ pad_test_shutdown(
 		return;
 	}
 	/* calculate the suggested pad times */
-	delta = usec_run_time - sliding_scale(tx_characters, 1000000, tty_cps);
+	delta = (long) (usec_run_time - (unsigned long) sliding_scale(tx_characters, 1000000, tty_cps));
 	if (delta < 0) {
 		/* probably should bump tx_characters */
 		delta = 0;

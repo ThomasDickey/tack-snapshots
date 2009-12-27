@@ -23,7 +23,7 @@
 #include <tack.h>
 #include <tic.h>
 
-MODULE_ID("$Id: init.c,v 1.10 2007/04/29 23:16:11 tom Exp $")
+MODULE_ID("$Id: init.c,v 1.11 2009/12/26 21:38:00 tom Exp $")
 
 #if NCURSES_VERSION_MAJOR >= 5 || NCURSES_VERSION_PATCH >= 981219
 #define _nc_get_curterm(p) _nc_get_tty_mode(p)
@@ -234,7 +234,10 @@ curses_setup(
 	 * getting the baudrate.
 	 */
 	_nc_get_curterm(&cur_term->Nttyb);
-	tty_baud_rate = baudrate();
+	if (baudrate() > 0)
+	    tty_baud_rate = (unsigned) baudrate();
+	else
+	    tty_baud_rate = 1;
 	tty_cps = (tty_baud_rate << 1) / tty_frame_size;
 
 	/* set up the defaults */

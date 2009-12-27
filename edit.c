@@ -23,7 +23,7 @@
 #include <time.h>
 #include <tic.h>
 
-MODULE_ID("$Id: edit.c,v 1.13 2007/08/12 14:22:25 tom Exp $")
+MODULE_ID("$Id: edit.c,v 1.15 2009/12/26 21:33:13 tom Exp $")
 
 /*
  * Terminfo edit features
@@ -101,7 +101,7 @@ send_info_string(
 	if (display_lines == -1) {
 		return;
 	}
-	len = strlen(str);
+	len = (int) strlen(str);
 	if (len + char_count + 3 >= columns) {
 		if (start_display == 0) {
 			put_str(",");
@@ -119,7 +119,7 @@ send_info_string(
 		if (len >= columns) {
 			/* if the terminal does not (am) then this loses */
 			if (columns) {
-				display_lines += ((strlen(str) + 3) / columns) + 1;
+				display_lines += (((int) strlen(str) + 3) / columns) + 1;
 			}
 			put_str("   ");
 			put_str(str);
@@ -187,7 +187,7 @@ save_info_string(
 {
 	int len;
 
-	len = strlen(str);
+	len = (int) strlen(str);
 	if (len + display_lines >= 77) {
 		if (display_lines > 0) {
 			(void) fprintf(fp, "\n\t");
@@ -339,7 +339,7 @@ show_value(
 		if (nt->nte_index == xon_index) {
 			xon_shadow = !xon_shadow;
 		} else {
-			CUR Booleans[nt->nte_index] = !CUR Booleans[nt->nte_index];
+			CUR Booleans[nt->nte_index] = (char) !CUR Booleans[nt->nte_index];
 		}
 		return;
 	}
@@ -359,7 +359,7 @@ show_value(
 		break;
 	case NUMBER:
 		if (sscanf(buf, "%d", &n) == 1) {
-			CUR Numbers[nt->nte_index] = n;
+			CUR Numbers[nt->nte_index] = (short) n;
 			sprintf(temp, "new numeric value  %s %d",
 				nt->nte_name, n);
 			ptextln(temp);
@@ -540,13 +540,13 @@ mark_cap(
 	if ((nt = _nc_find_entry(name, _nc_get_hash_table(FALSE)))) {
 		switch (nt->nte_type) {
 		case BOOLEAN:
-			flag_boolean[nt->nte_index] |= flag;
+			flag_boolean[nt->nte_index] = (char) (flag_boolean[nt->nte_index] | flag);
 			break;
 		case STRING:
-			flag_strings[nt->nte_index] |= flag;
+			flag_strings[nt->nte_index] = (char) (flag_strings[nt->nte_index] | flag);
 			break;
 		case NUMBER:
-			flag_numerics[nt->nte_index] |= flag;
+			flag_numerics[nt->nte_index] = (char) (flag_numerics[nt->nte_index] | flag);
 			break;
 		default:
 			sprintf(temp, "unknown cap type (%s)", name);
@@ -576,7 +576,7 @@ can_test(
 	char name[32];
 
 	if (s) {
-		for (j = 0; (name[j] = ch = *s); s++) {
+		for (j = 0; (ch = name[j] = *s); s++) {
 			if (ch == ' ' || ch == ')' || ch == '(') {
 				if (j) {
 					name[j] = '\0';
@@ -611,7 +611,7 @@ cap_index(
 
 	if (s) {
 		for (j = 0; ; s++) {
-			name[j] = ch = *s;
+			ch = name[j] = *s;
 			if (ch == ' ' || ch == ')' || ch == '(' || ch == 0) {
 				if (j) {
 					name[j] = '\0';
@@ -649,7 +649,7 @@ cap_match(
 	int c, l, t;
 
 	if (names) {
-		l = strlen(cap);
+		l = (int) strlen(cap);
 		while ((s = strstr(names, cap))) {
 			c = (names == s) ? 0 : *(s - 1);
 			t = s[l];
@@ -679,7 +679,8 @@ show_report(
 {
 	int i, j, nc, flag;
 	const char *s;
-	const char **nx = malloc(BOOLCOUNT + NUMCOUNT + MAX_STRINGS);
+	size_t count = (size_t) (BOOLCOUNT + NUMCOUNT + MAX_STRINGS);
+	const char **nx = (const char **) calloc(sizeof(const char *), count);
 
 	alloc_arrays();
 	flag = t->flags & 255;

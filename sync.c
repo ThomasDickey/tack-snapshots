@@ -22,7 +22,7 @@
 #include <tack.h>
 #include <time.h>
 
-MODULE_ID("$Id: sync.c,v 1.9 2006/05/06 20:45:48 tom Exp $")
+MODULE_ID("$Id: sync.c,v 1.10 2009/12/26 21:39:52 tom Exp $")
 
 /* terminal-synchronization and performance tests */
 
@@ -88,7 +88,7 @@ tty_sync_error(void)
 		*/
 		for (ack = 0; ; ) {
 			if (ack < TTY_ACK_SIZE - 2) {
-				tty_ACK[ack] = ch;
+				tty_ACK[ack] = (char) ch;
 				tty_ACK[ack + 1] = '\0';
 			}
 			if (ch == ACK_terminator) {
@@ -164,7 +164,7 @@ probe_enq_ok(void)
 		ptext("ACK received: ");
 		putln(expand(tty_ACK));
 #ifdef user8
-		len = user8 ? strlen(user8) : 0;
+		len = user8 ? (int) strlen(user8) : 0;
 #else
 		len = 0;
 #endif
@@ -183,7 +183,7 @@ probe_enq_ok(void)
 	}
 
 	tty_can_sync = SYNC_TESTED;
-	if ((len = strlen(tty_ACK)) == 1) {
+	if ((len = (int) strlen(tty_ACK)) == 1) {
 		/* single character acknowledge string */
 		ACK_terminator = tty_ACK[0];
 		ACK_length = 4096;
@@ -192,7 +192,7 @@ probe_enq_ok(void)
 	tc = tty_ACK[len - 1];
 #ifdef user8
 	if (user8) {
-		ulen = strlen(user8);
+		ulen = (int) strlen(user8);
 		if (tc == user8[ulen - 1]) {
 			/* ANSI style acknowledge string */
 			ACK_terminator = tc;
@@ -226,7 +226,7 @@ verify_time(void)
 		put_crlf();
 		if (ACK_terminator >= 0) {
 			ptext("ACK terminating character: ");
-			temp[0] = ACK_terminator;
+			temp[0] = (char) ACK_terminator;
 			temp[1] = '\0';
 			ptextln(expand(temp));
 		} else {
@@ -292,7 +292,7 @@ sync_home(
 	pad_test_shutdown(t, auto_right_margin == 0);
 	/* note:  tty_frame_size is the real framesize times two.
 	   This takes care of half bits. */
-	rate = (tx_cps * tty_frame_size) >> 1;
+	rate = ((tx_cps * (unsigned long) tty_frame_size) >> 1);
 	if (rate > tty_baud_rate) {
 		tty_baud_rate = rate;
 	}
