@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.22 2007/04/29 23:52:34 tom Exp $ */
+/* $Id: tack.h,v 1.23 2009/12/26 21:25:11 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -27,7 +27,7 @@
 /* terminfo action checker include file */
 
 #define MAJOR_VERSION 1
-#define MINOR_VERSION 5
+#define MINOR_VERSION 7
 
 #ifdef HAVE_CONFIG_H
 #include <ncurses_cfg.h>

@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: pad.c,v 1.6 2005/09/17 19:49:16 tom Exp $")
+MODULE_ID("$Id: pad.c,v 1.7 2009/12/26 21:30:31 tom Exp $")
 
 /* test the pad counts on the terminal */
 
@@ -1932,7 +1932,7 @@ pad_crash(
 	int *state,
 	int *ch)
 {
-	int save_xon_xoff;
+	char save_xon_xoff;
 
 	if (!clear_screen) {
 		ptext("(clear) Clear-screen not present.  ");

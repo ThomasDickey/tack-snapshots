@@ -44,7 +44,7 @@
 #endif
 #endif
 
-MODULE_ID("$Id: sysdep.c,v 1.18 2007/04/29 23:45:23 tom Exp $")
+MODULE_ID("$Id: sysdep.c,v 1.19 2009/12/26 21:40:36 tom Exp $")
 
 #if DECL_ERRNO
 extern int errno;
@@ -280,7 +280,7 @@ stty_query(int q)
 		case TTY_NOECHO:
 		return TTY_IS_NOECHO;
 	case TTY_OUT_TRANS:
-		return TTY_IS_OUT_TRANS;
+		return (int) TTY_IS_OUT_TRANS;
 	case TTY_CHAR_MODE:
 		return TTY_IS_CHAR_MODE;
 	}
@@ -299,7 +299,7 @@ initial_stty_query(int q)
 	case TTY_8_BIT:
 		return TTY_WAS_CS8;
 	case TTY_XON_XOFF:
-		return TTY_WAS_XON_XOFF;
+		return (int) TTY_WAS_XON_XOFF;
 	}
 	return (-1);
 }
@@ -409,7 +409,7 @@ read_key(char *buf, int max)
 			*(unsigned char *)s = 128;
 		} else {
 			/* strip high order bits (if any) */
-			*s &= char_mask;
+			*s = (char) (*s & char_mask);
 		}
 	}
 }

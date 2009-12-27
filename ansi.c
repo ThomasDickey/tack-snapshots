@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: ansi.c,v 1.11 2007/04/07 14:49:53 tom Exp $")
+MODULE_ID("$Id: ansi.c,v 1.12 2009/12/26 21:23:27 tom Exp $")
 
 /*
  * Standalone tests for ANSI terminals.  Three entry points:
@@ -146,7 +146,8 @@ read_ansi(void)
 			last_escape = A_ESC;
 		} else
 		if (last_escape == A_ESC && ch >= '@' && ch <= '_') {
-			pack_buf[j++] = last_escape = ch + 0x40;
+			last_escape = ch + 0x40;
+			pack_buf[j++] = (unsigned char) last_escape;
 		} else
 		if (last_escape != A_CSI || (ch > 0x20 && ch != 0x80)) {
 			if (last_escape == A_ESC) {
@@ -155,7 +156,7 @@ read_ansi(void)
 			if (ch > 0x80 && ch < 0xa0) {
 				last_escape = ch;
 			}
-			pack_buf[j++] = ch;
+			pack_buf[j++] = (unsigned char) ch;
 		}
 	}
 	if (last_escape == A_ESC) {
@@ -193,7 +194,7 @@ valid_mode(int expected)
 	terminator = 0;
 	for (; (ch = *s); s++) {
 		if (ch >= '0' && ch <= '9')
-			ansi_value[ape] = ansi_value[ape] * 10 + ch - '0';
+			ansi_value[ape] = (short) (ansi_value[ape] * 10 + ch - '0');
 		else if (ch == ';' || ch == ':')
 			ansi_value[++ape] = 0;
 		else if (ch >= '<' && ch <= '?')
@@ -240,7 +241,7 @@ read_reports(void)
 		sprintf(temp, "%s (%s) ", report_list[i].text,
 			expand_command(report_list[i].request));
 		ptext(temp);
-		for (j = strlen(temp); j < 49; j++)
+		for (j = (int) strlen(temp); j < 49; j++)
 			putchp(' ');
 		tc_putp(report_list[i].request);
 		vcr = 0;
@@ -260,7 +261,7 @@ read_reports(void)
 			put_crlf();
 			t = "*** The above request gives illegal response ***";
 			ptext(t);
-			for (j = strlen(t); j < 49; j++)
+			for (j = (int) strlen(t); j < 49; j++)
 				putchp(' ');
 		}
 		s = expand((const char *)ansi_buf);
@@ -311,7 +312,7 @@ request_cfss(void)
 		ptext(rqss[i].text);
 		if (rqss[i].expect == 0)
 			continue;
-		j = strlen(rqss[i].text) + strlen(rqss[i].expect);
+		j = (int) (strlen(rqss[i].text) + strlen(rqss[i].expect));
 		putchp(' ');
 		for (j++; j < 40; j++)
 			putchp(' ');
@@ -389,7 +390,7 @@ mode_display(const char *p, int n, int c, char s, char r)
 	int k;
 
 	sprintf(temp, "%s%d (%c, %c, %c)", p, n, c, s, r);
-	k = strlen(temp);
+	k = (int) strlen(temp);
 	if (char_count + k >= columns)
 		put_crlf();
 	for (; k < 14; k++)
@@ -426,7 +427,7 @@ terminal_state(void)
 			} else {
 				strcpy(temp, "Standard modes:");
 			}
-			k = strlen(temp);
+			k = (int) strlen(temp);
 			ptext(temp);
 			for (j = 0; j < (int) sizeof(buf); buf[j++] = ' ')
 				;
@@ -457,12 +458,12 @@ terminal_state(void)
 					}
 					sprintf(temp, " %d", j);
 					ptext(temp);
-					k += strlen(temp);
-					buf[k - 1] = ansi_value[1] + '0';
+					k += (int) strlen(temp);
+					buf[k - 1] = (char) (ansi_value[1] + '0');
 					if (modes_found >= MAX_MODES)
 						continue;
 					current_value[modes_found] =
-						ansi_value[1] + '0';
+						(char) (ansi_value[1] + '0');
 					/* some modes never return */
 					if ((i == 0 && j == 13)	/* control execution */
 						|| (puc[i][0] == '?' && j == 2))	/* VT52 */
@@ -520,9 +521,9 @@ terminal_state(void)
 				if (!valid_mode(('$' << 8) | 'y'))
 					continue;
 				if (k) {
-					reset_value[j] = ansi_value[1] + '0';
+					reset_value[j] = (char) (ansi_value[1] + '0');
 				} else {
-					set_value[j] = ansi_value[1] + '0';
+					set_value[j] = (char) (ansi_value[1] + '0');
 				}
 			}
 			put_str("\033[30l");	/* added for GORT bug
@@ -630,7 +631,7 @@ display_sgr(int puc)
 {
 	int k;
 
-	temp[0] = puc;
+	temp[0] = (char) puc;
 	temp[1] = '\0';
 	for (k = 0; k < 80; k++) {
 		if (char_count + 8 > 80)
@@ -841,7 +842,7 @@ tools_charset(
 			putchp(ch);
 			if (j == 1 && ch > '/')
 				j++;
-			bank[j] = ch;
+			bank[j] = (char) ch;
 			if (ch < ' ' || ch > '/')
 				break;
 			if (j + 2 >= (int) sizeof(bank))

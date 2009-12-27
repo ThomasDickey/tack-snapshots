@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: charset.c,v 1.11 2006/11/26 00:13:36 tom Exp $")
+MODULE_ID("$Id: charset.c,v 1.12 2009/12/26 21:26:37 tom Exp $")
 
 /*
 	Menu definitions for alternate character set and SGR tests.
@@ -316,7 +316,7 @@ test_one_attr(
 		putchp('.');
 		put_mode(begin_mode);
 		put_str(alt_modes[n].name);
-		for (i = strlen(alt_modes[n].name); i < 13; i++) {
+		for (i = (int) strlen(alt_modes[n].name); i < 13; i++) {
 			putchp(' ');
 		}
 		if (end_mode) {
@@ -418,7 +418,7 @@ test_acs(
 	line_count = 0;
 	for (i = 0; i < GLYPHS; i++) {
 		valid_glyph[i] = FALSE;
-		acs_table[i] = i;
+		acs_table[i] = (char) i;
 	}
 	if (acs_chars) {
 		sprintf(temp, "Alternate character set map: %s",

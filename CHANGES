@@ -1,3 +1,32 @@
+2009-12-26  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* configure:
+	regen to get new macros, as well as to use autoconf-252 (patched)
+
+	* aclocal.m4: resync with my-autoconf (many changes)
+
+	* Makefile.in: drop mkdirs.sh, just use mkdir -p
+
+	* control.c, tack.c, sysdep.c, sync.c: strict gcc warnings
+
+	* init.c: check if baudrate() returns ERR, use 1 if so.
+
+	* fun.c, edit.c, pad.c, scan.c, charset.c: strict gcc warnings
+
+	* tack.h: bump to 1.07
+
+	* HISTORY: reason for release
+
+	* ansi.c, output.c, menu.c: strict gcc warnings
+
+	* edit.c:
+	fix an incorrect malloc-size in show_report(), which could cause core-dump
+	when displaying long list of function-keys, e.g., for xterm-new
+
+2009-11-19  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.guess, config.sub: update to 2009-11-20
+
 2007-08-12  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* edit.c:

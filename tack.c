@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: tack.c,v 1.9 2007/04/29 23:39:38 tom Exp $")
+MODULE_ID("$Id: tack.c,v 1.10 2009/12/26 21:41:48 tom Exp $")
 
 /*
    This program is designed to test terminfo, not curses.  Therefore
@@ -373,13 +373,15 @@ tty_xon(
 		if (exit_xon_mode) {
 			tc_putp(exit_xon_mode);
 		}
-		xon_xoff = select_xon_xoff = FALSE;
+		xon_xoff = FALSE;
+		select_xon_xoff = FALSE;
 		strcpy(tty_xon_menu, enable_xon_xoff);
 	} else {
 		if (enter_xon_mode) {
 			tc_putp(enter_xon_mode);
 		}
-		xon_xoff = select_xon_xoff = TRUE;
+		xon_xoff = TRUE;
+		select_xon_xoff = TRUE;
 		strcpy(tty_xon_menu, disable_xon_xoff);
 	}
 	tty_set();
