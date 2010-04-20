@@ -1,3 +1,7 @@
+2010-04-20  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* package/debian/compat: RCS_BASE
+
 2009-12-26  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* configure:
