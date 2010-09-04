@@ -44,7 +44,7 @@
 #endif
 #endif
 
-MODULE_ID("$Id: sysdep.c,v 1.19 2009/12/26 21:40:36 tom Exp $")
+MODULE_ID("$Id: sysdep.c,v 1.21 2010/09/03 23:39:36 tom Exp $")
 
 #if DECL_ERRNO
 extern int errno;
@@ -103,168 +103,177 @@ void catchsig(void);
 void
 tty_raw(int minch GCC_UNUSED, int mask)
 {				/* set tty to raw noecho */
-	new_modes = old_modes;
+    new_modes = old_modes;
 #ifdef TERMIOS
 #if HAVE_SELECT
-	new_modes.c_cc[VMIN] = 1;
+    new_modes.c_cc[VMIN] = 1;
 #else
-	new_modes.c_cc[VMIN] = minch;
+    new_modes.c_cc[VMIN] = minch;
 #endif
-	new_modes.c_cc[VTIME] = 2;
-	new_modes.c_lflag &=
-		~(ISIG | ICANON | XCASE | ECHO | ECHOE | ECHOK | ECHONL);
+    new_modes.c_cc[VTIME] = 2;
+    new_modes.c_lflag &=
+	(unsigned) ~(ISIG | ICANON | XCASE | ECHO | ECHOE | ECHOK | ECHONL);
 #ifdef LOBLK
-	new_modes.c_lflag &= ~LOBLK;
+    new_modes.c_lflag &= ~LOBLK;
 #endif
-	new_modes.c_oflag &= ~(OPOST | OLCUC | TABDLY);
-	if (mask == ALLOW_PARITY) {
-		new_modes.c_cflag &= ~(CSIZE | PARENB | HUPCL);
-		new_modes.c_cflag |= CS8;
-	}
-	new_modes.c_iflag &=
-		~(IGNBRK | BRKINT | IGNPAR | PARMRK | INPCK | ISTRIP | INLCR | IGNCR | ICRNL |
-		IUCLC | IXON | IXANY | IXOFF);
+    new_modes.c_oflag &= (unsigned) ~(OPOST | OLCUC | TABDLY);
+    if (mask == ALLOW_PARITY) {
+	new_modes.c_cflag &= (unsigned) ~(CSIZE | PARENB | HUPCL);
+	new_modes.c_cflag |= CS8;
+    }
+    new_modes.c_iflag &=
+	(unsigned) ~(IGNBRK
+		     | BRKINT
+		     | IGNPAR
+		     | PARMRK
+		     | INPCK
+		     | ISTRIP
+		     | INLCR
+		     | IGNCR
+		     | ICRNL
+		     | IUCLC
+		     | IXON
+		     | IXANY
+		     | IXOFF);
 #else
-	new_modes.sg_flags |= RAW;
+    new_modes.sg_flags |= RAW;
 #endif
-	if (not_a_tty)
-		return;
-	PUT_TTY(fileno(stdin), &new_modes);
+    if (not_a_tty)
+	return;
+    PUT_TTY(fileno(stdin), &new_modes);
 }
 
 void
 tty_set(void)
 {				/* set tty to special modes */
-	new_modes = old_modes;
+    new_modes = old_modes;
 #ifdef TERMIOS
-	new_modes.c_cc[VMIN] = 1;
-	new_modes.c_cc[VTIME] = 1;
-	new_modes.c_lflag &= ~(ISIG | ICANON | ECHO | ECHOE | ECHOK | ECHONL);
+    new_modes.c_cc[VMIN] = 1;
+    new_modes.c_cc[VTIME] = 1;
+    new_modes.c_lflag &= (unsigned) ~(ISIG | ICANON | ECHO | ECHOE | ECHOK | ECHONL);
 #if defined(ONLCR) && defined(OCRNL) && defined(ONLRET) && defined(OFILL)
-	new_modes.c_oflag &= ~(ONLCR | OCRNL | ONLRET | OFILL);
+    new_modes.c_oflag &= (unsigned) ~(ONLCR | OCRNL | ONLRET | OFILL);
 #else
-	new_modes.c_oflag &= ~(OPOST);
+    new_modes.c_oflag &= (unsigned) ~(OPOST);
 #endif
-	if (char_mask == ALLOW_PARITY)
-		new_modes.c_iflag &= ~ISTRIP;
-	switch (select_xon_xoff) {
-	case 0:
-		new_modes.c_iflag &= ~(IXON | IXOFF);
-		break;
-	case 1:
+    if (char_mask == ALLOW_PARITY)
+	new_modes.c_iflag &= (unsigned) ~ISTRIP;
+    switch (select_xon_xoff) {
+    case 0:
+	new_modes.c_iflag &= (unsigned) ~(IXON | IXOFF);
+	break;
+    case 1:
 #if defined(sequent) && sequent
-		/* the sequent System V emulation is broken */
-		new_modes = old_modes;
-		new_modes.c_cc[VEOL] = 6;	/* control F  (ACK) */
+	/* the sequent System V emulation is broken */
+	new_modes = old_modes;
+	new_modes.c_cc[VEOL] = 6;	/* control F  (ACK) */
 #endif
-		new_modes.c_iflag |= IXON | IXOFF;
-		break;
-	}
-	switch (select_delay_type) {
-	case 0:
+	new_modes.c_iflag |= IXON | IXOFF;
+	break;
+    }
+    switch (select_delay_type) {
+    case 0:
 #ifdef NLDLY
-		new_modes.c_oflag &=
-			~(NLDLY | CRDLY | TABDLY | BSDLY | VTDLY | FFDLY);
-#endif	/* NLDLY */
-		break;
-	case 1:
+	new_modes.c_oflag &=
+	    (unsigned) ~(NLDLY | CRDLY | TABDLY | BSDLY | VTDLY | FFDLY);
+#endif /* NLDLY */
+	break;
+    case 1:
 #ifdef NLDLY
-		new_modes.c_oflag &=
-			~(NLDLY | CRDLY | TABDLY | BSDLY | VTDLY | FFDLY);
-#endif	/* NLDLY */
+	new_modes.c_oflag &=
+	    (unsigned) ~(NLDLY | CRDLY | TABDLY | BSDLY | VTDLY | FFDLY);
+#endif /* NLDLY */
 #ifdef NL1
-		new_modes.c_oflag |= NL1 | CR2;
-#endif	/* NL1 */
-		break;
-	}
-	if ((new_modes.c_oflag & (unsigned long) ~OPOST) == 0)
-		new_modes.c_oflag &= (unsigned long) ~OPOST;
+	new_modes.c_oflag |= NL1 | CR2;
+#endif /* NL1 */
+	break;
+    }
+    if ((new_modes.c_oflag & (unsigned long) ~OPOST) == 0)
+	new_modes.c_oflag &= (unsigned long) ~OPOST;
 #else
-	new_modes.sg_flags |= RAW;
-	if (not_a_tty)
-		return;
+    new_modes.sg_flags |= RAW;
+    if (not_a_tty)
+	return;
 #endif
-	PUT_TTY(fileno(stdin), &new_modes);
+    PUT_TTY(fileno(stdin), &new_modes);
 }
-
 
 void
 tty_reset(void)
 {				/* reset the tty to the original modes */
-	fflush(stdout);
-	if (not_a_tty)
-		return;
-	PUT_TTY(fileno(stdin), &old_modes);
+    fflush(stdout);
+    if (not_a_tty)
+	return;
+    PUT_TTY(fileno(stdin), &old_modes);
 }
-
 
 void
 tty_init(void)
 {				/* ATT terminal init */
 #if defined(F_GETFL) && defined(O_NDELAY)
-	int flags;
+    int flags;
 
-	flags = fcntl(fileno(stdin), F_GETFL, 0);
-	nodelay_read = flags & O_NDELAY;
+    flags = fcntl(fileno(stdin), F_GETFL, 0);
+    nodelay_read = flags & O_NDELAY;
 #else
-	nodelay_read = FALSE;
+    nodelay_read = FALSE;
 #endif
-	not_a_tty = FALSE;
-	if (GET_TTY(fileno(stdin), &old_modes) == -1) {
-		if (errno == ENOTTY) {
-			tty_frame_size = 20;
-			not_a_tty = TRUE;
-			return;
-		}
-		printf("tcgetattr error: %d\n", errno);
-		ExitProgram(EXIT_FAILURE);
+    not_a_tty = FALSE;
+    if (GET_TTY(fileno(stdin), &old_modes) == -1) {
+	if (errno == ENOTTY) {
+	    tty_frame_size = 20;
+	    not_a_tty = TRUE;
+	    return;
 	}
-	/* if TAB3 is set then setterm() wipes out tabs (ht) */
-	new_modes = old_modes;
+	printf("tcgetattr error: %d\n", errno);
+	ExitProgram(EXIT_FAILURE);
+    }
+    /* if TAB3 is set then setterm() wipes out tabs (ht) */
+    new_modes = old_modes;
 #ifdef TERMIOS
 #ifdef TABDLY
-	new_modes.c_oflag &= ~TABDLY;
-#endif	/* TABDLY */
+    new_modes.c_oflag &= (unsigned) ~TABDLY;
+#endif /* TABDLY */
 #endif
-	if (PUT_TTY(fileno(stdin), &new_modes) == -1) {
-		printf("tcsetattr error: %d\n", errno);
-		ExitProgram(EXIT_FAILURE);
-	}
+    if (PUT_TTY(fileno(stdin), &new_modes) == -1) {
+	printf("tcsetattr error: %d\n", errno);
+	ExitProgram(EXIT_FAILURE);
+    }
 #ifdef sequent
-	/* the sequent ATT emulation is broken soooo. */
-	old_modes.c_cflag &= ~(CSIZE | CSTOPB);
-	old_modes.c_cflag |= CS7 | PARENB;
+    /* the sequent ATT emulation is broken soooo. */
+    old_modes.c_cflag &= ~(CSIZE | CSTOPB);
+    old_modes.c_cflag |= CS7 | PARENB;
 #endif
-	catchsig();
+    catchsig();
 #ifdef TERMIOS
-	switch (old_modes.c_cflag & CSIZE) {
+    switch (old_modes.c_cflag & CSIZE) {
 #if defined(CS5) && (CS5 != 0)
-	case CS5:
-		tty_frame_size = 10;
-		break;
+    case CS5:
+	tty_frame_size = 10;
+	break;
 #endif
 #if defined(CS6) && (CS6 != 0)
-	case CS6:
-		tty_frame_size = 12;
-		break;
+    case CS6:
+	tty_frame_size = 12;
+	break;
 #endif
 #if defined(CS7) && (CS7 != 0)
-	case CS7:
-		tty_frame_size = 14;
-		break;
+    case CS7:
+	tty_frame_size = 14;
+	break;
 #endif
 #if defined(CS8) && (CS8 != 0)
-	case CS8:
-		tty_frame_size = 16;
-		break;
+    case CS8:
+	tty_frame_size = 16;
+	break;
 #endif
-	}
-	tty_frame_size += 2 +
-		((old_modes.c_cflag & PARENB) ? 2 : 0) +
-		((old_modes.c_cflag & CSTOPB) ? 4 : 2);
+    }
+    tty_frame_size += 2 +
+	((old_modes.c_cflag & PARENB) ? 2 : 0) +
+	((old_modes.c_cflag & CSTOPB) ? 4 : 2);
 #else
-	tty_frame_size = 6 +
-		(old_modes.sg_flags & PASS8) ? 16 : 14;
+    tty_frame_size = 6 +
+	(old_modes.sg_flags & PASS8) ? 16 : 14;
 #endif
 }
 
@@ -276,15 +285,15 @@ tty_init(void)
 int
 stty_query(int q)
 {
-	switch (q) {
-		case TTY_NOECHO:
-		return TTY_IS_NOECHO;
-	case TTY_OUT_TRANS:
-		return (int) TTY_IS_OUT_TRANS;
-	case TTY_CHAR_MODE:
-		return TTY_IS_CHAR_MODE;
-	}
-	return (-1);
+    switch (q) {
+    case TTY_NOECHO:
+	return TTY_IS_NOECHO;
+    case TTY_OUT_TRANS:
+	return (int) TTY_IS_OUT_TRANS;
+    case TTY_CHAR_MODE:
+	return TTY_IS_CHAR_MODE;
+    }
+    return (-1);
 }
 
 /*
@@ -295,29 +304,29 @@ stty_query(int q)
 int
 initial_stty_query(int q)
 {
-	switch (q) {
-	case TTY_8_BIT:
-		return TTY_WAS_CS8;
-	case TTY_XON_XOFF:
-		return (int) TTY_WAS_XON_XOFF;
-	}
-	return (-1);
+    switch (q) {
+    case TTY_8_BIT:
+	return TTY_WAS_CS8;
+    case TTY_XON_XOFF:
+	return (int) TTY_WAS_XON_XOFF;
+    }
+    return (-1);
 }
 
 #if HAVE_SELECT && defined(FD_ZERO)
 static int
 char_ready(void)
 {
-	int n;
-	fd_set ifds;
-	struct timeval tv;
+    int n;
+    fd_set ifds;
+    struct timeval tv;
 
-	FD_ZERO(&ifds);
-	FD_SET(fileno(stdin), &ifds);
-	tv.tv_sec = 0;
-	tv.tv_usec = 200000;
-	n = select(fileno(stdin)+1, &ifds, NULL, NULL, &tv);
-	return (n != 0);
+    FD_ZERO(&ifds);
+    FD_SET(fileno(stdin), &ifds);
+    tv.tv_sec = 0;
+    tv.tv_usec = 200000;
+    n = select(fileno(stdin) + 1, &ifds, NULL, NULL, &tv);
+    return (n != 0);
 }
 
 #else
@@ -325,15 +334,15 @@ char_ready(void)
 int
 char_ready(void)
 {
-	int i, j;
+    int i, j;
 
-	/* the following loop has to be tuned for each computer */
-	for (j = 0; j < 1000; j++) {
-		ioctl(fileno(stdin), FIONREAD, &i);
-		if (i)
-			return i;
-	}
-	return i;
+    /* the following loop has to be tuned for each computer */
+    for (j = 0; j < 1000; j++) {
+	ioctl(fileno(stdin), FIONREAD, &i);
+	if (i)
+	    return i;
+    }
+    return i;
 }
 
 #else
@@ -341,9 +350,9 @@ char_ready(void)
 int
 char_ready(void)
 {
-	int n = 0;
-	int howmany = ioctl(0, 'ichr', &n);
-	return (howmany >= 0 && n > 0);
+    int n = 0;
+    int howmany = ioctl(0, 'ichr', &n);
+    return (howmany >= 0 && n > 0);
 }
 #else
 #define char_ready() 1
@@ -360,15 +369,16 @@ char_ready(void)
 void
 spin_flush(void)
 {
-	unsigned char buf[64];
+    unsigned char buf[64];
 
-	fflush(stdout);
-	event_start(TIME_FLUSH);	/* start the timer */
-	do {
-		if (char_ready()) {
-			(void) read(fileno(stdin), &buf, sizeof(buf));
-		}
-	} while (event_time(TIME_FLUSH) < 400000);
+    fflush(stdout);
+    event_start(TIME_FLUSH);	/* start the timer */
+    do {
+	if (char_ready()) {
+	    if (read(fileno(stdin), &buf, sizeof(buf)))
+		break;
+	}
+    } while (event_time(TIME_FLUSH) < 400000);
 }
 
 /*
@@ -380,50 +390,49 @@ spin_flush(void)
 void
 read_key(char *buf, int max)
 {
-	int got, ask, i, l;
-	char *s;
+    int got, ask, i, l;
+    char *s;
 
-	*buf = '\0';
-	s = buf;
-	fflush(stdout);
-	/* ATT unix may return 0 or 1, Berkeley Unix should be 1 */
-	while (read(fileno(stdin), s, 1) == 0);
-	++s;
-	--max;
-	while (max > 0 && (ask = char_ready())) {
-		if (ask > max) {
-			ask = max;
-		}
-		if ((got = read(fileno(stdin), s, (unsigned) ask))) {
-			s += got;
-		} else {
-			break;
-		}
-		max -= got;
+    *buf = '\0';
+    s = buf;
+    fflush(stdout);
+    /* ATT unix may return 0 or 1, Berkeley Unix should be 1 */
+    while (read(fileno(stdin), s, 1) == 0) ;
+    ++s;
+    --max;
+    while (max > 0 && (ask = char_ready())) {
+	if (ask > max) {
+	    ask = max;
 	}
-	*s = '\0';
-	l = s - buf;
-	for (s = buf, i = 0; i < l; i++) {
-		if ((*s & 0x7f) == 0) {
-			/* convert nulls to 0x80 */
-			*(unsigned char *)s = 128;
-		} else {
-			/* strip high order bits (if any) */
-			*s = (char) (*s & char_mask);
-		}
+	if ((got = (int) read(fileno(stdin), s, (unsigned) ask))) {
+	    s += got;
+	} else {
+	    break;
 	}
+	max -= got;
+    }
+    *s = '\0';
+    l = (int) (s - buf);
+    for (s = buf, i = 0; i < l; i++) {
+	if ((*s & 0x7f) == 0) {
+	    /* convert nulls to 0x80 */
+	    *(unsigned char *) s = 128;
+	} else {
+	    /* strip high order bits (if any) */
+	    *s = (char) (*s & char_mask);
+	}
+    }
 }
-
 
 void
 ignoresig(void)
 {
-	/* ignore signals */
-	signal(SIGINT, SIG_IGN);
-	signal(SIGHUP, SIG_IGN);
-	signal(SIGQUIT, SIG_IGN);
-	signal(SIGTERM, SIG_IGN);
-	signal(SIGALRM, SIG_IGN);
+    /* ignore signals */
+    signal(SIGINT, SIG_IGN);
+    signal(SIGHUP, SIG_IGN);
+    signal(SIGQUIT, SIG_IGN);
+    signal(SIGTERM, SIG_IGN);
+    signal(SIGALRM, SIG_IGN);
 }
 
 /*
@@ -437,11 +446,10 @@ ignoresig(void)
 static RETSIGTYPE
 onintr(int sig GCC_UNUSED)
 {
-	ignoresig();
-	tty_reset();
-	ExitProgram(EXIT_FAILURE);
+    ignoresig();
+    tty_reset();
+    ExitProgram(EXIT_FAILURE);
 }
-
 
 /*
  * catchsig( )
@@ -454,17 +462,17 @@ onintr(int sig GCC_UNUSED)
 void
 catchsig(void)
 {
-	if ((signal(SIGINT, SIG_IGN)) == SIG_DFL)
-		signal(SIGINT, onintr);
+    if ((signal(SIGINT, SIG_IGN)) == SIG_DFL)
+	signal(SIGINT, onintr);
 
-	if ((signal(SIGHUP, SIG_IGN)) == SIG_DFL)
-		signal(SIGHUP, onintr);
+    if ((signal(SIGHUP, SIG_IGN)) == SIG_DFL)
+	signal(SIGHUP, onintr);
 
-	if ((signal(SIGQUIT, SIG_IGN)) == SIG_DFL)
-		signal(SIGQUIT, onintr);
+    if ((signal(SIGQUIT, SIG_IGN)) == SIG_DFL)
+	signal(SIGQUIT, onintr);
 
-	if ((signal(SIGTERM, SIG_IGN)) == SIG_DFL)
-		signal(SIGTERM, onintr);
+    if ((signal(SIGTERM, SIG_IGN)) == SIG_DFL)
+	signal(SIGTERM, onintr);
 
 }
 
@@ -475,9 +483,9 @@ catchsig(void)
 */
 static void
 alarm_event(
-	int sig GCC_UNUSED)
+	       int sig GCC_UNUSED)
 {
-	no_alarm_event = 0;
+    no_alarm_event = 0;
 }
 
 /*
@@ -487,9 +495,9 @@ alarm_event(
 */
 void
 set_alarm_clock(
-	int seconds)
+		   int seconds)
 {
-	signal(SIGALRM, alarm_event);
-	no_alarm_event = 1;
-	(void) alarm((unsigned) seconds);
+    signal(SIGALRM, alarm_event);
+    no_alarm_event = 1;
+    (void) alarm((unsigned) seconds);
 }

@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.23 2009/12/26 21:25:11 tom Exp $ */
+/* $Id: tack.h,v 1.24 2010/09/03 22:28:55 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -33,7 +33,7 @@
 #include <ncurses_cfg.h>
 #else
 #define RETSIGTYPE void
-#define GCC_UNUSED /*nothing*/
+#define GCC_UNUSED		/*nothing */
 #define HAVE_GETTIMEOFDAY 1
 #define HAVE_SELECT 1
 #define HAVE_SYS_TIME_H 1
@@ -45,7 +45,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <string.h>
-#include <signal.h>	/* include before curses.h to work around glibc bug */
+#include <signal.h>		/* include before curses.h to work around glibc bug */
 
 #include <curses.h>
 #include <term_entry.h>
@@ -54,7 +54,7 @@
 #if USE_RCS_IDS
 #define MODULE_ID(id) static const char Ident[] = id;
 #else
-#define MODULE_ID(id) /*nothing*/
+#define MODULE_ID(id)		/*nothing */
 #endif
 
 #if !HAVE_STRSTR
@@ -96,9 +96,9 @@ extern char tty_shortname[];
 extern int tty_can_sync;
 extern int total_pads_sent;	/* count pad characters sent */
 extern int total_caps_sent;	/* count caps sent */
-extern int total_printing_characters; /* count printing characters sent */
-extern SIG_ATOMIC_T no_alarm_event; /* TRUE if the alarm has not gone off yet */
-extern unsigned long usec_run_time; /* length of last test in microseconds */
+extern int total_printing_characters;	/* count printing characters sent */
+extern SIG_ATOMIC_T no_alarm_event;	/* TRUE if the alarm has not gone off yet */
+extern unsigned long usec_run_time;	/* length of last test in microseconds */
 extern int raw_characters_sent;	/* Total output characters */
 
 /* Stopwatch event timers */
@@ -113,7 +113,7 @@ extern int raw_characters_sent;	/* Total output characters */
 #define SLOW_TERMINAL_EXIT if (!test_complete && !EXIT_CONDITION) { break; }
 #define CAP_NOT_FOUND if (auto_pad_mode) return
 
-extern char letters[26+1];
+extern char letters[26 + 1];
 #define NEXT_LETTER letter = letters[letter_number =\
 	letters[letter_number + 1] ? letter_number + 1 : 0]
 
@@ -129,9 +129,9 @@ extern int char_count, line_count, expand_chars;
 extern int can_go_home, can_clear_screen;
 
 extern int translate_mode, scan_mode;
-extern int auto_pad_mode;		/* TRUE for auto time tests */
+extern int auto_pad_mode;	/* TRUE for auto time tests */
 extern int char_mask;
-extern int hex_out;			/* Display output in hex */
+extern int hex_out;		/* Display output in hex */
 
 /* Parity bit macros */
 #define STRIP_PARITY 0x7f
@@ -166,9 +166,9 @@ extern int send_reset_init;
 
 /* translate mode default strings */
 struct default_string_list {
-	const char *name;	/* terminfo name */
-	const char *value;	/* value of default string */
-	int index;		/* index into the strfname[] array */
+    const char *name;		/* terminfo name */
+    const char *value;		/* value of default string */
+    int index;			/* index into the strfname[] array */
 };
 
 #define TM_last 8
@@ -176,10 +176,10 @@ extern struct default_string_list TM_string[TM_last];
 
 /* attribute structure definition */
 struct mode_list {
-	const char *name;
-	const char *begin_mode;
-	const char *end_mode;
-	int number;
+    const char *name;
+    const char *begin_mode;
+    const char *end_mode;
+    int number;
 };
 
 extern const struct mode_list alt_modes[];
@@ -199,14 +199,14 @@ extern const int mode_map[];
 
 extern int tt_delay_max;	/* max number of milliseconds we can delay */
 extern int tt_delay_used;	/* number of milliseconds consumed in delay */
-extern const char *tt_cap[TT_MAX]; /* value of string */
+extern const char *tt_cap[TT_MAX];	/* value of string */
 extern int tt_affected[TT_MAX];	/* lines or columns effected (repetition
 				   factor) */
 extern int tt_count[TT_MAX];	/* Number of times sent */
 extern int tt_delay[TT_MAX];	/* Number of milliseconds delay */
 extern int ttp;			/* number of entries used */
 
-extern const char *tx_cap[TT_MAX]; /* value of string */
+extern const char *tx_cap[TT_MAX];	/* value of string */
 extern int tx_affected[TT_MAX];	/* lines or columns effected (repetition
 				   factor) */
 extern int tx_count[TT_MAX];	/* Number of times sent */
@@ -221,38 +221,37 @@ extern unsigned long tx_cps;	/* characters per second */
 */
 
 struct test_results {
-	struct test_results *next;	/* point to next entry */
-	struct test_list *test;	/* Test which got these results */
-	int reps;		/* repeat count */
-	int delay;		/* delay times 10 */
+    struct test_results *next;	/* point to next entry */
+    struct test_list *test;	/* Test which got these results */
+    int reps;			/* repeat count */
+    int delay;			/* delay times 10 */
 };
 
 struct test_list {
-	int flags;		/* Test description flags */
-	int lines_needed;	/* Lines needed for test (0->no action) */
-	const char *caps_done;	/* Caps shown in Done message */
-	const char *caps_tested; /* Other caps also being tested */
-	const char *menu_entry;	/* Menu entry text (optional) */
-				/* Function that does testing */
-	void (*test_procedure)(struct test_list *, int *, int *);
-	struct test_menu *sub_menu;	/* Nested sub-menu */
+    int flags;			/* Test description flags */
+    int lines_needed;		/* Lines needed for test (0->no action) */
+    const char *caps_done;	/* Caps shown in Done message */
+    const char *caps_tested;	/* Other caps also being tested */
+    const char *menu_entry;	/* Menu entry text (optional) */
+    /* Function that does testing */
+    void (*test_procedure) (struct test_list *, int *, int *);
+    struct test_menu *sub_menu;	/* Nested sub-menu */
 };
 
 struct test_menu {
-	int flags;		/* Menu feature flag */
-	int default_action;	/* Default command if <cr> <lf> entered */
-	const char *menu_text;	/* Describe this test_menu */
-	const char *menu_title;	/* Title for the menu */
-	const char *ident;	/* short menu name */
-	const char *standard_tests;	/* Standard test text */
-				/* print current settings (optional) */
-	void (*menu_function)(struct test_menu *);
-	struct test_list *tests;	/* Pointer to the menu/function pairs */
-	struct test_list *resume_tests;	/* Standard test resume point */
-	int resume_state;	/* resume state of test group */
-	int resume_char;	/* resume ch of test group */
+    int flags;			/* Menu feature flag */
+    int default_action;		/* Default command if <cr> <lf> entered */
+    const char *menu_text;	/* Describe this test_menu */
+    const char *menu_title;	/* Title for the menu */
+    const char *ident;		/* short menu name */
+    const char *standard_tests;	/* Standard test text */
+    /* print current settings (optional) */
+    void (*menu_function) (struct test_menu *);
+    struct test_list *tests;	/* Pointer to the menu/function pairs */
+    struct test_list *resume_tests;	/* Standard test resume point */
+    int resume_state;		/* resume state of test group */
+    int resume_char;		/* resume ch of test group */
 };
-
 
 /* menu flags */
 #define MENU_100c	0x00001a00	/* Augment 100% of columns */

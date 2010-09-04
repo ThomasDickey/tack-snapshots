@@ -1,0 +1,5 @@
+-- $Id: AUTHORS,v 1.1 2010/09/03 23:45:12 tom Exp $
+-- vile:txtmode
+-- this file is used by a script which collects metrics from the changelog
+weaver	Daniel Weaver
+dickey	Thomas Dickey
