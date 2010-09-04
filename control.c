@@ -25,7 +25,7 @@
 #include <sys/time.h>
 #endif
 
-MODULE_ID("$Id: control.c,v 1.11 2009/12/26 21:48:54 tom Exp $")
+MODULE_ID("$Id: control.c,v 1.13 2010/09/03 23:29:19 tom Exp $")
 
 /* terminfo test program control subroutines */
 
@@ -44,7 +44,7 @@ static int pad_test_duration = 1;	/* number of seconds for a pad test */
 int auto_pad_mode;		/* run the time tests */
 SIG_ATOMIC_T no_alarm_event;	/* TRUE if the alarm has not gone off yet */
 unsigned long usec_run_time;	/* length of last test in microseconds */
-static MY_TIMER stop_watch[MAX_TIMERS]; /* Hold the start timers */
+static MY_TIMER stop_watch[MAX_TIMERS];		/* Hold the start timers */
 
 char txt_longer_augment[80];	/* >) use bigger augment */
 char txt_shorter_augment[80];	/* <) use smaller augment */
@@ -77,9 +77,9 @@ static struct test_results **pads;	/* save pad results here */
 static void
 alloc_arrays(void)
 {
-    	if (pads == 0) {
-	    	pads = (struct test_results **)calloc(MAX_STRINGS, sizeof(struct test_results *));
-	}
+    if (pads == 0) {
+	pads = (struct test_results **) calloc(MAX_STRINGS, sizeof(struct test_results *));
+    }
 }
 
 /*
@@ -91,9 +91,9 @@ void
 event_start(int n)
 {
 #if HAVE_GETTIMEOFDAY
-	(void) gettimeofday(&stop_watch[n], (struct timezone *)0);
+    (void) gettimeofday(&stop_watch[n], (struct timezone *) 0);
 #else
-	stop_watch[n] = time((time_t *)0);
+    stop_watch[n] = time((time_t *) 0);
 #endif
 }
 
@@ -106,13 +106,13 @@ long
 event_time(int n)
 {
 #if HAVE_GETTIMEOFDAY
-	MY_TIMER current_time;
+    MY_TIMER current_time;
 
-	(void) gettimeofday(&current_time, (struct timezone *)0);
-	return ((current_time.tv_sec - stop_watch[n].tv_sec) * 1000000)
-		+ current_time.tv_usec - stop_watch[n].tv_usec;
+    (void) gettimeofday(&current_time, (struct timezone *) 0);
+    return ((current_time.tv_sec - stop_watch[n].tv_sec) * 1000000)
+	+ current_time.tv_usec - stop_watch[n].tv_usec;
 #else
-	return (time((time_t *)0) - stop_watch[n]) * 1000;
+    return (time((time_t *) 0) - stop_watch[n]) * 1000;
 #endif
 }
 
@@ -130,17 +130,17 @@ event_time(int n)
 static struct test_results *
 get_next_block(void)
 {
-	if (blocks <= 0) {
-		results = (struct test_results *)
-			malloc(sizeof(struct test_results) * RESULT_BLOCK);
-		if (!results) {
-			ptextln("Malloc failed");
-			return (struct test_results *) 0;
-		}
-		blocks = RESULT_BLOCK;
+    if (blocks <= 0) {
+	results = (struct test_results *)
+	    malloc(sizeof(struct test_results) * RESULT_BLOCK);
+	if (!results) {
+	    ptextln("Malloc failed");
+	    return (struct test_results *) 0;
 	}
-	blocks--;
-	return results++;
+	blocks = RESULT_BLOCK;
+    }
+    blocks--;
+    return results++;
 }
 
 /*
@@ -151,20 +151,20 @@ get_next_block(void)
 void
 set_augment_txt(void)
 {
-	sprintf(txt_longer_augment,
-		">) Change lines/characters effected to %d", augment << 1);
-	sprintf(txt_shorter_augment,
-		"<) Change lines/characters effected to %d", augment >> 1);
+    sprintf(txt_longer_augment,
+	    ">) Change lines/characters effected to %d", augment << 1);
+    sprintf(txt_shorter_augment,
+	    "<) Change lines/characters effected to %d", augment >> 1);
 }
 
 void
 control_init(void)
 {
-	sprintf(txt_longer_test_time, "+) Change test time to %d seconds",
-		pad_test_duration + 1);
-	sprintf(txt_shorter_test_time, "-) Change test time to %d seconds",
-		pad_test_duration - 1);
-	set_augment_txt();
+    sprintf(txt_longer_test_time, "+) Change test time to %d seconds",
+	    pad_test_duration + 1);
+    sprintf(txt_shorter_test_time, "-) Change test time to %d seconds",
+	    pad_test_duration - 1);
+    set_augment_txt();
 }
 
 /*
@@ -174,43 +174,40 @@ control_init(void)
 */
 int
 msec_cost(
-	const char *const cap,
-	int affcnt)
+	     const char *const cap,
+	     int affcnt)
 {
-	int dec, value, total, star, ch;
-	const char *cp;
+    int dec, value, total, star, ch;
+    const char *cp;
 
-	if (!cap) {
-		return 0;
-	}
-	total = 0;
-	for (cp = cap; *cp; cp++) {
-		if (*cp == '$' && cp[1] == '<') {
-			star = 1;
-			value = dec = 0;
-			for (cp += 2; (ch = *cp); cp++) {
-				if (ch >= '0' && ch <= '9') {
-					value = value * 10 + (ch - '0');
-					dec *= 10;
-				} else
-				if (ch == '.') {
-					dec = 1;
-				} else
-				if (ch == '*') {
-					star = affcnt;
-				} else
-				if (ch == '>') {
-					break;
-				}
-			}
-			if (dec > 1) {
-				total += (value * star) / dec;
-			} else {
-				total += (value * star);
-			}
+    if (!cap) {
+	return 0;
+    }
+    total = 0;
+    for (cp = cap; *cp; cp++) {
+	if (*cp == '$' && cp[1] == '<') {
+	    star = 1;
+	    value = dec = 0;
+	    for (cp += 2; (ch = *cp); cp++) {
+		if (ch >= '0' && ch <= '9') {
+		    value = value * 10 + (ch - '0');
+		    dec *= 10;
+		} else if (ch == '.') {
+		    dec = 1;
+		} else if (ch == '*') {
+		    star = affcnt;
+		} else if (ch == '>') {
+		    break;
 		}
+	    }
+	    if (dec > 1) {
+		total += (value * star) / dec;
+	    } else {
+		total += (value * star);
+	    }
 	}
-	return total;
+    }
+    return total;
 }
 
 /*
@@ -221,26 +218,26 @@ msec_cost(
 char *
 liberated(char *cap)
 {
-	static char cb[1024];
-	char *ts, *ls;
+    static char cb[1024];
+    char *ts, *ls;
 
-	cb[0] = '\0';
-	ls = NULL;
-	if (cap) {
-		for (ts = cb; (*ts = *cap); ++cap) {
-			if (*cap == '$' && cap[1] == '<') {
-				ls = ts;
-			}
-			++ts;
-			if (*cap == '>') {
-				if (ls) {
-					ts = ls;
-					ls = NULL;
-				}
-			}
+    cb[0] = '\0';
+    ls = NULL;
+    if (cap) {
+	for (ts = cb; (*ts = *cap); ++cap) {
+	    if (*cap == '$' && cap[1] == '<') {
+		ls = ts;
+	    }
+	    ++ts;
+	    if (*cap == '>') {
+		if (ls) {
+		    ts = ls;
+		    ls = NULL;
 		}
+	    }
 	}
-	return cb;
+    }
+    return cb;
 }
 
 /*
@@ -251,12 +248,12 @@ liberated(char *cap)
 void
 page_loop(void)
 {
-	if (line_count + 2 >= lines) {
-		NEXT_LETTER;
-		go_home();
-	} else {
-		put_crlf();
-	}
+    if (line_count + 2 >= lines) {
+	NEXT_LETTER;
+	go_home();
+    } else {
+	put_crlf();
+    }
 }
 
 /*
@@ -267,42 +264,42 @@ page_loop(void)
 */
 int
 skip_pad_test(
-	struct test_list *test,
-	int *state,
-	int *ch,
-	const char *text)
+		 struct test_list *test,
+		 int *state,
+		 int *ch,
+		 const char *text)
 {
-	char rep_text[16];
+    char rep_text[16];
 
-	while(1) {
-		if (text) {
-			ptext(text);
-		}
-		if ((test->flags & MENU_LC_MASK)) {
-			sprintf(rep_text, " *%d", augment);
-			ptext(rep_text);
-		}
-		ptext(" [n] > ");
-		*ch = wait_here();
-		if (*ch == 's') {
-			/* Skip is converted to next */
-			*ch = 'n';
-			return TRUE;
-		}
-		if (*ch == 'q') {
-			/* Quit is converted to help */
-			*ch = '?';
-			return TRUE;
-		}
-		if (*ch == '\r' || *ch == '\n' || *ch == 'n' || *ch == 'r') {
-			/* this is the only response that allows the test to run */
-			*ch = 0;
-		}
-		if (subtest_menu(pad_test_list, state, ch)) {
-			continue;
-		}
-		return (*ch != 0);
+    while (1) {
+	if (text) {
+	    ptext(text);
 	}
+	if ((test->flags & MENU_LC_MASK)) {
+	    sprintf(rep_text, " *%d", augment);
+	    ptext(rep_text);
+	}
+	ptext(" [n] > ");
+	*ch = wait_here();
+	if (*ch == 's') {
+	    /* Skip is converted to next */
+	    *ch = 'n';
+	    return TRUE;
+	}
+	if (*ch == 'q') {
+	    /* Quit is converted to help */
+	    *ch = '?';
+	    return TRUE;
+	}
+	if (*ch == '\r' || *ch == '\n' || *ch == 'n' || *ch == 'r') {
+	    /* this is the only response that allows the test to run */
+	    *ch = 0;
+	}
+	if (subtest_menu(pad_test_list, state, ch)) {
+	    continue;
+	}
+	return (*ch != 0);
+    }
 }
 
 /*
@@ -312,53 +309,53 @@ skip_pad_test(
 */
 void
 pad_done_message(
-	struct test_list *test,
-	int *state,
-	int *ch)
+		    struct test_list *test,
+		    int *state,
+		    int *ch)
 {
-	int default_action = 0;
-	char done_message[128];
-	char rep_text[16];
+    int default_action = 0;
+    char done_message[128];
+    char rep_text[16];
 
-	while (1) {
-		if ((test->flags & MENU_LC_MASK)) {
-			sprintf(rep_text, "*%d", augment);
-		} else {
-			rep_text[0] = '\0';
-		}
-		if (test->caps_done) {
-			sprintf(done_message, "(%s)%s Done ", test->caps_done,
-			rep_text);
-			ptext(done_message);
-		} else {
-			if (rep_text[0]) {
-				ptext(rep_text);
-				ptext(" ");
-			}
-			ptext("Done ");
-		}
-		if (debug_level & 2) {
-			dump_test_stats(test, state, ch);
-		} else {
-			*ch = wait_here();
-		}
-		if (*ch == '\r' || *ch == '\n') {
-			*ch = default_action;
-			return;
-		}
-		if (*ch == 's' || *ch == 'n') {
-			*ch = 0;
-			return;
-		}
-		if (strchr(pad_repeat_test, *ch)) {
-			/* default action is now repeat */
-			default_action = 'r';
-		}
-		if (subtest_menu(pad_test_list, state, ch)) {
-			continue;
-		}
-		return;
+    while (1) {
+	if ((test->flags & MENU_LC_MASK)) {
+	    sprintf(rep_text, "*%d", augment);
+	} else {
+	    rep_text[0] = '\0';
 	}
+	if (test->caps_done) {
+	    sprintf(done_message, "(%s)%s Done ", test->caps_done,
+		    rep_text);
+	    ptext(done_message);
+	} else {
+	    if (rep_text[0]) {
+		ptext(rep_text);
+		ptext(" ");
+	    }
+	    ptext("Done ");
+	}
+	if (debug_level & 2) {
+	    dump_test_stats(test, state, ch);
+	} else {
+	    *ch = wait_here();
+	}
+	if (*ch == '\r' || *ch == '\n') {
+	    *ch = default_action;
+	    return;
+	}
+	if (*ch == 's' || *ch == 'n') {
+	    *ch = 0;
+	    return;
+	}
+	if (strchr(pad_repeat_test, *ch)) {
+	    /* default action is now repeat */
+	    default_action = 'r';
+	}
+	if (subtest_menu(pad_test_list, state, ch)) {
+	    continue;
+	}
+	return;
+    }
 }
 
 /*
@@ -368,17 +365,17 @@ pad_done_message(
 */
 int
 sliding_scale(
-	int dividend,
-	int factor,
-	unsigned long divisor)
+		 int dividend,
+		 int factor,
+		 unsigned long divisor)
 {
-	double d = dividend;
+    double d = dividend;
 
-	if (divisor) {
-		d = (d * (double) factor) / (double) divisor;
-		return (int) (d + 0.5);
-	}
-	return 0;
+    if (divisor) {
+	d = (d * (double) factor) / (double) divisor;
+	return (int) (d + 0.5);
+    }
+    return 0;
 }
 
 /*
@@ -388,21 +385,21 @@ sliding_scale(
 */
 void
 pad_test_startup(
-	int do_clear)
+		    int do_clear)
 {
-	if (do_clear) {
-		put_clear();
-	}
-	repeats = augment;
-	raw_characters_sent = 0;
-	test_complete = ttp = char_count = tt_delay_used = 0;
-	letter = letters[letter_number = 0];
-	if (pad_test_duration <= 0) {
-		pad_test_duration = 1;
-	}
-	tt_delay_max = pad_test_duration * 1000;
-	set_alarm_clock(pad_test_duration);
-	event_start(TIME_TEST);
+    if (do_clear) {
+	put_clear();
+    }
+    repeats = augment;
+    raw_characters_sent = 0;
+    test_complete = ttp = char_count = tt_delay_used = 0;
+    letter = letters[letter_number = 0];
+    if (pad_test_duration <= 0) {
+	pad_test_duration = 1;
+    }
+    tt_delay_max = pad_test_duration * 1000;
+    set_alarm_clock(pad_test_duration);
+    event_start(TIME_TEST);
 }
 
 /*
@@ -413,9 +410,9 @@ pad_test_startup(
 int
 still_testing(void)
 {
-	fflush(stdout);
-	test_complete++;
-	return EXIT_CONDITION;
+    fflush(stdout);
+    test_complete++;
+    return EXIT_CONDITION;
 }
 
 /*
@@ -425,68 +422,71 @@ still_testing(void)
 */
 void
 pad_test_shutdown(
-	struct test_list *t,
-	int crlf)
+		     struct test_list *t,
+		     int crlf)
 {
-	int i;
-	int counts;			/* total counts */
-	int ss;				/* Save string index */
-	int cpo;			/* characters per operation */
-	long delta;			/* difference in characters */
-	int bogus;			/* Time is inaccurate */
-	struct test_results *r;		/* Results of current test */
-	int ss_index[TT_MAX];		/* String index */
+    int i;
+    int counts;			/* total counts */
+    int ss;			/* Save string index */
+    int cpo;			/* characters per operation */
+    long delta;			/* difference in characters */
+    int bogus;			/* Time is inaccurate */
+    struct test_results *r;	/* Results of current test */
+    int ss_index[TT_MAX];	/* String index */
 
-	alloc_arrays();
-	if (tty_can_sync == SYNC_TESTED) {
-		bogus = tty_sync_error();
-	} else {
-		bogus = 1;
-	}
-	usec_run_time = (unsigned long) event_time(TIME_TEST);
-	tx_source = t;
-	tx_characters = raw_characters_sent;
-	tx_cps = (unsigned long) sliding_scale(tx_characters, 1000000, usec_run_time);
+    alloc_arrays();
+    if (tty_can_sync == SYNC_TESTED) {
+	bogus = tty_sync_error();
+    } else {
+	bogus = 1;
+    }
+    usec_run_time = (unsigned long) event_time(TIME_TEST);
+    tx_source = t;
+    tx_characters = raw_characters_sent;
+    tx_cps = (unsigned long) sliding_scale(tx_characters, 1000000, usec_run_time);
 
-	/* save the data base */
-	for (txp = ss = counts = 0; txp < ttp; txp++) {
-		tx_cap[txp]   = tt_cap[txp];
-		tx_count[txp] = tt_count[txp];
-		tx_delay[txp] = tt_delay[txp];
-		tx_affected[txp] = tt_affected[txp];
-		tx_index[txp] = get_string_cap_byvalue(tt_cap[txp]);
-		if (tx_index[txp] >= 0) {
-			if (cap_match(t->caps_done, strnames[tx_index[txp]])) {
-				ss_index[ss++] = txp;
-				counts += tx_count[txp];
-			}
-		}
+    /* save the data base */
+    for (txp = ss = counts = 0; txp < ttp; txp++) {
+	tx_cap[txp] = tt_cap[txp];
+	tx_count[txp] = tt_count[txp];
+	tx_delay[txp] = tt_delay[txp];
+	tx_affected[txp] = tt_affected[txp];
+	tx_index[txp] = get_string_cap_byvalue(tt_cap[txp]);
+	if (tx_index[txp] >= 0) {
+	    if (cap_match(t->caps_done, strnames[tx_index[txp]])) {
+		ss_index[ss++] = txp;
+		counts += tx_count[txp];
+	    }
 	}
+    }
 
-	if (crlf) {
-		put_crlf();
+    if (crlf) {
+	put_crlf();
+    }
+    if (counts == 0 || tty_cps == 0 || bogus) {
+	/* nothing to do */
+	return;
+    }
+    /* calculate the suggested pad times */
+    delta = (long) (usec_run_time
+		    - (unsigned long) sliding_scale(tx_characters,
+						    1000000,
+						    tty_cps));
+    if (delta < 0) {
+	/* probably should bump tx_characters */
+	delta = 0;
+    }
+    cpo = (int) (delta / counts);
+    for (i = 0; i < ss; i++) {
+	if (!(r = get_next_block())) {
+	    return;
 	}
-	if (counts == 0 || tty_cps == 0 || bogus) {
-		/* nothing to do */
-		return;
-	}
-	/* calculate the suggested pad times */
-	delta = (long) (usec_run_time - (unsigned long) sliding_scale(tx_characters, 1000000, tty_cps));
-	if (delta < 0) {
-		/* probably should bump tx_characters */
-		delta = 0;
-	}
-	cpo = delta / counts;
-	for (i = 0; i < ss; i++) {
-		if (!(r = get_next_block())) {
-			return;
-		}
-		r->next = pads[tx_index[ss_index[i]]];
-		pads[tx_index[ss_index[i]]] = r;
-		r->test = t;
-		r->reps = tx_affected[ss_index[i]];
-		r->delay = cpo;
-	}
+	r->next = pads[tx_index[ss_index[i]]];
+	pads[tx_index[ss_index[i]]] = r;
+	r->test = t;
+	r->reps = tx_affected[ss_index[i]];
+	r->delay = cpo;
+    }
 }
 
 /*
@@ -496,31 +496,31 @@ pad_test_shutdown(
 */
 static void
 show_cap_results(
-	int x)
+		    int x)
 {
-	struct test_results *r;		/* a result */
-	int delay;
+    struct test_results *r;	/* a result */
+    int delay;
 
-	alloc_arrays();
-	if ((r = pads[x])) {
-		sprintf(temp, "(%s)", strnames[x]);
-		ptext(temp);
-		while (r) {
-			sprintf(temp, "$<%d>", r->delay / 1000);
-			put_columns(temp, (int) strlen(temp), 10);
-			r = r->next;
-		}
-		r = pads[x];
-		while (r) {
-			if (r->reps > 1) {
-				delay = r->delay / (r->reps * 100);
-				sprintf(temp, "$<%d.%d*>", delay / 10, delay % 10);
-				put_columns(temp, (int) strlen(temp), 10);
-			}
-			r = r->next;
-		}
-		put_crlf();
+    alloc_arrays();
+    if ((r = pads[x])) {
+	sprintf(temp, "(%s)", strnames[x]);
+	ptext(temp);
+	while (r) {
+	    sprintf(temp, "$<%d>", r->delay / 1000);
+	    put_columns(temp, (int) strlen(temp), 10);
+	    r = r->next;
 	}
+	r = pads[x];
+	while (r) {
+	    if (r->reps > 1) {
+		delay = r->delay / (r->reps * 100);
+		sprintf(temp, "$<%d.%d*>", delay / 10, delay % 10);
+		put_columns(temp, (int) strlen(temp), 10);
+	    }
+	    r = r->next;
+	}
+	put_crlf();
+    }
 }
 
 /*
@@ -530,43 +530,44 @@ show_cap_results(
 */
 void
 dump_test_stats(
-	struct test_list *t,
-	int *state,
-	int *ch)
+		   struct test_list *t,
+		   int *state,
+		   int *ch)
 {
-	int i, j;
-	char tbuf[32];
-	int x[32];
+    int i, j;
+    char tbuf[32];
+    int x[32];
 
-	put_crlf();
-	if (tx_source && tx_source->caps_done) {
-		cap_index(tx_source->caps_done, x);
-		if (x[0] >= 0) {
-			sprintf(temp, "Caps summary for (%s)",
-				tx_source->caps_done);
-			ptextln(temp);
-			for (i = 0; x[i] >= 0; i++) {
-				show_cap_results(x[i]);
-			}
-			put_crlf();
-		}
+    put_crlf();
+    if (tx_source && tx_source->caps_done) {
+	cap_index(tx_source->caps_done, x);
+	if (x[0] >= 0) {
+	    sprintf(temp, "Caps summary for (%s)",
+		    tx_source->caps_done);
+	    ptextln(temp);
+	    for (i = 0; x[i] >= 0; i++) {
+		show_cap_results(x[i]);
+	    }
+	    put_crlf();
 	}
-	sprintf(tbuf, "%011lu", usec_run_time);
-	sprintf(temp, "Test time: %lu.%s, characters per second %lu, characters %d",
-		usec_run_time / 1000000UL, &tbuf[5], tx_cps, tx_characters);
-	ptextln(temp);
-	for (i = 0; i < txp; i++) {
-		if ((j = get_string_cap_byvalue(tx_cap[i])) >= 0) {
-			sprintf(tbuf, "(%s)", strnames[j]);
-		} else {
-			strcpy(tbuf, "(?)");
-		}
-		sprintf(temp, "%8d  %3d  $<%3d>  %8s %s",
-			tx_count[i], tx_affected[i], tx_delay[i],
-			tbuf, expand(tx_cap[i]));
-		putln(temp);
+    }
+    sprintf(tbuf, "%011lu", usec_run_time);
+    sprintf(temp,
+	    "Test time: %lu.%s, characters per second %lu, characters %d",
+	    usec_run_time / 1000000UL, &tbuf[5], tx_cps, tx_characters);
+    ptextln(temp);
+    for (i = 0; i < txp; i++) {
+	if ((j = get_string_cap_byvalue(tx_cap[i])) >= 0) {
+	    sprintf(tbuf, "(%s)", strnames[j]);
+	} else {
+	    strcpy(tbuf, "(?)");
 	}
-	generic_done_message(t, state, ch);
+	sprintf(temp, "%8d  %3d  $<%3d>  %8s %s",
+		tx_count[i], tx_affected[i], tx_delay[i],
+		tbuf, expand(tx_cap[i]));
+	putln(temp);
+    }
+    generic_done_message(t, state, ch);
 }
 
 /*
@@ -576,18 +577,18 @@ dump_test_stats(
 */
 void
 longer_test_time(
-	struct test_list *t GCC_UNUSED,
-	int *state GCC_UNUSED,
-	int *ch)
+		    struct test_list *t GCC_UNUSED,
+		    int *state GCC_UNUSED,
+		    int *ch)
 {
-	pad_test_duration += 1;
-	sprintf(txt_longer_test_time, "+) Change test time to %d seconds",
-		pad_test_duration + 1);
-	sprintf(txt_shorter_test_time, "-) Change test time to %d seconds",
-		pad_test_duration - 1);
-	sprintf(temp, "Tests will run for %d seconds", pad_test_duration);
-	ptext(temp);
-	*ch = REQUEST_PROMPT;
+    pad_test_duration += 1;
+    sprintf(txt_longer_test_time, "+) Change test time to %d seconds",
+	    pad_test_duration + 1);
+    sprintf(txt_shorter_test_time, "-) Change test time to %d seconds",
+	    pad_test_duration - 1);
+    sprintf(temp, "Tests will run for %d seconds", pad_test_duration);
+    ptext(temp);
+    *ch = REQUEST_PROMPT;
 }
 
 /*
@@ -597,21 +598,21 @@ longer_test_time(
 */
 void
 shorter_test_time(
-	struct test_list *t GCC_UNUSED,
-	int *state GCC_UNUSED,
-	int *ch)
+		     struct test_list *t GCC_UNUSED,
+		     int *state GCC_UNUSED,
+		     int *ch)
 {
-	if (pad_test_duration > 1) {
-		pad_test_duration -= 1;
-		sprintf(txt_longer_test_time, "+) Change test time to %d seconds",
-			pad_test_duration + 1);
-		sprintf(txt_shorter_test_time, "-) Change test time to %d seconds",
-			pad_test_duration - 1);
-	}
-	sprintf(temp, "Tests will run for %d second%s", pad_test_duration,
-		pad_test_duration > 1 ? "s" : "");
-	ptext(temp);
-	*ch = REQUEST_PROMPT;
+    if (pad_test_duration > 1) {
+	pad_test_duration -= 1;
+	sprintf(txt_longer_test_time, "+) Change test time to %d seconds",
+		pad_test_duration + 1);
+	sprintf(txt_shorter_test_time, "-) Change test time to %d seconds",
+		pad_test_duration - 1);
+    }
+    sprintf(temp, "Tests will run for %d second%s", pad_test_duration,
+	    pad_test_duration > 1 ? "s" : "");
+    ptext(temp);
+    *ch = REQUEST_PROMPT;
 }
 
 /*
@@ -621,20 +622,20 @@ shorter_test_time(
 */
 void
 longer_augment(
-	struct test_list *t,
-	int *state GCC_UNUSED,
-	int *ch)
+		  struct test_list *t,
+		  int *state GCC_UNUSED,
+		  int *ch)
 {
-	augment <<= 1;
-	set_augment_txt();
-	if (augment_test) {
-		t = augment_test;
-	}
-	sprintf(temp, "The pad tests will effect %d %s.", augment,
-		((t->flags & MENU_LC_MASK) == MENU_lines) ?
-		"lines" : "characters");
-	ptextln(temp);
-	*ch = REQUEST_PROMPT;
+    augment <<= 1;
+    set_augment_txt();
+    if (augment_test) {
+	t = augment_test;
+    }
+    sprintf(temp, "The pad tests will effect %d %s.", augment,
+	    ((t->flags & MENU_LC_MASK) == MENU_lines) ?
+	    "lines" : "characters");
+    ptextln(temp);
+    *ch = REQUEST_PROMPT;
 }
 
 /*
@@ -644,21 +645,21 @@ longer_augment(
 */
 void
 shorter_augment(
-	struct test_list *t,
-	int *state GCC_UNUSED,
-	int *ch)
+		   struct test_list *t,
+		   int *state GCC_UNUSED,
+		   int *ch)
 {
-	if (augment > 1) {
-		/* don't let the augment go to zero */
-		augment >>= 1;
-	}
-	set_augment_txt();
-	if (augment_test) {
-		t = augment_test;
-	}
-	sprintf(temp, "The pad tests will effect %d %s.", augment,
-		((t->flags & MENU_LC_MASK) == MENU_lines) ?
-		"lines" : "characters");
-	ptextln(temp);
-	*ch = REQUEST_PROMPT;
+    if (augment > 1) {
+	/* don't let the augment go to zero */
+	augment >>= 1;
+    }
+    set_augment_txt();
+    if (augment_test) {
+	t = augment_test;
+    }
+    sprintf(temp, "The pad tests will effect %d %s.", augment,
+	    ((t->flags & MENU_LC_MASK) == MENU_lines) ?
+	    "lines" : "characters");
+    ptextln(temp);
+    *ch = REQUEST_PROMPT;
 }

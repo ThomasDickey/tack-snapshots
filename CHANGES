@@ -1,3 +1,29 @@
+2010-09-03  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* AUTHORS: RCS_BASE
+
+	* sysdep.c, sync.c, init.c, fun.c, output.c, scan.c, control.c:
+	gcc-warnings
+
+	* fun.c: indent
+
+	* Makefile.in: add dummy for "make check".
+
+	* tack.h, tack.c, sysdep.c, sync.c, scan.c: indent
+
+	* pad.c: copyright-date
+
+	* pad.c, output.c: indent
+
+	* modes.c: copyright-date
+
+	* modes.c: indent
+
+	* menu.c: copyright-date
+
+	* menu.c, init.c, fun.c, edit.c, crum.c, control.c, color.c, charset.c, ansi.c:
+	indent
+
 2010-04-20  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* package/debian/compat: RCS_BASE

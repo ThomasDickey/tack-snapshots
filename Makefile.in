@@ -1,4 +1,4 @@
-# $Id: Makefile.in,v 1.48 2009/12/26 21:54:08 tom Exp $
+# $Id: Makefile.in,v 1.49 2010/09/03 22:51:23 tom Exp $
 ##############################################################################
 # Copyright (c) 1998-2007,2009 Free Software Foundation, Inc.                #
 #                                                                            #
@@ -193,8 +193,11 @@ clean :: mostlyclean
 
 distclean :: clean
 	-rm -f ncurses_cfg.h
-	-rm -f config.cache config.status *.log *.out
+	-rm -f config.cache config.status config.log *.out
 	-rm -f Makefile
+
+check:
+	@echo "** no self-test available"
 
 realclean :: distclean
 
