@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: tack.c,v 1.11 2010/09/03 22:28:31 tom Exp $")
+MODULE_ID("$Id: tack.c,v 1.12 2010/09/04 14:40:30 tom Exp $")
 
 /*
    This program is designed to test terminfo, not curses.  Therefore
@@ -552,7 +552,10 @@ show_usage(
 void
 print_version(void)
 {
-    printf("tack version %d.%02d\n", MAJOR_VERSION, MINOR_VERSION);
+    printf("tack version %d.%02d (%d)\n",
+	   MAJOR_VERSION,
+	   MINOR_VERSION,
+	   PATCH_VERSION);
     printf("Copyright (C) 1997 Free Software Foundation, Inc.\n");
     printf("Tack comes with NO WARRANTY, to the extent permitted by law.\n");
     printf("You may redistribute copies of Tack under the terms of the\n");

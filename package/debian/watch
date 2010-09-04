@@ -1,0 +1,4 @@
+version=3
+
+opts=passive ftp://invisible-island.net/ncurses/tack-(\d+)\.tgz \
+ debian  uupdate

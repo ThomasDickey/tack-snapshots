@@ -1,0 +1,15 @@
+Source: tack
+Maintainer: Thomas E. Dickey <dickey@invisible-island.net>
+Section: misc
+Priority: optional
+Standards-Version: 3.8.4
+Build-Depends: debhelper (>= 5)
+Homepage: http://invisible-island.net/ncurses/
+
+Package: tack
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: generate C function prototypes and convert function definitions
+ The 'tack' program is a diagnostic tool that is designed to create and verify
+ the correctness of terminfo's. This program can be used to create new terminal
+ descriptions that are not included in the standard ncurses release.
