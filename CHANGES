@@ -1,3 +1,10 @@
+2010-09-04  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* package/tack.spec, package/debian/rules, package/debian/docs, package/debian/copyright, package/debian/control, package/debian/watch, package/debian/changelog, package/debian/source/format:
+	RCS_BASE
+
+	* tack.c, tack.h: add patch-date to version message
+
 2010-09-03  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* AUTHORS: RCS_BASE
