@@ -1,3 +1,7 @@
+2011-04-01  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.sub: update to 2011-04-01
+
 2011-02-02  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* config.guess: update to 2011-01-01
