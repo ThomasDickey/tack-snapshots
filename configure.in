@@ -1,5 +1,5 @@
 dnl***************************************************************************
-dnl Copyright (c) 2007 Free Software Foundation, Inc.                        *
+dnl Copyright (c) 2007,2011 Free Software Foundation, Inc.                   *
 dnl                                                                          *
 dnl Permission is hereby granted, free of charge, to any person obtaining a  *
 dnl copy of this software and associated documentation files (the            *
@@ -28,7 +28,7 @@ dnl***************************************************************************
 dnl
 dnl Author: Thomas E. Dickey	2007
 dnl
-dnl $Id: configure.in,v 1.7 2007/04/29 23:47:26 tom Exp $
+dnl $Id: configure.in,v 1.8 2011/05/01 21:53:26 tom Exp $
 dnl This is a simple configuration-script for tack which makes it simpler to
 dnl build outside the ncurses tree (provided that ncurses was configured using
 dnl the --with-ticlib option).
@@ -47,37 +47,35 @@ AC_PROG_MAKE_SET
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_AWK
-CF_PROG_INSTALL
 AC_PROG_LN_S
+
+CF_PROG_INSTALL
+CF_PROG_LINT
 CF_MAKE_TAGS
 
 dnl Things that we don't need (or must override) if we're not building ncurses
-CC_G_OPT="-g"				AC_SUBST(CC_G_OPT)
+CC_G_OPT="-g"					AC_SUBST(CC_G_OPT)
 CC_SHARED_OPTS=unknown			AC_SUBST(CC_SHARED_OPTS)
-CPPFLAGS="$CPPFLAGS"			AC_SUBST(CPPFLAGS)
-DESTDIR=""				AC_SUBST(DESTDIR)
-DFT_DEP_SUFFIX=""			AC_SUBST(DFT_DEP_SUFFIX)
+DESTDIR=""						AC_SUBST(DESTDIR)
+DFT_DEP_SUFFIX=""				AC_SUBST(DFT_DEP_SUFFIX)
 DFT_OBJ_SUBDIR=`pwd|sed -e's:.*/::'`	AC_SUBST(DFT_OBJ_SUBDIR)
 DFT_UPR_MODEL="NORMAL"			AC_SUBST(DFT_UPR_MODEL)
 ECHO_LINK='@ echo linking $@ ... ;'	AC_SUBST(ECHO_LINK)
-EXTRA_LDFLAGS=""			AC_SUBST(EXTRA_LDFLAGS)
-LD="ld"					AC_SUBST(LD)
-LDFLAGS_SHARED=""			AC_SUBST(LDFLAGS_SHARED)
-LD_MODEL=""				AC_SUBST(LD_MODEL)
-LD_SHARED_OPTS=""			AC_SUBST(LD_SHARED_OPTS)
-LIBTOOL=""				AC_SUBST(LIBTOOL)
-LIB_CLEAN=""				AC_SUBST(LIB_CLEAN)
-LIB_COMPILE=""				AC_SUBST(LIB_COMPILE)
-LIB_INSTALL=""				AC_SUBST(LIB_INSTALL)
-LIB_LINK='$(CC)'			AC_SUBST(LIB_LINK)
-LIB_SUFFIX=""				AC_SUBST(LIB_SUFFIX)
-LIB_UNINSTALL=""			AC_SUBST(LIB_UNINSTALL)
-LINK_PROGS=""				AC_SUBST(LINK_PROGS)
-LINT=lint				AC_SUBST(LINT)
-LINT_OPTS=""				AC_SUBST(LINT_OPTS)
-LOCAL_LDFLAGS=""			AC_SUBST(LOCAL_LDFLAGS)
-MATH_LIB="-lm"				AC_SUBST(MATH_LIB)
-TICS_ARGS=""				AC_SUBST(TICS_ARGS)
+EXTRA_LDFLAGS=""				AC_SUBST(EXTRA_LDFLAGS)
+LD="ld"							AC_SUBST(LD)
+LDFLAGS_SHARED=""				AC_SUBST(LDFLAGS_SHARED)
+LD_MODEL=""						AC_SUBST(LD_MODEL)
+LD_SHARED_OPTS=""				AC_SUBST(LD_SHARED_OPTS)
+LIBTOOL=""						AC_SUBST(LIBTOOL)
+LIB_CLEAN=""					AC_SUBST(LIB_CLEAN)
+LIB_COMPILE=""					AC_SUBST(LIB_COMPILE)
+LIB_INSTALL=""					AC_SUBST(LIB_INSTALL)
+LIB_LINK='$(CC)'				AC_SUBST(LIB_LINK)
+LIB_SUFFIX=""					AC_SUBST(LIB_SUFFIX)
+LIB_UNINSTALL=""				AC_SUBST(LIB_UNINSTALL)
+LINK_PROGS=""					AC_SUBST(LINK_PROGS)
+LOCAL_LDFLAGS=""				AC_SUBST(LOCAL_LDFLAGS)
+TICS_ARGS=""					AC_SUBST(TICS_ARGS)
 TINFO_ARGS='$(LIBS_CURSES)'		AC_SUBST(TINFO_ARGS)
 cf_cv_abi_version=""			AC_SUBST(cf_cv_abi_version)
 cf_cv_rel_version=""			AC_SUBST(cf_cv_rel_version)
@@ -189,3 +187,4 @@ done
 ],[
 AWK="$AWK"
 ],cat)
+# vi:ts=4 sw=4

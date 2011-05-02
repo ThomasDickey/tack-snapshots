@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: crum.c,v 1.7 2010/09/03 22:17:29 tom Exp $")
+MODULE_ID("$Id: crum.c,v 1.8 2011/05/01 19:08:32 tom Exp $")
 
 /*
  * Test cursor movement.
@@ -369,6 +369,9 @@ crum_move(
 	    return;
 	}
 	strcpy(buf, " (cup)");
+	break;
+    default:
+	buf[0] = '\0';
 	break;
     }
     if (buf[0] == '\0') {

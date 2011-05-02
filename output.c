@@ -23,7 +23,7 @@
 #include <tack.h>
 #include <time.h>
 
-MODULE_ID("$Id: output.c,v 1.16 2010/09/03 23:34:08 tom Exp $")
+MODULE_ID("$Id: output.c,v 1.18 2011/05/01 21:46:26 tom Exp $")
 
 /* globals */
 long char_sent;			/* number of characters sent */
@@ -125,18 +125,18 @@ tc_putch(int c)
     }
     if (log_fp) {
 	/* terminal output logging */
-	c = UChar(c);
-	if (c < 32) {
-	    fprintf(log_fp, "<%s>", c0[c]);
+	unsigned ch = UChar(c);
+	if (ch < 32) {
+	    fprintf(log_fp, "<%s>", c0[ch]);
 	    log_count += 5;
-	} else if (c < 127) {
-	    fprintf(log_fp, "%c", c);
+	} else if (ch < 127) {
+	    fprintf(log_fp, "%c", ch);
 	    log_count += 1;
 	} else {
-	    fprintf(log_fp, "<%02x>", c);
+	    fprintf(log_fp, "<%02x>", ch);
 	    log_count += 4;
 	}
-	if (c == '\n' || log_count >= 80) {
+	if (ch == '\n' || log_count >= 80) {
 	    fprintf(log_fp, "\n");
 	    log_count = 0;
 	}
@@ -702,12 +702,16 @@ put_clear(void)
 int
 wait_here(void)
 {
-    char ch, cc[64];
+    int ch;
+    char cc[64];
     char message[16];
     int i, j;
 
     for (i = 0; i < (int) sizeof(cc); i++) {
-	cc[i] = ch = (char) getchp(STRIP_PARITY);
+	ch = getchp(STRIP_PARITY);
+	if (ch == EOF)
+	    return ch;
+	cc[i] = (char) ch;
 	if (ch == '\r' || ch == '\n') {
 	    put_crlf();
 	    char_sent = 0;
@@ -724,11 +728,11 @@ wait_here(void)
 	if (ch == 023) {	/* Control S */
 	    /* ignore control S, but tell me about it */
 	    while (ch == 023 || ch == 021) {
-		ch = (char) getchp(STRIP_PARITY);
+		ch = getchp(STRIP_PARITY);
 		if (ch == EOF)
 		    break;
 		if (i + 1 < (int) sizeof(cc))
-		    cc[++i] = ch;
+		    cc[++i] = (char) ch;
 	    }
 	    put_str("\nThe terminal sent a ^S -");
 	    for (j = 0; j <= i; j++) {

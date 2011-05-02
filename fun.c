@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: fun.c,v 1.14 2010/09/03 23:34:23 tom Exp $")
+MODULE_ID("$Id: fun.c,v 1.17 2011/05/01 21:46:12 tom Exp $")
 
 /*
  * Test the function keys on the terminal.  The code for echo tests
@@ -162,7 +162,7 @@ keys_tested(
 	}
     } else {
 	for (i = 0; i < key_count; i++) {
-	    if (!fk_tested[i]) {
+	    if (!fk_tested[i] && fk_name[i] != 0) {
 		if (hex_output) {
 		    strcpy(outbuf, hex_expand_to(fkval[i], 3));
 		} else {
@@ -612,9 +612,16 @@ funkey_prog(
 	tc_putp(TPARM_2(pkey_xmit, fk, "abc\n"));
 	sprintf(temp, "Hit function key %d\n", fk);
 	ptextln(temp);
-	for (i = 0; i < 4; ++i)
-	    mm[i] = (char) getchp(STRIP_PARITY);
+
+	memset(mm, 0, 4);
+	for (i = 0; i < 4; ++i) {
+	    int cc = getchp(STRIP_PARITY);
+	    if (cc == EOF)
+		break;
+	    mm[i] = (char) cc;
+	}
 	mm[i] = '\0';
+
 	put_crlf();
 	if (mm[0] != 'a' || mm[1] != 'b' || mm[2] != 'c') {
 	    sprintf(temp, "Error string received was: %s", expand(mm));

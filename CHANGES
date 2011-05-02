@@ -1,3 +1,29 @@
+2011-05-01  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* configure: regen
+
+	* aclocal.m4, configure.in: add check for lint program
+
+	* output.c, fun.c: gcc warning
+
+	* color.c: fix clang warnings
+
+	* output.c: fix clang warnings
+	ensure that EOF is tested properly on return from getchp()
+
+	* fun.c: fix clang warning
+
+	* crum.c: copyright-date
+
+	* crum.c: fix clang warning
+
+	* fun.c: ensure that EOF is checked for return-value from getchp()
+	(report by Joachim Schmitz)
+
+	* aclocal.m4: resync with my-autoconf, many fixes
+
+	* package/debian/changelog, package/tack.spec, tack.h: bump
+
 2011-04-01  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* config.sub: update to 2011-04-01
