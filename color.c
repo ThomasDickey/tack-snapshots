@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: color.c,v 1.8 2010/09/03 22:16:19 tom Exp $")
+MODULE_ID("$Id: color.c,v 1.9 2011/05/01 19:46:36 tom Exp $")
 
 /*
  * Color terminal tests.  Has only one entry point: test_color().
@@ -592,6 +592,9 @@ color_matrix(
 	    break;
 	}
     }
+    if (max_colors <= 0 || matrix_size <= 0)
+	return;
+
     matrix_area = matrix_size * matrix_size;
     for (brightness = 0; brightness < 2; brightness++) {
 	put_crlf();
@@ -759,10 +762,13 @@ color_ccc(
 	    (set_color_pair ? magic_cookie_glitch : 0);
     }
     set_color_step();
-    colors_per_line = max_colors > max_pairs
-	? max_pairs : max_colors;
+    colors_per_line = ((max_colors > max_pairs)
+		       ? max_pairs
+		       : max_colors);
     j = (columns - 14) / (cookie_monster + 1);
-    if (colors_per_line > j) {
+    if (i == 0) {
+	colors_per_line = 0;
+    } else if (colors_per_line > j) {
 	colors_per_line = (j / i) * i;
     }
     sprintf(temp, "RGB color step %d, cookies %d", color_step,
