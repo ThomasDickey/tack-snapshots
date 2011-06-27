@@ -1,0 +1,83 @@
+01 81 <esc>
+02 82 1
+03 83 2
+04 84 3
+05 85 4
+06 86 5
+07 87 6
+08 88 7
+09 89 8
+0a 8a 9
+0b 8b 0
+0c 8c -
+0d 8d =
+0e 8e <backspace>
+0f 8f <tab>
+10 90 q
+11 91 w
+12 92 e
+13 93 r
+14 94 t
+15 95 y
+16 96 u
+17 97 i
+18 98 o
+19 99 p
+1a 9a [
+1b 9b ]
+1c 9c <return>
+1d 9d <control>
+1e 9e a
+1f 9f s
+20 a0 d
+21 a1 f
+22 a2 g
+23 a3 h
+24 a4 j
+25 a5 k
+26 a6 l
+27 a7 ;
+28 a8 '
+29 a9 <29>
+2a aa <left shift>
+2b ab \
+2c ac z
+2d ad x
+2e ae c
+2f af v
+30 b0 b
+31 b1 n
+32 b2 m
+33 b3 ,
+34 b4 .
+35 b5 /
+36 b6 <right shift>
+37 b7 <insert replace>
+38 b8 <funct>
+39 b9 <space>
+3a ba <caps lock>
+3b bb <F1>
+3c bc <F2>
+3d bd <F3>
+3e be <F4>
+3f bf <F5>
+40 c0 <F6>
+41 c1 <F7>
+42 c2 <F8>
+43 c3 <F9>
+44 c4 <F10>
+45 c5 <F15>
+46 c6 <F16>
+47 c7 <keypad 7>
+48 c8 <keypad 8>
+49 c9 <keypad 9>
+4a ca <keypad ->
+4b cb <keypad 4>
+4c cc <keypad 5>
+4d cd <keypad 6>
+4e ce <keypad ,>
+4f cf <keypad 1>
+50 d0 <keypad 2>
+51 d1 <keypad 3>
+52 d2 <keypad 0>
+53 d3 <keypad .>

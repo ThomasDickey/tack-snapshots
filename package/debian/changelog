@@ -1,3 +1,9 @@
+tack (1.07-20110626) unstable; urgency=low
+
+  * minor fixes for character-set display, etc., from Daniel Weaver
+
+ -- Thomas E. Dickey <dickey@invisible-island.net>  Sun, 26 Jun 2011 14:45:27 -0400
+
 tack (1.07-20110501) unstable; urgency=low
 
   * fix sign-extension bug.

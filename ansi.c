@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997 Free Software Foundation, Inc.
+** Copyright (C) 1991-2010,2011 Free Software Foundation, Inc.
 ** 
 ** This file is part of TACK.
 ** 
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: ansi.c,v 1.13 2010/09/03 22:13:11 tom Exp $")
+MODULE_ID("$Id: ansi.c,v 1.14 2011/06/26 17:34:30 Daniel.Weaver Exp $")
 
 /*
  * Standalone tests for ANSI terminals.  Three entry points:
@@ -769,7 +769,7 @@ show_characters(char *bank, int bias)
 {
     int i;
 
-    sprintf(temp, "G%d GL   ", bank[1] & 3);
+    sprintf(temp, "G%d G%c   ", bank[1] & 3, bias ? 'R' : 'L');
     ptext(temp);
     select_bank(bank);
     for (i = ' '; i < 0x80; i++) {
