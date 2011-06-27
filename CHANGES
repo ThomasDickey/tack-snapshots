@@ -1,3 +1,22 @@
+2011-06-26  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* configure: regen
+
+	* aclocal.m4:
+	update CF_CURSES_HEADER, looking for ncurses.h ahead of curses.h for
+	consistency with CF_NCURSES_HEADER
+
+	* package/debian/changelog, package/tack.spec, tack.h: bump
+
+2011-06-26  Daniel.Weaver
+
+	* ansi.c:
+	minor bug-fix to show "GR" label in appropriate ANSI character-sets.
+
+	* tack.1: update email address
+
+	* scan.wy150: New file.
+
 2011-05-01  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* configure: regen
