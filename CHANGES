@@ -1,3 +1,7 @@
+2012-02-25  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.guess, config.sub: update to 2012-02-10
+
 2011-06-26  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* configure: regen
