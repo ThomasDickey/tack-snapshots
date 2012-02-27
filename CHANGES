@@ -1,3 +1,35 @@
+2012-02-26  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* configure: regen
+
+	* configure.in:
+	add $ECHO_CC to AC_OUTPUT logic, overlooked in echo-fixes
+
+	* tack.h, package/debian/changelog, package/tack.spec: bump
+
+	* configure.in:
+	add configure check to determine if we have tinfo library, and further if
+	tack needs intermediate ncurses library to link.
+
+	* configure.in: always check for _nc_tic_expand
+
+	* configure.in:
+	use CF_DISABLE_ECHO (prompted by patch by Samuel Bronson).
+
+	* aclocal.m4: add CF_DISABLE_ECHO macro
+
+	* aclocal.m4: resync with-my-autoconf:
+	+ add/use CF_ACVERSION_CHECK to support lookup with AC_CHECK_TOOLS vs
+	  AC_PATH_PROGS for ncurses*-config script in CF_NCURSES_CONFIG
+	+ modify CF_ANSI_CC_CHECK to check for environment variable $CC, which
+	  conflicts with usage for curses applications.
+	+ modify CF_CURSES_LIBS to check for OpenBSD "otermcap" library.
+	+ new macro CF_TRY_XOPEN_SOURCE
+	+ modify CF_XOPEN_SOURCE to omit Solaris-specific __EXTENSIONS__ definition
+	  where possible.  This led to adding workarounds for Darwin, IRIX64, MirBSD,
+	  OpenBSD as well as configure check with CF_TRY_XOPEN_SOURCE.  Also modify
+	  version pattern for newer AIX systems,
+
 2012-02-25  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* config.guess, config.sub: update to 2012-02-10
