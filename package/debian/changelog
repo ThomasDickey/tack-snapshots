@@ -1,3 +1,9 @@
+tack (1.07-20120226) unstable; urgency=low
+
+  * improvements for configure script
+
+ -- Thomas E. Dickey <dickey@invisible-island.net>  Sun, 26 Feb 2012 20:01:01 -0500
+
 tack (1.07-20110626) unstable; urgency=low
 
   * minor fixes for character-set display, etc., from Daniel Weaver

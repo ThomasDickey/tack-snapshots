@@ -1,5 +1,5 @@
 dnl***************************************************************************
-dnl Copyright (c) 2007,2011 Free Software Foundation, Inc.                   *
+dnl Copyright (c) 2007-2011,2012 Free Software Foundation, Inc.              *
 dnl                                                                          *
 dnl Permission is hereby granted, free of charge, to any person obtaining a  *
 dnl copy of this software and associated documentation files (the            *
@@ -26,9 +26,9 @@ dnl sale, use or other dealings in this Software without prior written       *
 dnl authorization.                                                           *
 dnl***************************************************************************
 dnl
-dnl Author: Thomas E. Dickey	2007
+dnl Author: Thomas E. Dickey	2007-on
 dnl
-dnl $Id: configure.in,v 1.8 2011/05/01 21:53:26 tom Exp $
+dnl $Id: configure.in,v 1.12 2012/02/27 01:16:43 tom Exp $
 dnl This is a simple configuration-script for tack which makes it simpler to
 dnl build outside the ncurses tree (provided that ncurses was configured using
 dnl the --with-ticlib option).
@@ -60,7 +60,6 @@ DESTDIR=""						AC_SUBST(DESTDIR)
 DFT_DEP_SUFFIX=""				AC_SUBST(DFT_DEP_SUFFIX)
 DFT_OBJ_SUBDIR=`pwd|sed -e's:.*/::'`	AC_SUBST(DFT_OBJ_SUBDIR)
 DFT_UPR_MODEL="NORMAL"			AC_SUBST(DFT_UPR_MODEL)
-ECHO_LINK='@ echo linking $@ ... ;'	AC_SUBST(ECHO_LINK)
 EXTRA_LDFLAGS=""				AC_SUBST(EXTRA_LDFLAGS)
 LD="ld"							AC_SUBST(LD)
 LDFLAGS_SHARED=""				AC_SUBST(LDFLAGS_SHARED)
@@ -83,19 +82,26 @@ cf_cv_rel_version=""			AC_SUBST(cf_cv_rel_version)
 NCURSES_TREE="#"
 AC_SUBST(NCURSES_TREE)
 
-cf_cv_screen=curses
+cf_cv_screen=ncurses
 cf_cv_libtype=
 
 AC_EXEEXT
 AC_OBJEXT
 
 CF_ANSI_CC_REQD
+CF_DISABLE_ECHO
+
+# ncurses uses a different symbol as of 2012/02/26 (workaround)
+ECHO_LINK="$ECHO_LD"
+AC_SUBST(ECHO_LINK)
+
 CF_ENABLE_WARNINGS
 CF_GCC_ATTRIBUTES
 CF_XOPEN_SOURCE
 
 dnl ---------------------------------------------------------------------------
 dnl NcursesW, installed in conventional location
+AC_MSG_CHECKING(for ncurses/ncursesw flavor)
 AC_ARG_WITH(ncursesw,
 	[  --with-ncursesw         use wide ncurses-libraries (installed)],
 	[cf_cv_screen=ncursesw],[
@@ -104,6 +110,7 @@ dnl Ncurses, installed in conventional location
 AC_ARG_WITH(ncurses,
 	[  --with-ncurses          use ncurses-libraries (installed)],
 	[cf_cv_screen=ncurses])])
+AC_MSG_RESULT($cf_cv_screen)
 
 case $cf_cv_screen in
 ncurses)
@@ -118,12 +125,52 @@ ncursesw)
 	;;
 esac
 
-case $cf_cv_screen in
-ncurses*)
-	AC_CHECK_FUNC(_nc_tic_expand,,[
-		AC_CHECK_LIB(tic,_nc_tic_expand,[LIBS="-ltic $LIBS"])])
-	;;
-esac
+AC_CHECK_FUNC(_nc_tic_expand,,[
+	AC_CHECK_LIB(tic,_nc_tic_expand,[LIBS="-ltic $LIBS"])])
+
+# The CF_*CURSES_CONFIG stuff provides curses/ncurses, which may include tinfo.
+# Check if (a) we have tinfo library and (b) if we need ncurses library too.
+
+cf_curses_lib=$cf_cv_screen$cf_cf_libtype
+cf_tinfo_lib=tinfo$cf_cf_libtype
+
+# If we do not have and/or do not need tinfo, reset cf_tinfo_lib to empty.
+AC_CHECK_FUNC(setupterm,[
+	case "x$LIBS" in #(vi
+	*$cf_tinfo_lib*) #(vi
+		;;
+	*)
+		AC_CHECK_LIB($cf_tinfo_lib,reset_shell_mode,
+			[LIBS="-l$cf_tinfo_lib $LIBS"],
+			[cf_tinfo_lib=''])
+		;;
+	esac
+],[
+	AC_CHECK_LIB($cf_tinfo_lib, setupterm,
+		[LIBS="-l$cf_tinfo_lib $LIBS"],
+		[cf_tinfo_lib=''])
+])
+
+# If we have tinfo, check if we do not need intermediate ncurses library to
+# link with tic library.
+if test -n "$cf_tinfo_lib"
+then
+	cf_save_libs="$LIBS"
+	LIBS=`echo "x$LIBS" | sed -e 's,^.,,' -e "s,-l$cf_curses_lib,,g"`
+
+	AC_MSG_CHECKING(if tack would link without $cf_curses_lib library)
+AC_TRY_LINK([#include <${cf_cv_ncurses_header:-curses.h}>],
+[
+	int x = _nc_trans_string (0, 0);
+],[cf_trim_ncurses=yes],[cf_trim_ncurses=no])
+	AC_MSG_RESULT($cf_trim_ncurses)
+
+	if test "$cf_trim_ncurses" = no
+	then
+		LIBS="$cf_save_libs"
+	fi
+
+fi
 
 CF_DISABLE_LEAKS
 
@@ -179,12 +226,15 @@ do
 	cat >>Makefile <<TEST_EOF
 
 \$(MODEL)/$N.o : $N.c \\
-	tack.h \\
-	ncurses_cfg.h
-	@echo compiling $N; \$(CC) -c \$(CFLAGS_DEFAULT) $N.c
+		tack.h \\
+		ncurses_cfg.h
+	$RULE_CC
+	$ECHO_CC\$(CC) -c \$(CFLAGS_DEFAULT) $N.c
 TEST_EOF
 done
 ],[
 AWK="$AWK"
+ECHO_CC="$ECHO_CC"
+RULE_CC="$RULE_CC"
 ],cat)
 # vi:ts=4 sw=4
