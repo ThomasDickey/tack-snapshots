@@ -1,3 +1,28 @@
+2012-03-01  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* Makefile.in: copyright date
+
+2012-02-29  Werner.Fink
+
+	* Makefile.in, configure.in:
+	Update configure-script and makefile template to work with this post-5.9
+	change, allowing build of tack within the ncurses source-tree:
+
+	20110924
+		+ modify configure script and makefiles to split TIC_ARGS and
+		  TINFO_ARGS into pieces corresponding to LDFLAGS and LIBS variables,
+		  to help separate searches for tic- and tinfo-libraries (patch by Nick
+		  Alcock aka "Nix").
+
+	The change is prompted by review of OpenSUSE package by Werner Fink, using
+	a patch from the rpm source file:
+		ncurses-5.9-tack-tinfo.dif (2011-11-18)
+
+	and discarding
+		ncurses-5.7-tack.dif (2010-01-12)
+
+	because the latter breaks builds with libtool -TD
+
 2012-02-26  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* configure: regen
