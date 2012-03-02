@@ -1,8 +1,8 @@
 Summary:  tack - terminfo action checker
 %define AppProgram tack
 %define AppVersion 1.07
-%define AppRelease 20120226
-# $XTermId: tack.spec,v 1.4 2012/02/27 01:00:28 tom Exp $
+%define AppRelease 20120303
+# $XTermId: tack.spec,v 1.5 2012/03/02 10:55:45 tom Exp $
 Name: %{AppProgram}
 Version: %{AppVersion}
 Release: %{AppRelease}

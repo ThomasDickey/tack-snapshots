@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2010,2011 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.28 2012/02/27 01:01:24 tom Exp $ */
+/* $Id: tack.h,v 1.30 2012/03/02 10:55:37 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -28,7 +28,7 @@
 
 #define MAJOR_VERSION 1
 #define MINOR_VERSION 7
-#define PATCH_VERSION 20120226
+#define PATCH_VERSION 20120303
 
 #ifdef HAVE_CONFIG_H
 #include <ncurses_cfg.h>
@@ -39,6 +39,34 @@
 #define HAVE_SELECT 1
 #define HAVE_SYS_TIME_H 1
 #define HAVE_SYS_TIME_SELECT 1
+#endif
+
+#ifndef BROKEN_LINKER
+#define BROKEN_LINKER 0
+#endif
+
+#ifndef DECL_ERRNO
+#define DECL_ERRNO 0
+#endif
+
+#ifndef HAVE_LONG_FILE_NAMES
+#define HAVE_LONG_FILE_NAMES 0
+#endif
+
+#ifndef NO_LEAKS
+#define NO_LEAKS 0
+#endif
+
+#ifndef USE_DATABASE
+#define USE_DATABASE 0
+#endif
+
+#ifndef USE_TERMCAP
+#define USE_TERMCAP 0
+#endif
+
+#ifndef USE_RCS_IDS
+#define USE_RCS_IDS 0
 #endif
 
 #include <sys/types.h>
@@ -64,10 +92,10 @@ extern char *_nc_strstr(const char *, const char *);
 #endif
 
 #if NO_LEAKS && defined(HAVE__NC_FREE_TIC)
-extern void _nc_free_tic(int);
+extern void _nc_free_tic(int) GCC_NORETURN;
 extern void tack_edit_leaks(void);
 extern void tack_fun_leaks(void);
-extern void ExitProgram(int);
+extern void ExitProgram(int) GCC_NORETURN;
 #else
 #define ExitProgram(code) exit(code)
 #undef  NO_LEAKS
