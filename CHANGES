@@ -1,3 +1,27 @@
+2012-03-02  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* configure: regen
+
+	* output.c: icc9 warning
+
+	* configure.in: LIBS_CURSES_symbol is redundant - remove
+
+	* package/debian/changelog, package/tack.spec, tack.h: bump-version
+
+	* tack.h: quiet gcc -Wundef warnings
+	also quiet two no-return cases when configuring with no-leaks option.
+
+	* configure.in:
+	Add CF_ERRNO, CF_LINK_DATAONLY checks with supporting macros to address
+	gcc -Wundef warnings about DECL_ERRNO and BROKEN_LINKER symbols.
+
+	* configure.in:
+	add EXTRA_CFLAGS to CFLAGS/CPPFLAGS (report by Samuel Bronson)
+
+	* aclocal.m4:
+	Add CF_ERRNO, CF_LINK_DATAONLY checks with supporting macros to address
+	gcc -Wundef warnings about DECL_ERRNO and BROKEN_LINKER symbols.
+
 2012-03-01  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* Makefile.in: copyright date

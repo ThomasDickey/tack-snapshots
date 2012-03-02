@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2011,2012 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -23,7 +23,7 @@
 #include <tack.h>
 #include <time.h>
 
-MODULE_ID("$Id: output.c,v 1.18 2011/05/01 21:46:26 tom Exp $")
+MODULE_ID("$Id: output.c,v 1.19 2012/03/02 11:54:04 tom Exp $")
 
 /* globals */
 long char_sent;			/* number of characters sent */
@@ -130,7 +130,7 @@ tc_putch(int c)
 	    fprintf(log_fp, "<%s>", c0[ch]);
 	    log_count += 5;
 	} else if (ch < 127) {
-	    fprintf(log_fp, "%c", ch);
+	    fprintf(log_fp, "%c", (char) ch);
 	    log_count += 1;
 	} else {
 	    fprintf(log_fp, "<%02x>", ch);

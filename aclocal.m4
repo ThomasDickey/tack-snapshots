@@ -26,7 +26,7 @@ dnl sale, use or other dealings in this Software without prior written       *
 dnl authorization.                                                           *
 dnl***************************************************************************
 dnl
-dnl $Id: aclocal.m4,v 1.11 2012/02/26 22:34:28 tom Exp $
+dnl $Id: aclocal.m4,v 1.12 2012/03/02 10:32:52 tom Exp $
 dnl
 dnl Author: Thomas E. Dickey
 dnl
@@ -467,6 +467,63 @@ AC_TRY_LINK([#include <stdio.h>],[printf("Hello world");],,
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
+dnl CF_CHECK_ERRNO version: 11 updated: 2010/05/26 05:38:42
+dnl --------------
+dnl Check for data that is usually declared in <stdio.h> or <errno.h>, e.g.,
+dnl the 'errno' variable.  Define a DECL_xxx symbol if we must declare it
+dnl ourselves.
+dnl
+dnl $1 = the name to check
+dnl $2 = the assumed type
+AC_DEFUN([CF_CHECK_ERRNO],
+[
+AC_CACHE_CHECK(if external $1 is declared, cf_cv_dcl_$1,[
+    AC_TRY_COMPILE([
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#include <stdio.h>
+#include <sys/types.h>
+#include <errno.h> ],
+    ifelse([$2],,int,[$2]) x = (ifelse([$2],,int,[$2])) $1,
+    [cf_cv_dcl_$1=yes],
+    [cf_cv_dcl_$1=no])
+])
+
+if test "$cf_cv_dcl_$1" = no ; then
+    CF_UPPER(cf_result,decl_$1)
+    AC_DEFINE_UNQUOTED($cf_result)
+fi
+
+# It's possible (for near-UNIX clones) that the data doesn't exist
+CF_CHECK_EXTERN_DATA($1,ifelse([$2],,int,[$2]))
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_CHECK_EXTERN_DATA version: 3 updated: 2001/12/30 18:03:23
+dnl --------------------
+dnl Check for existence of external data in the current set of libraries.  If
+dnl we can modify it, it's real enough.
+dnl $1 = the name to check
+dnl $2 = its type
+AC_DEFUN([CF_CHECK_EXTERN_DATA],
+[
+AC_CACHE_CHECK(if external $1 exists, cf_cv_have_$1,[
+    AC_TRY_LINK([
+#undef $1
+extern $2 $1;
+],
+    [$1 = 2],
+    [cf_cv_have_$1=yes],
+    [cf_cv_have_$1=no])
+])
+
+if test "$cf_cv_have_$1" = yes ; then
+    CF_UPPER(cf_result,have_$1)
+    AC_DEFINE_UNQUOTED($cf_result)
+fi
+
+])dnl
+dnl ---------------------------------------------------------------------------
 dnl CF_CURSES_CONFIG version: 2 updated: 2006/10/29 11:06:27
 dnl ----------------
 dnl Tie together the configure-script macros for curses.  It may be ncurses,
@@ -746,6 +803,14 @@ then
 	CF_GCC_WARNINGS
 fi
 fi
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_ERRNO version: 5 updated: 1997/11/30 12:44:39
+dnl --------
+dnl Check if 'errno' is declared in <errno.h>
+AC_DEFUN([CF_ERRNO],
+[
+CF_CHECK_ERRNO(errno)
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_FIND_LIBRARY version: 9 updated: 2008/03/23 14:48:54
@@ -1179,6 +1244,69 @@ fi
 CF_SUBDIR_PATH($1,$2,lib)
 
 $1="$cf_library_path_list [$]$1"
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_LINK_DATAONLY version: 9 updated: 2009/01/01 20:21:38
+dnl ----------------
+dnl Some systems have a non-ANSI linker that doesn't pull in modules that have
+dnl only data (i.e., no functions), for example NeXT.  On those systems we'll
+dnl have to provide wrappers for global tables to ensure they're linked
+dnl properly.
+AC_DEFUN([CF_LINK_DATAONLY],
+[
+AC_MSG_CHECKING([if data-only library module links])
+AC_CACHE_VAL(cf_cv_link_dataonly,[
+	rm -f conftest.a
+	cat >conftest.$ac_ext <<EOF
+#line __oline__ "configure"
+int	testdata[[3]] = { 123, 456, 789 };
+EOF
+	if AC_TRY_EVAL(ac_compile) ; then
+		mv conftest.o data.o && \
+		( $AR $ARFLAGS conftest.a data.o ) 2>&AC_FD_CC 1>/dev/null
+	fi
+	rm -f conftest.$ac_ext data.o
+	cat >conftest.$ac_ext <<EOF
+#line __oline__ "configure"
+int	testfunc()
+{
+#if defined(NeXT)
+	${cf_cv_main_return:-return}(1);	/* I'm told this linker is broken */
+#else
+	extern int testdata[[3]];
+	return testdata[[0]] == 123
+	   &&  testdata[[1]] == 456
+	   &&  testdata[[2]] == 789;
+#endif
+}
+EOF
+	if AC_TRY_EVAL(ac_compile); then
+		mv conftest.o func.o && \
+		( $AR $ARFLAGS conftest.a func.o ) 2>&AC_FD_CC 1>/dev/null
+	fi
+	rm -f conftest.$ac_ext func.o
+	( eval $RANLIB conftest.a ) 2>&AC_FD_CC >/dev/null
+	cf_saveLIBS="$LIBS"
+	LIBS="conftest.a $LIBS"
+	AC_TRY_RUN([
+	int main()
+	{
+		extern int testfunc();
+		${cf_cv_main_return:-return} (!testfunc());
+	}
+	],
+	[cf_cv_link_dataonly=yes],
+	[cf_cv_link_dataonly=no],
+	[cf_cv_link_dataonly=unknown])
+	LIBS="$cf_saveLIBS"
+	])
+AC_MSG_RESULT($cf_cv_link_dataonly)
+
+if test "$cf_cv_link_dataonly" = no ; then
+	AC_DEFINE(BROKEN_LINKER)
+	BROKEN_LINKER=1
+fi
+
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_MAKE_TAGS version: 6 updated: 2010/10/23 15:52:32
