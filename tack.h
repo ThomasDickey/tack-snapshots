@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997-2010,2011 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2011,2012 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.30 2012/03/02 10:55:37 tom Exp $ */
+/* $Id: tack.h,v 1.32 2012/03/03 16:02:55 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -35,6 +35,7 @@
 #else
 #define RETSIGTYPE void
 #define GCC_UNUSED		/*nothing */
+#define GCC_NORETURN		/*nothing */
 #define HAVE_GETTIMEOFDAY 1
 #define HAVE_SELECT 1
 #define HAVE_SYS_TIME_H 1
@@ -86,6 +87,12 @@
 #define MODULE_ID(id)		/*nothing */
 #endif
 
+#if defined(__GNUC__) && defined(_FORTIFY_SOURCE)
+#define IGNORE_RC(func) ignore_unused = (int) func
+#else
+#define IGNORE_RC(func) (void) func
+#endif /* gcc workarounds */
+
 #if !HAVE_STRSTR
 extern char *_nc_strstr(const char *, const char *);
 #define strstr(h,n) _nc_strstr(h,n)
@@ -116,6 +123,10 @@ extern int debug_level;
 extern char temp[];
 extern char tty_basename[];
 extern char tty_shortname[];
+
+#if defined(__GNUC__) && defined(_FORTIFY_SOURCE)
+extern int ignore_unused;
+#endif
 
 #define SYNC_FAILED	0
 #define SYNC_TESTED	1
@@ -349,7 +360,7 @@ extern void put_str(const char *);
 extern void put_this(int);
 extern void putchp(int);
 extern void putln(const char *);
-extern void read_string(char *, int);
+extern void read_string(char *, size_t);
 extern void three_digit(char *, int);
 extern void tt_putp(const char *);
 extern void tt_putparm(NCURSES_CONST char *, int, int, int);
@@ -426,15 +437,15 @@ extern void bye_kids(int);
 /* scan.c */
 extern char **scan_up, **scan_down, **scan_name;
 extern int scan_key(void);
-extern unsigned scan_max;	/* length of longest scan code */
-extern unsigned *scan_tested, *scan_length;
+extern size_t scan_max;		/* length of longest scan code */
+extern size_t *scan_tested, *scan_length;
 extern void scan_init(char *fn);
 
 /* sysdep.c */
 extern int initial_stty_query(int);
 extern int stty_query(int);
 extern void ignoresig(void);
-extern void read_key(char *, int);
+extern void read_key(char *, size_t);
 extern void set_alarm_clock(int);
 extern void spin_flush(void);
 extern void tty_init(void);

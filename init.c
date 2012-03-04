@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2010,2012 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -23,7 +23,7 @@
 #include <tack.h>
 #include <tic.h>
 
-MODULE_ID("$Id: init.c,v 1.13 2010/09/03 23:35:01 tom Exp $")
+MODULE_ID("$Id: init.c,v 1.14 2012/03/03 15:15:32 tom Exp $")
 
 #if NCURSES_VERSION_MAJOR >= 5 || NCURSES_VERSION_PATCH >= 981219
 #define _nc_get_curterm(p) _nc_get_tty_mode(p)
@@ -130,7 +130,7 @@ reset_init(void)
     }
     if (init_prog) {
 	can_test("iprog", FLAG_TESTED);
-	(void) system(init_prog);
+	IGNORE_RC(system(init_prog));
     }
     put_name(init_3string, " (is3)");
 

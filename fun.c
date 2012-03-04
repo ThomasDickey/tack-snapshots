@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2011,2012 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: fun.c,v 1.17 2011/05/01 21:46:12 tom Exp $")
+MODULE_ID("$Id: fun.c,v 1.19 2012/03/03 22:05:22 tom Exp $")
 
 /*
  * Test the function keys on the terminal.  The code for echo tests
@@ -64,7 +64,7 @@ static char **fk_label;		/* function key labels (if any) */
 static int *fk_tested;
 static size_t num_strings = 0;
 
-static unsigned fkmax = 1;	/* length of longest key */
+static size_t fkmax = 1;	/* length of longest key */
 static int got_labels = 0;	/* true if we have some labels */
 static int key_count = 0;
 static int end_state;
@@ -613,7 +613,7 @@ funkey_prog(
 	sprintf(temp, "Hit function key %d\n", fk);
 	ptextln(temp);
 
-	memset(mm, 0, 4);
+	memset(mm, 0, (size_t) 4);
 	for (i = 0; i < 4; ++i) {
 	    int cc = getchp(STRIP_PARITY);
 	    if (cc == EOF)
@@ -850,22 +850,22 @@ tools_report(
 	} else {
 	    put_str(expand(&buf[i - 1]));
 	}
-	if (!strncmp(&txt[sizeof(txt) - 7], "columns", 7)) {
+	if (!strncmp(&txt[sizeof(txt) - 7], "columns", (size_t) 7)) {
 	    column_pattern();
 	    buf[i = 0] = '\0';
 	    crp = 0;
 	}
-	if (!strncmp(&txt[sizeof(txt) - 5], "lines", 5)) {
+	if (!strncmp(&txt[sizeof(txt) - 5], "lines", (size_t) 5)) {
 	    line_pattern();
 	    buf[i = 0] = '\0';
 	    crp = 0;
 	}
-	if (!strncmp(&txt[sizeof(txt) - 5], "clear", 5)) {
+	if (!strncmp(&txt[sizeof(txt) - 5], "clear", (size_t) 5)) {
 	    put_clear();
 	    buf[i = 0] = '\0';
 	    crp = 0;
 	}
-	if (!strncmp(&txt[sizeof(txt) - 4], "high", 4)) {
+	if (!strncmp(&txt[sizeof(txt) - 4], "high", (size_t) 4)) {
 	    high_bit ^= 0x80;
 	    if (high_bit) {
 		ptextln("\nParity bit set");
@@ -873,11 +873,11 @@ tools_report(
 		ptextln("\nParity bit reset");
 	    }
 	}
-	if (!strncmp(&txt[sizeof(txt) - 4], "help", 4)) {
+	if (!strncmp(&txt[sizeof(txt) - 4], "help", (size_t) 4)) {
 	    put_crlf();
 	    report_help(crx);
 	}
-	if (!strncmp(&txt[sizeof(txt) - 4], "echo", 4)) {
+	if (!strncmp(&txt[sizeof(txt) - 4], "echo", (size_t) 4)) {
 	    /* display the last status report */
 	    /* clear bypass condition on Tek terminals */
 	    put_crlf();
@@ -887,13 +887,13 @@ tools_report(
 	    put_str(expand(buf));
 	}
 	if (save_scan_mode &&
-	    !strncmp(&txt[sizeof(txt) - 4], "scan", 4)) {
+	    !strncmp(&txt[sizeof(txt) - 4], "scan", (size_t) 4)) {
 	    /* toggle scan mode */
 	    scan_mode = !scan_mode;
 	}
-	if (!strncmp(&txt[sizeof(txt) - 3], "end", 3))
+	if (!strncmp(&txt[sizeof(txt) - 3], "end", (size_t) 3))
 	    break;
-	if (!strncmp(&txt[sizeof(txt) - 3], "hex", 3)) {
+	if (!strncmp(&txt[sizeof(txt) - 3], "hex", (size_t) 3)) {
 	    if (crx) {
 		/* display the last status report in hex */
 		/* clear bypass condition on Tek terminals */
@@ -906,11 +906,11 @@ tools_report(
 		hex_display = !hex_display;
 	    }
 	}
-	if (!strncmp(&txt[sizeof(txt) - 3], "two", 3))
+	if (!strncmp(&txt[sizeof(txt) - 3], "two", (size_t) 3))
 	    crx = 2;
-	if (!strncmp(&txt[sizeof(txt) - 3], "one", 3))
+	if (!strncmp(&txt[sizeof(txt) - 3], "one", (size_t) 3))
 	    crx = 1;
-	if (!strncmp(&txt[sizeof(txt) - 3], "all", 3))
+	if (!strncmp(&txt[sizeof(txt) - 3], "all", (size_t) 3))
 	    crx = 0;
     }
     scan_mode = save_scan_mode;

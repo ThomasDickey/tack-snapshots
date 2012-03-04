@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2010,2012 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -44,7 +44,7 @@
 #endif
 #endif
 
-MODULE_ID("$Id: sysdep.c,v 1.21 2010/09/03 23:39:36 tom Exp $")
+MODULE_ID("$Id: sysdep.c,v 1.22 2012/03/03 16:22:56 tom Exp $")
 
 #if DECL_ERRNO
 extern int errno;
@@ -388,7 +388,7 @@ spin_flush(void)
 **	A null character is converted to 0x80.
 */
 void
-read_key(char *buf, int max)
+read_key(char *buf, size_t max)
 {
     int got, ask, i, l;
     char *s;
@@ -397,19 +397,21 @@ read_key(char *buf, int max)
     s = buf;
     fflush(stdout);
     /* ATT unix may return 0 or 1, Berkeley Unix should be 1 */
-    while (read(fileno(stdin), s, 1) == 0) ;
+    while (read(fileno(stdin), s, (size_t) 1) == 0) {
+	;			/* EMPTY */
+    }
     ++s;
     --max;
-    while (max > 0 && (ask = char_ready())) {
-	if (ask > max) {
-	    ask = max;
+    while ((int) max > 0 && (ask = char_ready()) > 0) {
+	if (ask > (int) max) {
+	    ask = (int) max;
 	}
-	if ((got = (int) read(fileno(stdin), s, (unsigned) ask))) {
+	if ((got = (int) read(fileno(stdin), s, (size_t) ask)) > 0) {
 	    s += got;
 	} else {
 	    break;
 	}
-	max -= got;
+	max -= (size_t) got;
     }
     *s = '\0';
     l = (int) (s - buf);

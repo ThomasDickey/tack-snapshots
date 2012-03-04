@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2010,2012 Free Software Foundation, Inc.
 ** 
 ** This file is part of TACK.
 ** 
@@ -25,7 +25,7 @@
 #include <sys/time.h>
 #endif
 
-MODULE_ID("$Id: control.c,v 1.13 2010/09/03 23:29:19 tom Exp $")
+MODULE_ID("$Id: control.c,v 1.14 2012/03/03 16:03:17 tom Exp $")
 
 /* terminfo test program control subroutines */
 
@@ -78,7 +78,7 @@ static void
 alloc_arrays(void)
 {
     if (pads == 0) {
-	pads = (struct test_results **) calloc(MAX_STRINGS, sizeof(struct test_results *));
+	pads = (struct test_results **) calloc((size_t) MAX_STRINGS, sizeof(struct test_results *));
     }
 }
 

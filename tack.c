@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2010,2012 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: tack.c,v 1.12 2010/09/04 14:40:30 tom Exp $")
+MODULE_ID("$Id: tack.c,v 1.13 2012/03/03 15:15:20 tom Exp $")
 
 /*
    This program is designed to test terminfo, not curses.  Therefore
@@ -55,6 +55,10 @@ int select_xon_xoff;		/* TTY driver XON/XOFF mode select */
 int hex_out;			/* Display output in hex */
 int send_reset_init;		/* Send the reset and initialization strings */
 FILE *log_fp;			/* Terminal logfile */
+
+#if defined(__GNUC__) && defined(_FORTIFY_SOURCE)
+int ignore_unused;
+#endif
 
 /*****************************************************************************
  *
