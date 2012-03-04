@@ -26,7 +26,7 @@ dnl sale, use or other dealings in this Software without prior written       *
 dnl authorization.                                                           *
 dnl***************************************************************************
 dnl
-dnl $Id: aclocal.m4,v 1.12 2012/03/02 10:32:52 tom Exp $
+dnl $Id: aclocal.m4,v 1.13 2012/03/03 20:00:35 tom Exp $
 dnl
 dnl Author: Thomas E. Dickey
 dnl
@@ -1843,30 +1843,6 @@ if test "$cf_cv_posix_c_source" != no ; then
 	CPPFLAGS="$cf_trim_CPPFLAGS"
 	CF_ADD_CFLAGS($cf_cv_posix_c_source)
 fi
-
-])dnl
-dnl ---------------------------------------------------------------------------
-dnl CF_PRG_RULES version: 1 updated: 2006/06/03 11:45:08
-dnl ------------
-dnl Append definitions and rules for the given programs to the subdirectory
-dnl Makefiles, and the recursion rule for the top-level Makefile.
-dnl
-dnl parameters
-dnl	$1 = script to run
-dnl	$2 = list of subdirectories
-dnl
-dnl variables
-dnl	$AWK
-AC_DEFUN([CF_PRG_RULES],
-[
-for cf_dir in $2
-do
-	if test ! -d $srcdir/$cf_dir; then
-		continue
-	elif test -f $srcdir/$cf_dir/programs; then
-		$AWK -f $1 $srcdir/$cf_dir/programs >>$cf_dir/Makefile
-	fi
-done
 
 ])dnl
 dnl ---------------------------------------------------------------------------

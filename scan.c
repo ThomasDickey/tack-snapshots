@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2010,2012 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -22,11 +22,11 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: scan.c,v 1.10 2010/09/03 23:33:44 tom Exp $")
+MODULE_ID("$Id: scan.c,v 1.11 2012/03/03 16:12:35 tom Exp $")
 
-unsigned scan_max;		/* length of longest scan code */
+size_t scan_max;		/* length of longest scan code */
 char **scan_up, **scan_down, **scan_name;
-unsigned *scan_tested, *scan_length;
+size_t *scan_tested, *scan_length;
 static unsigned *scan_value;
 
 static unsigned shift_state;
@@ -98,13 +98,16 @@ smash(void)
     return t;
 }
 
+#define CHUNK 4096
+#define CHUNK_LO (CHUNK - 96)
+
 void
 scan_init(char *fn)
 {				/* read the scan mode key definitions */
     char *s, *sl;
     FILE *fp;
     int ch, i, j;
-    unsigned len;
+    size_t len;
     char home[512];
 
     if ((str = getenv("HOME")))
@@ -143,12 +146,12 @@ scan_init(char *fn)
     scan_up = (char **) malloc(sizeof(char *) * MAX_SCAN);
     scan_down = (char **) malloc(sizeof(char *) * MAX_SCAN);
     scan_name = (char **) malloc(sizeof(char *) * MAX_SCAN);
-    scan_tested = (unsigned *) malloc(sizeof(unsigned *) * MAX_SCAN);
-    scan_length = (unsigned *) malloc(sizeof(unsigned *) * MAX_SCAN);
+    scan_tested = (size_t *) malloc(sizeof(size_t *) * MAX_SCAN);
+    scan_length = (size_t *) malloc(sizeof(size_t *) * MAX_SCAN);
     scan_value = (unsigned *) malloc(sizeof(unsigned *) * MAX_SCAN);
     scan_up[0] = scan_down[0] = scan_name[0] = (char *) 0;
-    str = (char *) malloc(4096);	/* buffer space */
-    sl = str + 4000;		/* an upper limit */
+    str = (char *) malloc((size_t) CHUNK);	/* buffer space */
+    sl = str + CHUNK_LO;	/* an upper limit */
     scan_max = 1;
     for (i = 0;;) {
 	for (s = str; (ch = getc(fp)) != EOF;) {
@@ -167,8 +170,8 @@ scan_init(char *fn)
 	scan_blanks();
 	scan_name[i] = str;
 
-	scan_length[i] = (unsigned) strlen(scan_down[i]);
-	len = (unsigned) strlen(scan_up[i]) + scan_length[i];
+	scan_length[i] = strlen(scan_down[i]);
+	len = strlen(scan_up[i]) + scan_length[i];
 	if (len > scan_max)
 	    scan_max = len;
 
@@ -183,8 +186,8 @@ scan_init(char *fn)
 
 	i++;
 	if (str > sl) {
-	    str = (char *) malloc(4096);
-	    sl = str + 4000;
+	    str = (char *) malloc((size_t) CHUNK);
+	    sl = str + CHUNK_LO;
 	} else
 	    str = s;
     }

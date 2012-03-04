@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991-2010,2011 Free Software Foundation, Inc.
+** Copyright (C) 1991-2011,2012 Free Software Foundation, Inc.
 ** 
 ** This file is part of TACK.
 ** 
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: ansi.c,v 1.14 2011/06/26 17:34:30 Daniel.Weaver Exp $")
+MODULE_ID("$Id: ansi.c,v 1.15 2012/03/03 16:06:23 tom Exp $")
 
 /*
  * Standalone tests for ANSI terminals.  Three entry points:
@@ -384,7 +384,7 @@ request_cfss(void)
 **	print the mode display entry
 */
 static void
-mode_display(const char *p, int n, int c, char s, char r)
+mode_display(const char *p, int n, int c, int s, int r)
 {
     int k;
 

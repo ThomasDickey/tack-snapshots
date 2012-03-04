@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2010,2012 Free Software Foundation, Inc.
 ** 
 ** This file is part of TACK.
 ** 
@@ -22,7 +22,7 @@
 #include <tack.h>
 #include <time.h>
 
-MODULE_ID("$Id: sync.c,v 1.12 2010/09/03 23:35:21 tom Exp $")
+MODULE_ID("$Id: sync.c,v 1.13 2012/03/03 16:03:04 tom Exp $")
 
 /* terminal-synchronization and performance tests */
 
@@ -152,7 +152,7 @@ probe_enq_ok(void)
 #endif
     tc_putp(tty_ENQ);
     event_start(TIME_SYNC);	/* start the timer */
-    read_key(tty_ACK, TTY_ACK_SIZE - 1);
+    read_key(tty_ACK, (size_t) (TTY_ACK_SIZE - 1));
 
     if (event_time(TIME_SYNC) > 400000 || tty_ACK[0] == '\0') {
 	/* These characters came from the user.  Sigh. */

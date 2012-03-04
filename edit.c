@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1997 Free Software Foundation, Inc.
+** Copyright (C) 1997-2010,2012 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -23,7 +23,7 @@
 #include <time.h>
 #include <tic.h>
 
-MODULE_ID("$Id: edit.c,v 1.16 2010/09/03 22:20:17 tom Exp $")
+MODULE_ID("$Id: edit.c,v 1.17 2012/03/03 16:03:23 tom Exp $")
 
 /*
  * Terminfo edit features
@@ -84,8 +84,8 @@ static void
 alloc_arrays(void)
 {
     if (flag_strings == 0) {
-	label_strings = (int *) calloc(MAX_STRINGS, sizeof(int));
-	flag_strings = (char *) calloc(MAX_STRINGS, sizeof(char));
+	label_strings = (int *) calloc((size_t) MAX_STRINGS, sizeof(int));
+	flag_strings = (char *) calloc((size_t) MAX_STRINGS, sizeof(char));
     }
 }
 
@@ -277,7 +277,7 @@ show_value(
     char tmp[1024];
 
     ptext("enter name: ");
-    read_string(buf, 80);
+    read_string(buf, (size_t) 80);
     if (buf[0] == '\0' || buf[1] == '\0') {
 	*ch = buf[0];
 	return;
@@ -541,19 +541,19 @@ mark_cap(
     if ((nt = _nc_find_entry(name, _nc_get_hash_table(FALSE)))) {
 	switch (nt->nte_type) {
 	case BOOLEAN:
-	    flag_boolean[nt->nte_index] = (char)
-						  (flag_boolean[nt->nte_index]
-						  | flag);
+	    flag_boolean[nt->nte_index] = ((char)
+					   (flag_boolean[nt->nte_index]
+					    | flag));
 	    break;
 	case STRING:
-	    flag_strings[nt->nte_index] = (char)
-						  (flag_strings[nt->nte_index]
-						  | flag);
+	    flag_strings[nt->nte_index] = ((char)
+					   (flag_strings[nt->nte_index]
+					    | flag));
 	    break;
 	case NUMBER:
-	    flag_numerics[nt->nte_index] = (char)
-						   (flag_numerics[nt->nte_index]
-						   | flag);
+	    flag_numerics[nt->nte_index] = ((char)
+					    (flag_numerics[nt->nte_index]
+					     | flag));
 	    break;
 	default:
 	    sprintf(temp, "unknown cap type (%s)", name);
@@ -796,7 +796,7 @@ edit_init(void)
     /* scan for labels */
     for (i = lc = 0; i < MAX_STRINGS; i++) {
 	original_term.Strings[i] = CUR Strings[i];
-	if (strncmp(STR_NAME(i), "lf", 2) == 0) {
+	if (strncmp(STR_NAME(i), "lf", (size_t) 2) == 0) {
 	    flag_strings[i] |= FLAG_LABEL;
 	    if (CUR Strings[i]) {
 		label_strings[lc++] = i;
@@ -861,7 +861,7 @@ change_one_entry(
     if (i == 255) {
 	/* read the cap name from the user */
 	ptext("enter name: ");
-	read_string(pad, 32);
+	read_string(pad, (size_t) 32);
 	if (pad[0] == '\0' || pad[1] == '\0') {
 	    *chp = pad[0];
 	    return;
@@ -899,7 +899,7 @@ change_one_entry(
 	    _nc_tic_expand(current_string, TRUE, TRUE));
     putln(buf);
     ptextln("Enter new pad.  0 for no pad.  CR for no change.");
-    read_string(buf, 32);
+    read_string(buf, (size_t) 32);
     if (buf[0] == '\0' || (buf[1] == '\0' && isalpha(UChar(buf[0])))) {
 	*chp = buf[0];
 	return;

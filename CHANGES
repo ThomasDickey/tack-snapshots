@@ -1,3 +1,32 @@
+2012-03-03  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* fun.c: gcc warning
+
+	* configure: regen
+
+	* configure.in: Solaris' "set" does not quote - fix with sed.
+
+	* configure: regen
+
+	* configure.in:
+	substitution for --disable-echo feature did not work with FreeBSD 7.2;
+	work around using output of shell's "set" command.  Also remove CF_PRG_RULES
+	which is not needed.
+
+	* aclocal.m4: remove CF_PRG_RULES - unused
+
+	* sysdep.c, scan.c, output.c, ansi.c, edit.c, control.c, fun.c, sync.c, tack.h:
+	strict gcc 4.1.2 warnings with CentOS 5.7 64-bit
+
+	* init.c, tack.c:
+	quiet unnecesary warning about ignoring return-value from system()
+
+	* configure:
+	regen with ac252 20120303 to work with Intel 12.0.3 compiler
+
+	* tack.h:
+	quiet unnecesary warning about ignoring return-value from system()
+
 2012-03-02  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* configure: regen

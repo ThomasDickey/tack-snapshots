@@ -28,7 +28,7 @@ dnl***************************************************************************
 dnl
 dnl Author: Thomas E. Dickey	2007-on
 dnl
-dnl $Id: configure.in,v 1.16 2012/03/02 11:49:03 tom Exp $
+dnl $Id: configure.in,v 1.18 2012/03/03 21:39:39 tom Exp $
 dnl This is a simple configuration-script for tack which makes it simpler to
 dnl build outside the ncurses tree (provided that ncurses was configured using
 dnl the --with-ticlib option).
@@ -46,7 +46,6 @@ CF_CHECK_CACHE
 AC_PROG_MAKE_SET
 AC_PROG_CC
 AC_PROG_CPP
-AC_PROG_AWK
 AC_PROG_LN_S
 
 CF_PROG_INSTALL
@@ -222,7 +221,6 @@ CF_ADD_CFLAGS($EXTRA_CFLAGS)
 dnl ---------------------------------------------------------------------------
 
 AC_OUTPUT(Makefile,[
-CF_PRG_RULES([$srcdir/mk-test.awk ECHO_LINK="$ECHO_LINK"], .)
 	cat >>Makefile <<TEST_EOF
 
 # These rules are generated so we do not rely on suffix rules, which do not
@@ -237,13 +235,11 @@ do
 \$(MODEL)/$N.o : $N.c \\
 		tack.h \\
 		ncurses_cfg.h
-	$RULE_CC
+	$SHOW_CC
 	$ECHO_CC\$(CC) -c \$(CFLAGS_DEFAULT) $N.c
 TEST_EOF
 done
-],[
-AWK="$AWK"
-ECHO_CC="$ECHO_CC"
-RULE_CC="$RULE_CC"
-],cat)
+],[],
+[set | sed -e s%=%=\'% -e s%\$%\'% -e s%\'\'%\'%g |fgrep _CC= >>$CONFIG_STATUS
+cat])
 # vi:ts=4 sw=4
