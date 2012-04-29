@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: charset.c,v 1.13 2010/09/03 22:13:47 tom Exp $")
+MODULE_ID("$Id: charset.c,v 1.14 2012/04/29 00:14:39 tom Exp $")
 
 /*
 	Menu definitions for alternate character set and SGR tests.
@@ -33,6 +33,7 @@ static void charset_civis(struct test_list *t, int *state, int *ch);
 static void charset_cvvis(struct test_list *t, int *state, int *ch);
 static void charset_cnorm(struct test_list *t, int *state, int *ch);
 static void charset_hs(struct test_list *t, int *state, int *ch);
+static void charset_eslok(struct test_list *t, int *state, int *ch);
 static void charset_status(struct test_list *t, int *state, int *ch);
 static void charset_dsl(struct test_list *t, int *state, int *ch);
 static void charset_enacs(struct test_list *t, int *state, int *ch);
@@ -50,6 +51,7 @@ struct test_list acs_test_list[] =
     {MENU_NEXT, 3, "cnorm", 0, 0, charset_cnorm, 0},
     {MENU_NEXT, 3, "hs", 0, 0, charset_hs, 0},
     {MENU_NEXT, 3, "tsl) (fsl) (wsl", "hs", 0, charset_status, 0},
+    {MENU_NEXT, 3, "eslok", "hs", 0, charset_eslok, 0},
     {MENU_NEXT, 3, "dsl", "hs", 0, charset_dsl, 0},
     {MENU_NEXT, 0, "acsc) (enacs) (smacs) (rmacs", 0, 0, charset_enacs, 0},
     {MENU_NEXT, 0, "smacs) (rmacs", 0, 0, charset_smacs, 0},
@@ -170,6 +172,51 @@ charset_status(
     tc_putp(from_status_line);
     putln("hould not be broken.");
     ptextln("If the previous line is not a complete sentence then (tsl) to-status-line, (fsl) from-status-line, or (wsl) width-of-status-line is incorrect.");
+    generic_done_message(t, state, ch);
+}
+
+/*
+**	charset_eslok(test_list, status, ch)
+**
+**	(eslok) test Status line with cursor addressing and erasure.
+*/
+static void
+charset_eslok(
+		 struct test_list *t,
+		 int *state,
+		 int *ch)
+{
+    int i, max;
+    char *s;
+    static char m[] = "*** status line *** 123456789.123456789.123456789.123456789.123456789.123456789.123456789.123456789.123456789.123456789.123456789.123456789.123456789.123456789.123456789.123456789.123456789.";
+
+    if (has_status_line != 1) {
+	return;
+    }
+    if (status_line_esc_ok != 1) {
+	ptextln("(eslok) status_line_esc_ok not present");
+	return;
+    }
+    put_clear();
+    max = width_status_line == -1 ? columns : width_status_line;
+    sprintf(temp, "Terminal has status line of %d characters", max);
+    ptextln(temp);
+
+    put_str("This line s");
+    s = TPARM_1(to_status_line, 10);
+    tc_putp(s);
+    for (i = 10; i < max; i++)
+	putchp(m[i]);
+    putchp('\r');
+    for (i = 0; i < 10; i++)
+	putchp(m[i]);
+    if (cursor_address) {
+	tputs(TPARM_2(cursor_address, 4, 4), lines, tc_putch);
+	put_str("STATUS");
+    }
+    tc_putp(from_status_line);
+    putln("hould not be broken.");
+    ptextln("If the previous line is not a complete sentence then the preceding test failed, or (eslok) status_line_esc_ok is incorrect.  The status line should have \"STATUS\".");
     generic_done_message(t, state, ch);
 }
 

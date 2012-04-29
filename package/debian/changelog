@@ -1,3 +1,13 @@
+tack (1.07-20120429) unstable; urgency=low
+
+  * add makefile rules for generated documentation.
+  * corrected ncv test to handle the default case.
+  * improve cleanup after color palette tests.
+  * add test for eslok.
+  * portability-fix for configure script.
+
+ -- Thomas E. Dickey <dickey@invisible-island.net>  Sun, 29 Apr 2012 11:17:02 -0400
+
 tack (1.07-20120303) unstable; urgency=low
 
   * code cleanup

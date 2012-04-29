@@ -26,7 +26,7 @@ dnl sale, use or other dealings in this Software without prior written       *
 dnl authorization.                                                           *
 dnl***************************************************************************
 dnl
-dnl $Id: aclocal.m4,v 1.13 2012/03/03 20:00:35 tom Exp $
+dnl $Id: aclocal.m4,v 1.14 2012/04/29 15:04:06 tom Exp $
 dnl
 dnl Author: Thomas E. Dickey
 dnl
@@ -987,7 +987,7 @@ if test "$GCC" = yes ; then
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_GCC_WARNINGS version: 27 updated: 2010/10/23 15:52:32
+dnl CF_GCC_WARNINGS version: 28 updated: 2012/03/31 20:10:46
 dnl ---------------
 dnl Check if the compiler supports useful warning options.  There's a few that
 dnl we don't use, simply because they're too noisy:
@@ -1081,6 +1081,13 @@ then
 			Winline) #(vi
 				case $GCC_VERSION in
 				[[34]].*)
+					CF_VERBOSE(feature is broken in gcc $GCC_VERSION)
+					continue;;
+				esac
+				;;
+			Wpointer-arith) #(vi
+				case $GCC_VERSION in
+				[[12]].*)
 					CF_VERBOSE(feature is broken in gcc $GCC_VERSION)
 					continue;;
 				esac
@@ -1307,6 +1314,60 @@ if test "$cf_cv_link_dataonly" = no ; then
 	BROKEN_LINKER=1
 fi
 
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_MAKE_DOCS version: 1 updated: 2012/04/29 11:02:32
+dnl ------------
+dnl $1 = name(s) to generate rules for
+dnl $2 = suffix of corresponding manpages used as input.
+define([CF_MAKE_DOCS],[
+test -z "$cf_make_docs" && cf_make_docs=0
+
+cf_output=makefile
+test -f "$cf_output" || cf_output=Makefile
+
+if test "$cf_make_docs" = 0
+then
+cat >>$cf_output <<"CF_EOF"
+################################################################################
+.SUFFIXES : .html .$2 .man .ps .pdf .txt
+
+.$2.html :
+	GROFF_NO_SGR=stupid [$](SHELL) -c "tbl [$]*.$2 | groff -Thtml -man" >[$]@
+
+.$2.ps :
+	[$](SHELL) -c "tbl [$]*.$2 | groff -man" >[$]@
+
+.$2.txt :
+	GROFF_NO_SGR=stupid [$](SHELL) -c "tbl [$]*.$2 | nroff -Tascii -man | col -bx" >[$]@
+
+.ps.pdf :
+	ps2pdf [$]*.ps
+
+CF_EOF
+	cf_make_docs=1
+fi
+
+for cf_name in $1
+do
+cat >>$cf_output <<CF_EOF
+################################################################################
+docs-$cf_name \\
+docs :: $cf_name.html \\
+	$cf_name.pdf \\
+	$cf_name.ps \\
+	$cf_name.txt
+
+clean \\
+docs-clean ::
+	rm -f $cf_name.html $cf_name.pdf $cf_name.ps $cf_name.txt
+
+$cf_name.html : $cf_name.$2
+$cf_name.pdf : $cf_name.ps
+$cf_name.ps : $cf_name.$2
+$cf_name.txt : $cf_name.$2
+CF_EOF
+done
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_MAKE_TAGS version: 6 updated: 2010/10/23 15:52:32

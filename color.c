@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: color.c,v 1.9 2011/05/01 19:46:36 tom Exp $")
+MODULE_ID("$Id: color.c,v 1.11 2012/04/29 14:09:45 tom Exp $")
 
 /*
  * Color terminal tests.  Has only one entry point: test_color().
@@ -35,14 +35,14 @@ static void color_ccc(struct test_list *, int *, int *);
 static void color_bce(struct test_list *, int *, int *);
 /* *INDENT-OFF* */
 struct test_list color_test_list[] = {
-    {0, 0, 0, 0, "e) edit terminfo", 0, &edit_menu},
-    {MENU_NEXT, 2, "colors) (pairs", 0, 0, color_check, 0},
-    {MENU_NEXT, 12, "setf) (setb) (scp", 0, 0, color_setf, 0},
-    {MENU_NEXT, 24, "op", 0, 0, color_matrix, 0},
-    {MENU_NEXT, 16, "ncv", 0, 0, color_ncv, 0},
-    {MENU_NEXT, 0, "bce", 0, 0, color_bce, 0},
+    {0,         0,  0,                   0, "e) edit terminfo", 0, &edit_menu},
+    {MENU_NEXT, 2,  "colors) (pairs",    0, 0,                  color_check, 0},
+    {MENU_NEXT, 12, "setf) (setb) (scp", 0, 0,                  color_setf,   0},
+    {MENU_NEXT, 24, "op",                0, 0,                  color_matrix, 0},
+    {MENU_NEXT, 16, "ncv",               0, 0,                  color_ncv,    0},
+    {MENU_NEXT, 0,  "bce",               0, 0,                  color_bce,    0},
     {MENU_NEXT | MENU_CLEAR, 0, "ccc) (initc) (initp", "hls op oc", 0, color_ccc, 0},
-    {MENU_LAST, 0, 0, 0, 0, 0, 0}
+    {MENU_LAST, 0,  0, 0, 0, 0, 0}
 };
 /* *INDENT-ON* */
 
@@ -63,26 +63,23 @@ struct color_table {
     int r, g, b;
     int h, l, s;
 };
-
+/* *INDENT-OFF* */
 static struct color_table def_colors[8] =
 {
-    {"black  ", COLOR_BLACK, 0, 0, 0, 0, 0, 0},
-    {"blue   ", COLOR_BLUE, 0, 0, 1000, 330, 50, 100},
-    {"green  ", COLOR_GREEN, 0, 1000, 0, 240, 50, 100},
-    {"cyan   ", COLOR_CYAN, 0, 1000, 1000, 300, 50, 100},
-    {"red    ", COLOR_RED, 1000, 0, 0, 120, 50, 100},
-    {"magenta", COLOR_MAGENTA, 1000, 0, 1000, 60, 50, 100},
-    {"yellow ", COLOR_YELLOW, 1000, 1000, 0, 180, 50, 100},
-    {"white  ", COLOR_WHITE, 1000, 1000, 1000, 0, 100, 0}
+    {"black  ", COLOR_BLACK,   0,    0,    0,     0,    0,    0},
+    {"blue   ", COLOR_BLUE,    0,    0,    1000,  330,  50,   100},
+    {"green  ", COLOR_GREEN,   0,    1000, 0,     240,  50,   100},
+    {"cyan   ", COLOR_CYAN,    0,    1000, 1000,  300,  50,   100},
+    {"red    ", COLOR_RED,     1000, 0,    0,     120,  50,   100},
+    {"magenta", COLOR_MAGENTA, 1000, 0,    1000,  60,   50,   100},
+    {"yellow ", COLOR_YELLOW,  1000, 1000, 0,     180,  50,   100},
+    {"white  ", COLOR_WHITE,   1000, 1000, 1000,  0,    100,  0}
 };
+/* *INDENT-ON* */
 
 #define MAX_PAIR	256
-static int fg_color[MAX_PAIR] =
-{COLOR_BLACK, COLOR_BLUE, COLOR_GREEN,
- COLOR_CYAN, COLOR_RED, COLOR_MAGENTA, COLOR_YELLOW, COLOR_WHITE};
-static int bg_color[MAX_PAIR] =
-{COLOR_BLACK, COLOR_BLACK, COLOR_BLACK,
- COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK};
+static int fg_color[MAX_PAIR];
+static int bg_color[MAX_PAIR];
 static int pairs_used = 8;
 static int a_bright_color, bright_value;
 static int cookie_monster, color_step, colors_per_line;
@@ -275,6 +272,40 @@ send_pair(int p, int fr, int fg, int fb, int br, int bg, int bb)
     }
 }
 
+/*
+ * Initialize data used for palette; do not modify the terminal.
+ */
+static void
+init_palette(void)
+{
+    static const int dft_fg_color[] =
+    {
+	COLOR_BLACK,
+	COLOR_BLUE,
+	COLOR_GREEN,
+	COLOR_CYAN,
+	COLOR_RED,
+	COLOR_MAGENTA,
+	COLOR_YELLOW,
+	COLOR_WHITE
+    };
+    int n;
+
+    pairs_used = 0;
+    R = G = B = 0;
+
+    a_bright_color = 0;
+    bright_value = 0;
+    cookie_monster = 0;
+    color_step = 0;
+    colors_per_line = 0;
+
+    for (n = 0; n < MAX_PAIR; ++n) {
+	fg_color[n] = (n < 8) ? dft_fg_color[n] : COLOR_BLACK;
+	bg_color[n] = COLOR_BLACK;
+    }
+}
+
 static int
 load_palette(int n)
 {				/* load the color palette */
@@ -314,6 +345,33 @@ load_palette(int n)
 		}
 	    }
 	}
+    }
+}
+
+static void
+reset_palette(void)
+{
+    int n;
+
+    reset_colors();
+    init_palette();
+    if (set_a_foreground || set_foreground) {
+	/*
+	 * Reset the colors to a usable ANSI palette.  Aside from xterm, none
+	 * of the other terminals have a way to determine what the original
+	 * colors actually were.
+	 */
+	for (n = 0; n < 8; ++n) {
+	    if (n < max_colors) {
+		send_color(n,
+			   (n & 1) ? 800 : 0,
+			   (n & 2) ? 800 : 0,
+			   (n & 4) ? 800 : 0);
+	    }
+	}
+    } else {
+	/* this is only a guess - revisit if we ever find a working terminal */
+	send_pair(0, 1000, 1000, 1000, 0, 0, 0);
     }
 }
 
@@ -648,10 +706,6 @@ color_ncv(
 {
     int i;
 
-    if (no_color_video == -1) {
-	/* I have no idea what this means */
-	return;
-    }
     sprintf(temp,
 	    "According to no_color_video (ncv) which is %d, the following attributes should work correctly with color.",
 	    no_color_video);
@@ -660,11 +714,13 @@ color_ncv(
     set_attr(0);
     ncv_display(0);
     for (i = 1; i <= 9; i++) {
-	if (((no_color_video >> (mode_map[i] - 1)) & 1) == 0) {
+	if (no_color_video < 0 ||
+	    ((no_color_video >> (mode_map[i] - 1)) & 1) == 0) {
 	    ncv_display(mode_map[i]);
 	}
     }
-    if (no_color_video & 0x3ff) {
+    if (no_color_video > 0 &&
+	(no_color_video & 0x3ff) != 0) {
 	ptextln("\nThe following attributes should not work correctly with color. (ncv)\n");
 	for (i = 1; i <= 9; i++) {
 	    if ((no_color_video >> (mode_map[i] - 1)) & 1) {
@@ -747,12 +803,11 @@ color_ccc(
     }
     generic_done_message(t, state, ch);
     if (*ch != 0 && *ch != 'n') {
-	reset_colors();
+	reset_palette();
 	return;
     }
 
-    pairs_used = 0;
-    cookie_monster = 0;
+    init_palette();
     if (magic_cookie_glitch > 0) {
 	cookie_monster =
 	    ((set_a_foreground || set_foreground)
@@ -771,12 +826,9 @@ color_ccc(
     } else if (colors_per_line > j) {
 	colors_per_line = (j / i) * i;
     }
-    sprintf(temp, "RGB color step %d, cookies %d", color_step,
-	    cookie_monster);
+    sprintf(temp, "RGB color step %d, cookies %d", color_step, cookie_monster);
     ptextln(temp);
 
-    R = G = B = 0;
-    pairs_used = 0;
     for (;;) {
 	if (rainbow(colors_per_line)) {
 	    break;
@@ -784,10 +836,10 @@ color_ccc(
     }
     generic_done_message(t, state, ch);
     if (*ch != 0 && *ch != 'n') {
-	reset_colors();
+	reset_palette();
 	return;
     }
     dump_colors();
-    reset_colors();
+    reset_palette();
     generic_done_message(t, state, ch);
 }
