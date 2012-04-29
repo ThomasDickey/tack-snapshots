@@ -1,3 +1,15 @@
+2012-04-28  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* charset.c: add a test for "eslok" capability
+
+	* charset.c: copyright-date
+
+	* configure: regen
+
+	* configure.in:
+	the last change could produce unbalanced quote with certain shells - check
+	for that and repair it (report by Samuel Bronson).
+
 2012-03-03  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* fun.c: gcc warning
