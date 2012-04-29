@@ -28,7 +28,7 @@ dnl***************************************************************************
 dnl
 dnl Author: Thomas E. Dickey	2007-on
 dnl
-dnl $Id: configure.in,v 1.19 2012/04/28 20:31:41 tom Exp $
+dnl $Id: configure.in,v 1.20 2012/04/29 14:44:36 tom Exp $
 dnl This is a simple configuration-script for tack which makes it simpler to
 dnl build outside the ncurses tree (provided that ncurses was configured using
 dnl the --with-ticlib option).
@@ -239,6 +239,7 @@ do
 	$ECHO_CC\$(CC) -c \$(CFLAGS_DEFAULT) $N.c
 TEST_EOF
 done
+CF_MAKE_DOCS(tack,1)
 ],[],
 [set |fgrep _CC= |sed -e s%=%=\'% -e s%\$%\'% -e s%\'\'%\'%g -e s%=\'\$%=\'\'% >>$CONFIG_STATUS
 cat])

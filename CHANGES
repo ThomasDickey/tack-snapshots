@@ -1,3 +1,27 @@
+2012-04-29  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* package/debian/changelog, package/tack.spec, tack.h: bump
+
+	* configure: regen
+
+	* aclocal.m4: add CF_MAKE_DOCS
+	update CF_GCC_WARNINGS for old gcc's whose pointer-arithmetic warnings were bogus.
+
+	* configure.in:
+	use CF_MAKE_DOCS rule in makefile for generating html/pdf/txt versions of manpages.
+
+	* color.c: copyright-date
+
+	* color.c:
+	corrected check for ncv (no_color_video), which did not handle the case when
+	all video attributes should work.
+
+	* color.c:
+	add/use init_palette() and reset_palette() to restore the 0-7 ANSI colors
+	to sane values after running the change-colors tests.  Without some specific
+	knowledge of the terminal (terminfo does not provide this), it is not possible
+	to restore the original colors.
+
 2012-04-28  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* charset.c: add a test for "eslok" capability
