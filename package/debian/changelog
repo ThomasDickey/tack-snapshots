@@ -1,3 +1,9 @@
+tack (1.07-20120916) unstable; urgency=low
+
+  * improvements for configure script
+
+ -- Thomas E. Dickey <dickey@invisible-island.net>  Sun, 16 Sep 2012 10:01:00 -0400
+
 tack (1.07-20120429) unstable; urgency=low
 
   * add makefile rules for generated documentation.

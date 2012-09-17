@@ -26,7 +26,7 @@ dnl sale, use or other dealings in this Software without prior written       *
 dnl authorization.                                                           *
 dnl***************************************************************************
 dnl
-dnl $Id: aclocal.m4,v 1.14 2012/04/29 15:04:06 tom Exp $
+dnl $Id: aclocal.m4,v 1.17 2012/09/16 19:16:39 tom Exp $
 dnl
 dnl Author: Thomas E. Dickey
 dnl
@@ -467,62 +467,38 @@ AC_TRY_LINK([#include <stdio.h>],[printf("Hello world");],,
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_CHECK_ERRNO version: 11 updated: 2010/05/26 05:38:42
-dnl --------------
-dnl Check for data that is usually declared in <stdio.h> or <errno.h>, e.g.,
-dnl the 'errno' variable.  Define a DECL_xxx symbol if we must declare it
-dnl ourselves.
+dnl CF_CLANG_COMPILER version: 1 updated: 2012/06/16 14:55:39
+dnl -----------------
+dnl Check if the given compiler is really clang.  clang's C driver defines
+dnl __GNUC__ (fooling the configure script into setting $GCC to yes) but does
+dnl not ignore some gcc options.
 dnl
-dnl $1 = the name to check
-dnl $2 = the assumed type
-AC_DEFUN([CF_CHECK_ERRNO],
-[
-AC_CACHE_CHECK(if external $1 is declared, cf_cv_dcl_$1,[
-    AC_TRY_COMPILE([
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
+dnl This macro should be run "soon" after AC_PROG_CC or AC_PROG_CPLUSPLUS, to
+dnl ensure that it is not mistaken for gcc/g++.  It is normally invoked from
+dnl the wrappers for gcc and g++ warnings.
+dnl
+dnl $1 = GCC (default) or GXX
+dnl $2 = INTEL_COMPILER (default) or INTEL_CPLUSPLUS
+dnl $3 = CFLAGS (default) or CXXFLAGS
+AC_DEFUN([CF_CLANG_COMPILER],[
+ifelse([$2],,CLANG_COMPILER,[$2])=no
+
+if test "$ifelse([$1],,[$1],GCC)" = yes ; then
+	AC_MSG_CHECKING(if this is really Clang ifelse([$1],GXX,C++,C) compiler)
+	cf_save_CFLAGS="$ifelse([$3],,CFLAGS,[$3])"
+	ifelse([$3],,CFLAGS,[$3])="$ifelse([$3],,CFLAGS,[$3]) -Qunused-arguments"
+	AC_TRY_COMPILE([],[
+#ifdef __clang__
+#else
+make an error
 #endif
-#include <stdio.h>
-#include <sys/types.h>
-#include <errno.h> ],
-    ifelse([$2],,int,[$2]) x = (ifelse([$2],,int,[$2])) $1,
-    [cf_cv_dcl_$1=yes],
-    [cf_cv_dcl_$1=no])
-])
-
-if test "$cf_cv_dcl_$1" = no ; then
-    CF_UPPER(cf_result,decl_$1)
-    AC_DEFINE_UNQUOTED($cf_result)
+],[ifelse([$2],,CLANG_COMPILER,[$2])=yes
+cf_save_CFLAGS="$cf_save_CFLAGS -Qunused-arguments"
+],[])
+	ifelse([$3],,CFLAGS,[$3])="$cf_save_CFLAGS"
+	AC_MSG_RESULT($ifelse([$2],,CLANG_COMPILER,[$2]))
 fi
-
-# It's possible (for near-UNIX clones) that the data doesn't exist
-CF_CHECK_EXTERN_DATA($1,ifelse([$2],,int,[$2]))
-])dnl
-dnl ---------------------------------------------------------------------------
-dnl CF_CHECK_EXTERN_DATA version: 3 updated: 2001/12/30 18:03:23
-dnl --------------------
-dnl Check for existence of external data in the current set of libraries.  If
-dnl we can modify it, it's real enough.
-dnl $1 = the name to check
-dnl $2 = its type
-AC_DEFUN([CF_CHECK_EXTERN_DATA],
-[
-AC_CACHE_CHECK(if external $1 exists, cf_cv_have_$1,[
-    AC_TRY_LINK([
-#undef $1
-extern $2 $1;
-],
-    [$1 = 2],
-    [cf_cv_have_$1=yes],
-    [cf_cv_have_$1=no])
 ])
-
-if test "$cf_cv_have_$1" = yes ; then
-    CF_UPPER(cf_result,have_$1)
-    AC_DEFINE_UNQUOTED($cf_result)
-fi
-
-])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_CURSES_CONFIG version: 2 updated: 2006/10/29 11:06:27
 dnl ----------------
@@ -596,7 +572,7 @@ fi
 AC_CHECK_HEADERS($cf_cv_ncurses_header)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_CURSES_LIBS version: 35 updated: 2011/08/09 21:06:37
+dnl CF_CURSES_LIBS version: 36 updated: 2012/07/07 21:02:48
 dnl --------------
 dnl Look for the curses libraries.  Older curses implementations may require
 dnl termcap/termlib to be linked as well.  Call CF_CURSES_CPPFLAGS first.
@@ -676,7 +652,7 @@ if test ".$ac_cv_func_initscr" != .yes ; then
     # Check for library containing tgoto.  Do this before curses library
     # because it may be needed to link the test-case for initscr.
     AC_CHECK_FUNC(tgoto,[cf_term_lib=predefined],[
-        for cf_term_lib in $cf_check_list otermcap termcap termlib unknown
+        for cf_term_lib in $cf_check_list otermcap termcap tinfo termlib unknown
         do
             AC_CHECK_LIB($cf_term_lib,tgoto,[break])
         done
@@ -784,6 +760,25 @@ if test "$with_no_leaks" = yes ; then
 	AC_DEFINE(YY_NO_LEAKS)
 fi
 ])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_DISABLE_RPATH_HACK version: 2 updated: 2011/02/13 13:31:33
+dnl ---------------------
+dnl The rpath-hack makes it simpler to build programs, particularly with the
+dnl *BSD ports which may have essential libraries in unusual places.  But it
+dnl can interfere with building an executable for the base system.  Use this
+dnl option in that case.
+AC_DEFUN([CF_DISABLE_RPATH_HACK],
+[
+AC_MSG_CHECKING(if rpath-hack should be disabled)
+CF_ARG_DISABLE(rpath-hack,
+	[  --disable-rpath-hack    don't add rpath options for additional libraries],
+	[cf_disable_rpath_hack=yes],
+	[cf_disable_rpath_hack=no])
+AC_MSG_RESULT($cf_disable_rpath_hack)
+if test "$cf_disable_rpath_hack" = no ; then
+	CF_RPATH_HACK
+fi
+])
 dnl ---------------------------------------------------------------------------
 dnl CF_ENABLE_WARNINGS version: 4 updated: 2009/07/26 17:53:03
 dnl ------------------
@@ -987,7 +982,7 @@ if test "$GCC" = yes ; then
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_GCC_WARNINGS version: 28 updated: 2012/03/31 20:10:46
+dnl CF_GCC_WARNINGS version: 29 updated: 2012/06/16 14:55:39
 dnl ---------------
 dnl Check if the compiler supports useful warning options.  There's a few that
 dnl we don't use, simply because they're too noisy:
@@ -1010,6 +1005,7 @@ AC_DEFUN([CF_GCC_WARNINGS],
 [
 AC_REQUIRE([CF_GCC_VERSION])
 CF_INTEL_COMPILER(GCC,INTEL_COMPILER,CFLAGS)
+CF_CLANG_COMPILER(GCC,CLANG_COMPILER,CFLAGS)
 
 cat > conftest.$ac_ext <<EOF
 #line __oline__ "${as_me:-configure}"
@@ -1222,6 +1218,60 @@ cf_save_CFLAGS="$cf_save_CFLAGS -we147 -no-gcc"
 		;;
 	esac
 fi
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_LD_RPATH_OPT version: 5 updated: 2011/07/17 14:48:41
+dnl ---------------
+dnl For the given system and compiler, find the compiler flags to pass to the
+dnl loader to use the "rpath" feature.
+AC_DEFUN([CF_LD_RPATH_OPT],
+[
+AC_REQUIRE([CF_CHECK_CACHE])
+
+LD_RPATH_OPT=
+AC_MSG_CHECKING(for an rpath option)
+case $cf_cv_system_name in #(vi
+irix*) #(vi
+	if test "$GCC" = yes; then
+		LD_RPATH_OPT="-Wl,-rpath,"
+	else
+		LD_RPATH_OPT="-rpath "
+	fi
+	;;
+linux*|gnu*|k*bsd*-gnu) #(vi
+	LD_RPATH_OPT="-Wl,-rpath,"
+	;;
+openbsd[[2-9]].*|mirbsd*) #(vi
+	LD_RPATH_OPT="-Wl,-rpath,"
+	;;
+dragonfly*|freebsd*) #(vi
+	LD_RPATH_OPT="-rpath "
+	;;
+netbsd*) #(vi
+	LD_RPATH_OPT="-Wl,-rpath,"
+	;;
+osf*|mls+*) #(vi
+	LD_RPATH_OPT="-rpath "
+	;;
+solaris2*) #(vi
+	LD_RPATH_OPT="-R"
+	;;
+*)
+	;;
+esac
+AC_MSG_RESULT($LD_RPATH_OPT)
+
+case "x$LD_RPATH_OPT" in #(vi
+x-R*)
+	AC_MSG_CHECKING(if we need a space after rpath option)
+	cf_save_LIBS="$LIBS"
+	CF_ADD_LIBS(${LD_RPATH_OPT}$libdir)
+	AC_TRY_LINK(, , cf_rpath_space=no, cf_rpath_space=yes)
+	LIBS="$cf_save_LIBS"
+	AC_MSG_RESULT($cf_rpath_space)
+	test "$cf_rpath_space" = yes && LD_RPATH_OPT="$LD_RPATH_OPT "
+	;;
+esac
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_LIBRARY_PATH version: 9 updated: 2010/03/28 12:52:50
@@ -1797,7 +1847,7 @@ case .$with_cflags in #(vi
 esac
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_PATH_SYNTAX version: 13 updated: 2010/05/26 05:38:42
+dnl CF_PATH_SYNTAX version: 14 updated: 2012/06/19 20:58:54
 dnl --------------
 dnl Check the argument to see that it looks like a pathname.  Rewrite it if it
 dnl begins with one of the prefix/exec_prefix variables, and then again if the
@@ -1817,7 +1867,7 @@ case ".[$]$1" in #(vi
   ;;
 .[[a-zA-Z]]:[[\\/]]*) #(vi OS/2 EMX
   ;;
-.\[$]{*prefix}*) #(vi
+.\[$]{*prefix}*|.\[$]{*dir}*) #(vi
   eval $1="[$]$1"
   case ".[$]$1" in #(vi
   .NONE/*)
@@ -1975,6 +2025,121 @@ $1=`echo "$2" | \
 		-e 's/-[[UD]]'"$3"'\(=[[^ 	]]*\)\?[$]//g'`
 ])dnl
 dnl ---------------------------------------------------------------------------
+dnl CF_RPATH_HACK version: 9 updated: 2011/02/13 13:31:33
+dnl -------------
+AC_DEFUN([CF_RPATH_HACK],
+[
+AC_REQUIRE([CF_LD_RPATH_OPT])
+AC_MSG_CHECKING(for updated LDFLAGS)
+if test -n "$LD_RPATH_OPT" ; then
+	AC_MSG_RESULT(maybe)
+
+	AC_CHECK_PROGS(cf_ldd_prog,ldd,no)
+	cf_rpath_list="/usr/lib /lib"
+	if test "$cf_ldd_prog" != no
+	then
+		cf_rpath_oops=
+
+AC_TRY_LINK([#include <stdio.h>],
+		[printf("Hello");],
+		[cf_rpath_oops=`$cf_ldd_prog conftest$ac_exeext | fgrep ' not found' | sed -e 's% =>.*$%%' |sort -u`
+		 cf_rpath_list=`$cf_ldd_prog conftest$ac_exeext | fgrep / | sed -e 's%^.*[[ 	]]/%/%' -e 's%/[[^/]][[^/]]*$%%' |sort -u`])
+
+		# If we passed the link-test, but get a "not found" on a given library,
+		# this could be due to inept reconfiguration of gcc to make it only
+		# partly honor /usr/local/lib (or whatever).  Sometimes this behavior
+		# is intentional, e.g., installing gcc in /usr/bin and suppressing the
+		# /usr/local libraries.
+		if test -n "$cf_rpath_oops"
+		then
+			for cf_rpath_src in $cf_rpath_oops
+			do
+				for cf_rpath_dir in \
+					/usr/local \
+					/usr/pkg \
+					/opt/sfw
+				do
+					if test -f $cf_rpath_dir/lib/$cf_rpath_src
+					then
+						CF_VERBOSE(...adding -L$cf_rpath_dir/lib to LDFLAGS for $cf_rpath_src)
+						LDFLAGS="$LDFLAGS -L$cf_rpath_dir/lib"
+						break
+					fi
+				done
+			done
+		fi
+	fi
+
+	CF_VERBOSE(...checking EXTRA_LDFLAGS $EXTRA_LDFLAGS)
+
+	CF_RPATH_HACK_2(LDFLAGS)
+	CF_RPATH_HACK_2(LIBS)
+
+	CF_VERBOSE(...checked EXTRA_LDFLAGS $EXTRA_LDFLAGS)
+fi
+AC_SUBST(EXTRA_LDFLAGS)
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_RPATH_HACK_2 version: 6 updated: 2010/04/17 16:31:24
+dnl ---------------
+dnl Do one set of substitutions for CF_RPATH_HACK, adding an rpath option to
+dnl EXTRA_LDFLAGS for each -L option found.
+dnl
+dnl $cf_rpath_list contains a list of directories to ignore.
+dnl
+dnl $1 = variable name to update.  The LDFLAGS variable should be the only one,
+dnl      but LIBS often has misplaced -L options.
+AC_DEFUN([CF_RPATH_HACK_2],
+[
+CF_VERBOSE(...checking $1 [$]$1)
+
+cf_rpath_dst=
+for cf_rpath_src in [$]$1
+do
+	case $cf_rpath_src in #(vi
+	-L*) #(vi
+
+		# check if this refers to a directory which we will ignore
+		cf_rpath_skip=no
+		if test -n "$cf_rpath_list"
+		then
+			for cf_rpath_item in $cf_rpath_list
+			do
+				if test "x$cf_rpath_src" = "x-L$cf_rpath_item"
+				then
+					cf_rpath_skip=yes
+					break
+				fi
+			done
+		fi
+
+		if test "$cf_rpath_skip" = no
+		then
+			# transform the option
+			if test "$LD_RPATH_OPT" = "-R " ; then
+				cf_rpath_tmp=`echo "$cf_rpath_src" |sed -e "s%-L%-R %"`
+			else
+				cf_rpath_tmp=`echo "$cf_rpath_src" |sed -e "s%-L%$LD_RPATH_OPT%"`
+			fi
+
+			# if we have not already added this, add it now
+			cf_rpath_tst=`echo "$EXTRA_LDFLAGS" | sed -e "s%$cf_rpath_tmp %%"`
+			if test "x$cf_rpath_tst" = "x$EXTRA_LDFLAGS"
+			then
+				CF_VERBOSE(...Filter $cf_rpath_src ->$cf_rpath_tmp)
+				EXTRA_LDFLAGS="$cf_rpath_tmp $EXTRA_LDFLAGS"
+			fi
+		fi
+		;;
+	esac
+	cf_rpath_dst="$cf_rpath_dst $cf_rpath_src"
+done
+$1=$cf_rpath_dst
+
+CF_VERBOSE(...checked $1 [$]$1)
+AC_SUBST(EXTRA_LDFLAGS)
+])dnl
+dnl ---------------------------------------------------------------------------
 dnl CF_SIG_ATOMIC_T version: 2 updated: 2005/09/18 17:27:12
 dnl ---------------
 dnl signal handler, but there are some gcc depedencies in that recommendation.
@@ -2025,29 +2190,6 @@ CF_ADD_SUBDIR_PATH($1,$2,$3,$prefix,NONE)
 CF_ADD_SUBDIR_PATH($1,$2,$3,/usr/local,$prefix)
 CF_ADD_SUBDIR_PATH($1,$2,$3,/opt,$prefix)
 CF_ADD_SUBDIR_PATH($1,$2,$3,[$]HOME,$prefix)
-])dnl
-dnl ---------------------------------------------------------------------------
-dnl CF_SYS_TIME_SELECT version: 4 updated: 2000/10/04 09:18:40
-dnl ------------------
-dnl Check if we can include <sys/time.h> with <sys/select.h>; this breaks on
-dnl older SCO configurations.
-AC_DEFUN([CF_SYS_TIME_SELECT],
-[
-AC_MSG_CHECKING(if sys/time.h works with sys/select.h)
-AC_CACHE_VAL(cf_cv_sys_time_select,[
-AC_TRY_COMPILE([
-#include <sys/types.h>
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
-#endif
-],[],[cf_cv_sys_time_select=yes],
-     [cf_cv_sys_time_select=no])
-     ])
-AC_MSG_RESULT($cf_cv_sys_time_select)
-test "$cf_cv_sys_time_select" = yes && AC_DEFINE(HAVE_SYS_TIME_SELECT)
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_TERM_HEADER version: 2 updated: 2010/10/23 15:54:49

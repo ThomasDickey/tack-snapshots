@@ -20,8 +20,9 @@
 */
 
 #include <tack.h>
+#include <tic.h>
 
-MODULE_ID("$Id: tack.c,v 1.13 2012/03/03 15:15:20 tom Exp $")
+MODULE_ID("$Id: tack.c,v 1.14 2012/09/16 22:12:40 tom Exp $")
 
 /*
    This program is designed to test terminfo, not curses.  Therefore
@@ -608,7 +609,11 @@ main(int argc, char *argv[])
 	    term_variable = argv[i];
 	}
     }
-    (void) strcpy(tty_basename, term_variable);
+    sprintf(tty_basename, "%.*s",
+	    MAX_ALIAS,
+	    (term_variable
+	     ? term_variable
+	     : "unknown"));
 
     curses_setup(argv[0]);
 

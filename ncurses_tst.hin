@@ -30,7 +30,7 @@
  *  Author: Thomas E. Dickey <dickey@clark.net> 1998                        *
  ****************************************************************************/
 /*
- * $Id: ncurses_tst.hin,v 1.1 1998/02/11 12:14:05 tom Exp $
+ * $Id: ncurses_tst.hin,v 1.2 2012/09/16 15:16:02 Adrian.Bunk Exp $
  *
  * This is a template-file used to generate the "ncurses_cfg.h" file.
  *
@@ -41,16 +41,5 @@
 #ifndef NC_CONFIG_H
 #define NC_CONFIG_H
 @DEFS@
-
-	/* The C compiler may not treat these properly but C++ has to */
-#ifdef __cplusplus
-#undef const
-#undef inline
-#else
-#if defined(lint) || defined(TRACE)
-#undef inline
-#define inline /* nothing */
-#endif
-#endif
 
 #endif /* NC_CONFIG_H */

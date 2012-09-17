@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.33 2012/04/29 15:16:11 tom Exp $ */
+/* $Id: tack.h,v 1.35 2012/09/16 15:16:00 Adrian.Bunk Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -28,26 +28,20 @@
 
 #define MAJOR_VERSION 1
 #define MINOR_VERSION 7
-#define PATCH_VERSION 20120429
+#define PATCH_VERSION 20120916
 
 #ifdef HAVE_CONFIG_H
 #include <ncurses_cfg.h>
 #else
-#define RETSIGTYPE void
 #define GCC_UNUSED		/*nothing */
 #define GCC_NORETURN		/*nothing */
 #define HAVE_GETTIMEOFDAY 1
 #define HAVE_SELECT 1
 #define HAVE_SYS_TIME_H 1
-#define HAVE_SYS_TIME_SELECT 1
 #endif
 
 #ifndef BROKEN_LINKER
 #define BROKEN_LINKER 0
-#endif
-
-#ifndef DECL_ERRNO
-#define DECL_ERRNO 0
 #endif
 
 #ifndef HAVE_LONG_FILE_NAMES
@@ -92,11 +86,6 @@
 #else
 #define IGNORE_RC(func) (void) func
 #endif /* gcc workarounds */
-
-#if !HAVE_STRSTR
-extern char *_nc_strstr(const char *, const char *);
-#define strstr(h,n) _nc_strstr(h,n)
-#endif
 
 #if NO_LEAKS && defined(HAVE__NC_FREE_TIC)
 extern void _nc_free_tic(int) GCC_NORETURN;
