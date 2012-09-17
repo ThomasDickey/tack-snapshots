@@ -1,3 +1,44 @@
+2012-09-16  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* configure, configure.in:
+	add check for long filenames to define HAVE_LONG_FILE_NAMES, needed to choose
+	larger limit for MAX_ALIAS (the actual length of a terminal description's name)
+
+	* edit.c: fix Solaris compiler warning
+
+	* tack.c: ensure that $TERM is set and is not too large
+
+	* configure, configure.in, aclocal.m4:
+	add --disable-rpath-hack to simplify ports to Solaris
+
+	* edit.c: build-fix for g++
+
+	* configure, aclocal.m4: resync with my-autoconf:
+	- add CF_CLANG_COMPILER to tune strict warnings for clang
+	- modify CF_CURSES_LIBS to check for tinfo library
+	- modify CF_PATH_SYNTAX to allow for variables such as ${datadir}
+
+	* configure, configure.in: remove unused checks for header-files
+
+2012-09-16  Adrian.Bunk
+
+	* configure, configure.in, aclocal.m4, ncurses_tst.hin, sysdep.c, tack.h, Makefile.in:
+	- remove fallback definitions for "const" and "inline" from ncurses_tst.hin
+	- remove unused AC_HEADER_TIME configure check
+	- remove the obsolete CF_SYS_TIME_SELECT configure check
+	- change the autoconf prerequisite to "2.52" (noting that the patched 2.52 is
+	  actually required)
+	- remove configure-checks for AWK and LN_S variables
+
+2012-09-16  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* Makefile.in: datarootdir is now needed for mandir
+	remove unused includedir and datadir
+
+	* package/debian/changelog, package/tack.spec, tack.h: bump
+
+	* configure: regen (will support --datarootdir with this)
+
 2012-04-29  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* package/debian/changelog, package/tack.spec, tack.h: bump

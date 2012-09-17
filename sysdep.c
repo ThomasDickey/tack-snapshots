@@ -36,7 +36,7 @@
 #endif
 
 #if HAVE_SELECT
-#if HAVE_SYS_TIME_H && HAVE_SYS_TIME_SELECT
+#if HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
 #if HAVE_SYS_SELECT_H
@@ -44,11 +44,7 @@
 #endif
 #endif
 
-MODULE_ID("$Id: sysdep.c,v 1.22 2012/03/03 16:22:56 tom Exp $")
-
-#if DECL_ERRNO
-extern int errno;
-#endif
+MODULE_ID("$Id: sysdep.c,v 1.23 2012/09/16 15:16:00 Adrian.Bunk Exp $")
 
 #ifdef TERMIOS
 #define PUT_TTY(fd, buf) tcsetattr(fd, TCSAFLUSH, buf)
@@ -445,7 +441,7 @@ ignoresig(void)
  *
  * onintr always exits fatally
  */
-static RETSIGTYPE
+static void
 onintr(int sig GCC_UNUSED)
 {
     ignoresig();

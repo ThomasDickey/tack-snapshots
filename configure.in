@@ -28,14 +28,14 @@ dnl***************************************************************************
 dnl
 dnl Author: Thomas E. Dickey	2007-on
 dnl
-dnl $Id: configure.in,v 1.20 2012/04/29 14:44:36 tom Exp $
+dnl $Id: configure.in,v 1.24 2012/09/16 23:44:45 tom Exp $
 dnl This is a simple configuration-script for tack which makes it simpler to
 dnl build outside the ncurses tree (provided that ncurses was configured using
 dnl the --with-ticlib option).
 dnl
 dnl See http://invisible-island.net/autoconf/ for additional information.
 dnl ---------------------------------------------------------------------------
-AC_PREREQ(2.13.20020210)
+AC_PREREQ(2.52)
 AC_INIT(tack.c)
 AC_CONFIG_HEADER(ncurses_cfg.h:ncurses_tst.hin)
 
@@ -46,7 +46,6 @@ CF_CHECK_CACHE
 AC_PROG_MAKE_SET
 AC_PROG_CC
 AC_PROG_CPP
-AC_PROG_LN_S
 
 CF_PROG_INSTALL
 CF_PROG_LINT
@@ -88,6 +87,7 @@ cf_cv_libtype=
 
 AC_EXEEXT
 AC_OBJEXT
+AC_SYS_LONG_FILE_NAMES
 
 CF_ANSI_CC_REQD
 CF_DISABLE_ECHO
@@ -101,7 +101,6 @@ CF_GCC_ATTRIBUTES
 CF_XOPEN_SOURCE
 
 ###	Checks for external-data
-CF_ERRNO
 CF_LINK_DATAONLY
 
 dnl ---------------------------------------------------------------------------
@@ -177,6 +176,7 @@ AC_TRY_LINK([#include <${cf_cv_ncurses_header:-curses.h}>],
 
 fi
 
+CF_DISABLE_RPATH_HACK
 CF_DISABLE_LEAKS
 
 # look for curses-related headers
@@ -187,29 +187,17 @@ AC_CHECK_HEADERS( \
 	term_entry.h \
 	)
 
-AC_TYPE_SIGNAL
-
-AC_STDC_HEADERS
-AC_HEADER_TIME
 AC_CHECK_HEADERS( \
-getopt.h \
-locale.h \
-stdarg.h \
-sys/ioctl.h \
 sys/select.h \
 sys/time.h \
-termios.h \
-unistd.h \
 )
 
 AC_CHECK_FUNCS( \
 _nc_free_tic \
 gettimeofday \
 select \
-strstr \
 )
 
-CF_SYS_TIME_SELECT
 CF_SIG_ATOMIC_T
 
 TICS_LIBS="$LIBS"

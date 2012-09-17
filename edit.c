@@ -23,7 +23,7 @@
 #include <time.h>
 #include <tic.h>
 
-MODULE_ID("$Id: edit.c,v 1.17 2012/03/03 16:03:23 tom Exp $")
+MODULE_ID("$Id: edit.c,v 1.19 2012/09/16 22:23:46 tom Exp $")
 
 /*
  * Terminfo edit features
@@ -166,7 +166,7 @@ show_info(
 	    send_info_string(buf, ch);
 	}
     }
-    for (i = 0; i < MAX_STRINGS; i++) {
+    for (i = 0; i < (int) MAX_STRINGS; i++) {
 	if (CUR Strings[i]) {
 	    sprintf(buf, "%s=%s", STR_NAME(i),
 		    print_expand(CUR Strings[i]));
@@ -246,7 +246,7 @@ save_info(
 	    save_info_string(buf, fp);
 	}
     }
-    for (i = 0; i < MAX_STRINGS; i++) {
+    for (i = 0; i < (int) MAX_STRINGS; i++) {
 	if (CUR Strings[i]) {
 	    sprintf(buf, "%s=%s", STR_NAME(i),
 		    _nc_tic_expand(CUR Strings[i], TRUE, TRUE));
@@ -410,7 +410,7 @@ get_string_cap_byvalue(
     int i;
 
     if (value) {
-	for (i = 0; i < MAX_STRINGS; i++) {
+	for (i = 0; i < (int) MAX_STRINGS; i++) {
 	    if (CUR Strings[i] == value) {
 		return i;
 	    }
@@ -466,7 +466,7 @@ show_changed(
 	    ptextln(temp);
 	}
     }
-    for (i = 0; i < MAX_STRINGS; i++) {
+    for (i = 0; i < (int) MAX_STRINGS; i++) {
 	a = original_term.Strings[i] ? original_term.Strings[i] : "";
 	b = CUR Strings[i] ? CUR Strings[i] : "";
 	if (strcmp(a, b)) {
@@ -509,7 +509,7 @@ user_modified(void)
 	    return TRUE;
 	}
     }
-    for (i = 0; i < MAX_STRINGS; i++) {
+    for (i = 0; i < (int) MAX_STRINGS; i++) {
 	a = original_term.Strings[i] ? original_term.Strings[i] : "";
 	b = CUR Strings[i] ? CUR Strings[i] : "";
 	if (strcmp(a, b)) {
@@ -652,7 +652,7 @@ cap_match(
 	     const char *names,
 	     const char *cap)
 {
-    char *s;
+    const char *s;
     int c, l, t;
 
     if (names) {
@@ -702,7 +702,7 @@ show_report(
 	    nx[nc++] = numnames[i];
 	}
     }
-    for (i = 0; i < MAX_STRINGS; i++) {
+    for (i = 0; i < (int) MAX_STRINGS; i++) {
 	if (flag_strings[i] & flag) {
 	    nx[nc++] = STR_NAME(i);
 	}
@@ -762,7 +762,7 @@ show_untested(
 	    ptext(temp);
 	}
     }
-    for (i = 0; i < MAX_STRINGS; i++) {
+    for (i = 0; i < (int) MAX_STRINGS; i++) {
 	if (flag_strings[i] == 0 && CUR Strings[i]) {
 	    sprintf(temp, "%s ", STR_NAME(i));
 	    ptext(temp);
@@ -794,7 +794,7 @@ edit_init(void)
 	original_term.Numbers[i] = CUR Numbers[i];
     }
     /* scan for labels */
-    for (i = lc = 0; i < MAX_STRINGS; i++) {
+    for (i = lc = 0; i < (int) MAX_STRINGS; i++) {
 	original_term.Strings[i] = CUR Strings[i];
 	if (strncmp(STR_NAME(i), "lf", (size_t) 2) == 0) {
 	    flag_strings[i] |= FLAG_LABEL;
@@ -804,7 +804,7 @@ edit_init(void)
 	}
     }
     /* scan for function keys */
-    for (i = 0; i < MAX_STRINGS; i++) {
+    for (i = 0; i < (int) MAX_STRINGS; i++) {
 	const char *this_name = STR_NAME(i);
 	if ((this_name[0] == 'k') && strcmp(this_name, "kmous")) {
 	    flag_strings[i] |= FLAG_FUNCTION_KEY;
