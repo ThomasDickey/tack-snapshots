@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: fun.c,v 1.19 2012/03/03 22:05:22 tom Exp $")
+MODULE_ID("$Id: fun.c,v 1.20 2013/07/13 18:48:55 tom Exp $")
 
 /*
  * Test the function keys on the terminal.  The code for echo tests
@@ -200,24 +200,32 @@ enter_key(
 	     char *value,
 	     char *lab)
 {
-    unsigned j;
+    size_t j;
 
     alloc_strings();
     if (value) {
-	j = (unsigned) strlen(value);
-	fkmax = fkmax > j ? fkmax : j;
-	/* do not permit duplicates */
-	for (j = 0; (int) j < key_count; j++) {
-	    if (!strcmp(fk_name[j], name)) {
-		return;
+	int found = 0;
+	if (key_count != 0) {
+	    j = strlen(value);
+	    fkmax = (fkmax > j) ? fkmax : j;
+	    /* do not permit duplicates */
+	    for (j = 0; j < (size_t) key_count; j++) {
+		if (fk_name[j] == 0) {
+		    break;
+		} else if (!strcmp(fk_name[j], name)) {
+		    found = 1;
+		    break;
+		}
 	    }
 	}
-	fkval[key_count] = value;
-	fk_tested[key_count] = 0;
-	fk_label[key_count] = lab;
-	fk_name[key_count++] = name;
-	if (lab) {
-	    got_labels = TRUE;
+	if (!found) {
+	    fkval[key_count] = value;
+	    fk_tested[key_count] = 0;
+	    fk_label[key_count] = lab;
+	    fk_name[key_count++] = name;
+	    if (lab) {
+		got_labels = TRUE;
+	    }
 	}
     }
 }
