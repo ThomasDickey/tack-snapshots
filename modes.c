@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997,2010 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997 Free Software Foundation, Inc.
 ** 
 ** This file is part of TACK.
 ** 
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: modes.c,v 1.8 2010/09/03 22:22:49 tom Exp $")
+MODULE_ID("$Id: modes.c,v 1.7 2010/09/03 22:22:49 tom Exp $")
 
 /*
  * Tests boolean flags and terminal modes.

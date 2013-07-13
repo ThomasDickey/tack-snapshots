@@ -23,7 +23,7 @@
 #include <tack.h>
 #include <tic.h>
 
-MODULE_ID("$Id: init.c,v 1.14 2012/03/03 15:15:32 tom Exp $")
+MODULE_ID("$Id: init.c,v 1.16 2013/07/13 18:59:47 tom Exp $")
 
 #if NCURSES_VERSION_MAJOR >= 5 || NCURSES_VERSION_PATCH >= 981219
 #define _nc_get_curterm(p) _nc_get_tty_mode(p)
@@ -222,12 +222,16 @@ curses_setup(
 #endif
 
 	/**
-	 * This call will load the terminfo data base and set the cur-term
-	 * variable.  Only terminals that actually exist will get here so its
-	 * OK to ignore errors.  This is a good thing since ncurses does not
-	 * permit (os) or (gn) to be set.
+	 * This call loads the terminfo data base and sets the cur-term
+	 * variable.  Only terminals that actually exist get here so it is
+	 * simpler to handle errors.
 	 */
-    setupterm(tty_basename, 1, &status);
+    if (setupterm(tty_basename, 1, &status) != OK) {
+	fprintf(stderr, "The \"%s\" terminal is listed as %s\n",
+		tty_basename,
+		(status > 0) ? "hardcopy" : "generic");
+	ExitProgram(EXIT_FAILURE);
+    }
 
 	/**
 	 * Get the current terminal definitions.  This must be done before

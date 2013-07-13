@@ -1,3 +1,43 @@
+2013-07-13  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* init.c: copyright-date
+
+	* init.c: typo
+
+	* fun.c: copyright-date
+
+	* fun.c: fix warnings from clang 3.3 --analyze
+
+	* scan.c: copyright-date
+
+	* scan.c: fix warnings from clang 3.3 --analyze
+
+	* init.c:
+	add error check to setupterm call; ncurses does in fact allow hardcopy and
+	generic terminal descriptions (Debian #716377).
+
+	* configure: regen
+
+	* aclocal.m4, configure.in:
+	add/use CF_LIB_PREFIX, CF_MAKEFLAGS, CF_TOP_BUILDDIR and CF_WITH_LIB_PREFIX,
+	to fix unexpanded variables in Makefile.in
+
+	* package/debian/changelog, tack.h, package/tack.spec: bump
+
+	* configure: regen
+
+	* aclocal.m4: resync with my-autoconf:
+	+ add 3rd parameter to AC_DEFINE's to allow autoheader to run
+	  (several macros)
+	+ CF_MAKE_DOCS: apply workaround from xterm #288 for html output
+	+ CF_INTEL_COMPILER, CF_XOPEN_SOURCE: $host_os needs AC_CANONICAL_HOST
+	+ CF_ACVERSION_CHECK: change from byacc to work around long-ago
+	  breakage in autoconf
+	+ CF_GCC_VERSION: amend workarounds to accommodate Debian's
+	  modification of version-message
+	+ CF_CC_ENV_FLAGS: new macro
+	+ remove unused macros
+
 2013-02-10  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* config.sub, config.guess: update to 2013-02-04

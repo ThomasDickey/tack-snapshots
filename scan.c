@@ -22,7 +22,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: scan.c,v 1.11 2012/03/03 16:12:35 tom Exp $")
+MODULE_ID("$Id: scan.c,v 1.12 2013/07/13 18:43:00 tom Exp $")
 
 size_t scan_max;		/* length of longest scan code */
 char **scan_up, **scan_down, **scan_name;
@@ -146,9 +146,9 @@ scan_init(char *fn)
     scan_up = (char **) malloc(sizeof(char *) * MAX_SCAN);
     scan_down = (char **) malloc(sizeof(char *) * MAX_SCAN);
     scan_name = (char **) malloc(sizeof(char *) * MAX_SCAN);
-    scan_tested = (size_t *) malloc(sizeof(size_t *) * MAX_SCAN);
-    scan_length = (size_t *) malloc(sizeof(size_t *) * MAX_SCAN);
-    scan_value = (unsigned *) malloc(sizeof(unsigned *) * MAX_SCAN);
+    scan_tested = (size_t *) malloc(sizeof(size_t) * MAX_SCAN);
+    scan_length = (size_t *) malloc(sizeof(size_t) * MAX_SCAN);
+    scan_value = (unsigned *) malloc(sizeof(unsigned) * MAX_SCAN);
     scan_up[0] = scan_down[0] = scan_name[0] = (char *) 0;
     str = (char *) malloc((size_t) CHUNK);	/* buffer space */
     sl = str + CHUNK_LO;	/* an upper limit */
@@ -176,7 +176,8 @@ scan_init(char *fn)
 	    scan_max = len;
 
 	scan_value[i] = UChar(scan_name[i][0]);
-	if (scan_name[i][1])	/* multi-character name */
+	if (scan_name[i][0]
+	    && scan_name[i][1])	/* multi-character name */
 	    for (j = 0; scan_special[j].name; j++) {
 		if (!strcmp(scan_name[i], scan_special[j].name)) {
 		    scan_value[i] = scan_special[j].type;

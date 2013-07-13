@@ -28,7 +28,7 @@ dnl***************************************************************************
 dnl
 dnl Author: Thomas E. Dickey	2007-on
 dnl
-dnl $Id: configure.in,v 1.24 2012/09/16 23:44:45 tom Exp $
+dnl $Id: configure.in,v 1.25 2013/07/13 17:23:39 tom Exp $
 dnl This is a simple configuration-script for tack which makes it simpler to
 dnl build outside the ncurses tree (provided that ncurses was configured using
 dnl the --with-ticlib option).
@@ -49,6 +49,7 @@ AC_PROG_CPP
 
 CF_PROG_INSTALL
 CF_PROG_LINT
+CF_MAKEFLAGS
 CF_MAKE_TAGS
 
 dnl Things that we don't need (or must override) if we're not building ncurses
@@ -82,12 +83,14 @@ cf_cv_rel_version=""			AC_SUBST(cf_cv_rel_version)
 NCURSES_TREE="#"
 AC_SUBST(NCURSES_TREE)
 
+CF_TOP_BUILDDIR
 cf_cv_screen=ncurses
 cf_cv_libtype=
 
 AC_EXEEXT
 AC_OBJEXT
 AC_SYS_LONG_FILE_NAMES
+CF_WITH_LIB_PREFIX
 
 CF_ANSI_CC_REQD
 CF_DISABLE_ECHO
