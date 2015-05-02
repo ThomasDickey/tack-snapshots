@@ -1,3 +1,9 @@
+2015-05-02  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.guess: update to 2015-03-04
+
+	* config.sub: update to 2015-03-08
+
 2013-07-13  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* init.c: copyright-date
