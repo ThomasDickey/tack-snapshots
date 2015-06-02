@@ -1,3 +1,20 @@
+2015-06-02  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* configure.in:
+	use CF_WITH_NCURSES_ETC, but disable the pdcurses flavor
+
+	* configure: regen
+
+	* aclocal.m4: use CF_WITH_NCURSES_ETC
+
+	* control.c: workaround for glibc header defect
+
+	* configure: regen
+
+	* aclocal.m4: resync with my-autoconf
+
+	* tack.h, package/debian/changelog, package/tack.spec: bump
+
 2015-05-02  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* config.guess: update to 2015-03-04

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997-2010,2012 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2012,2015 Free Software Foundation, Inc.
 ** 
 ** This file is part of TACK.
 ** 
@@ -25,7 +25,7 @@
 #include <sys/time.h>
 #endif
 
-MODULE_ID("$Id: control.c,v 1.14 2012/03/03 16:03:17 tom Exp $")
+MODULE_ID("$Id: control.c,v 1.15 2015/06/02 10:23:59 tom Exp $")
 
 /* terminfo test program control subroutines */
 
@@ -347,7 +347,7 @@ pad_done_message(
 	    *ch = 0;
 	    return;
 	}
-	if (strchr(pad_repeat_test, *ch)) {
+	if ((strchr)(pad_repeat_test, *ch)) {
 	    /* default action is now repeat */
 	    default_action = 'r';
 	}
