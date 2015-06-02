@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997-2011,2012 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2013,2015 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.36 2013/07/13 15:45:17 tom Exp $ */
+/* $Id: tack.h,v 1.37 2015/06/02 09:05:07 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -28,7 +28,7 @@
 
 #define MAJOR_VERSION 1
 #define MINOR_VERSION 7
-#define PATCH_VERSION 20130713
+#define PATCH_VERSION 20150606
 
 #ifdef HAVE_CONFIG_H
 #include <ncurses_cfg.h>

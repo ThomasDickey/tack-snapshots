@@ -1,3 +1,9 @@
+tack (1.07+20150606) unstable; urgency=low
+
+  * maintenance updates
+
+ -- Thomas E. Dickey <dickey@invisible-island.net>  Tue, 02 Jun 2015 04:45:21 -0400
+
 tack (1.07-20130713) unstable; urgency=low
 
   * improvements for configure script
