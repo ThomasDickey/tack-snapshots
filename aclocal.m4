@@ -26,7 +26,7 @@ dnl sale, use or other dealings in this Software without prior written       *
 dnl authorization.                                                           *
 dnl***************************************************************************
 dnl
-dnl $Id: aclocal.m4,v 1.20 2015/06/02 09:13:06 tom Exp $
+dnl $Id: aclocal.m4,v 1.21 2015/06/03 00:56:15 tom Exp $
 dnl
 dnl Author: Thomas E. Dickey
 dnl
@@ -473,28 +473,6 @@ if test ".$system_name" != ".$cf_cv_system_name" ; then
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_CHECK_CFLAGS version: 3 updated: 2014/07/22 05:32:57
-dnl ---------------
-dnl Conditionally add to $CFLAGS and $CPPFLAGS values which are derived from
-dnl a build-configuration such as imake.  These have the pitfall that they
-dnl often contain compiler-specific options which we cannot use, mixed with
-dnl preprocessor options that we usually can.
-AC_DEFUN([CF_CHECK_CFLAGS],
-[
-CF_VERBOSE(checking additions to CFLAGS)
-cf_check_cflags="$CFLAGS"
-cf_check_cppflags="$CPPFLAGS"
-CF_ADD_CFLAGS($1,yes)
-if test "x$cf_check_cflags" != "x$CFLAGS" ; then
-AC_TRY_LINK([#include <stdio.h>],[printf("Hello world");],,
-	[CF_VERBOSE(test-compile failed.  Undoing change to \$CFLAGS)
-	 if test "x$cf_check_cppflags" != "x$CPPFLAGS" ; then
-		 CF_VERBOSE(but keeping change to \$CPPFLAGS)
-	 fi
-	 CFLAGS="$cf_check_flags"])
-fi
-])dnl
-dnl ---------------------------------------------------------------------------
 dnl CF_CLANG_COMPILER version: 2 updated: 2013/11/19 19:23:35
 dnl -----------------
 dnl Check if the given compiler is really clang.  clang's C driver defines
@@ -830,14 +808,6 @@ fi
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_ERRNO version: 5 updated: 1997/11/30 12:44:39
-dnl --------
-dnl Check if 'errno' is declared in <errno.h>
-AC_DEFUN([CF_ERRNO],
-[
-CF_CHECK_ERRNO(errno)
-])dnl
-dnl ---------------------------------------------------------------------------
 dnl CF_FIND_LIBRARY version: 9 updated: 2008/03/23 14:48:54
 dnl ---------------
 dnl Look for a non-standard library, given parameters for AC_TRY_LINK.  We
@@ -886,6 +856,136 @@ if test $cf_found_library = no ; then
 	AC_MSG_ERROR(Cannot link $1 library)
 fi
 ])
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_FIND_LINKAGE version: 20 updated: 2015/04/18 08:56:57
+dnl ---------------
+dnl Find a library (specifically the linkage used in the code fragment),
+dnl searching for it if it is not already in the library path.
+dnl See also CF_ADD_SEARCHPATH.
+dnl
+dnl Parameters (4-on are optional):
+dnl     $1 = headers for library entrypoint
+dnl     $2 = code fragment for library entrypoint
+dnl     $3 = the library name without the "-l" option or ".so" suffix.
+dnl     $4 = action to perform if successful (default: update CPPFLAGS, etc)
+dnl     $5 = action to perform if not successful
+dnl     $6 = module name, if not the same as the library name
+dnl     $7 = extra libraries
+dnl
+dnl Sets these variables:
+dnl     $cf_cv_find_linkage_$3 - yes/no according to whether linkage is found
+dnl     $cf_cv_header_path_$3 - include-directory if needed
+dnl     $cf_cv_library_path_$3 - library-directory if needed
+dnl     $cf_cv_library_file_$3 - library-file if needed, e.g., -l$3
+AC_DEFUN([CF_FIND_LINKAGE],[
+
+# If the linkage is not already in the $CPPFLAGS/$LDFLAGS configuration, these
+# will be set on completion of the AC_TRY_LINK below.
+cf_cv_header_path_$3=
+cf_cv_library_path_$3=
+
+CF_MSG_LOG([Starting [FIND_LINKAGE]($3,$6)])
+
+cf_save_LIBS="$LIBS"
+
+AC_TRY_LINK([$1],[$2],[
+	cf_cv_find_linkage_$3=yes
+	cf_cv_header_path_$3=/usr/include
+	cf_cv_library_path_$3=/usr/lib
+],[
+
+LIBS="-l$3 $7 $cf_save_LIBS"
+
+AC_TRY_LINK([$1],[$2],[
+	cf_cv_find_linkage_$3=yes
+	cf_cv_header_path_$3=/usr/include
+	cf_cv_library_path_$3=/usr/lib
+	cf_cv_library_file_$3="-l$3"
+],[
+	cf_cv_find_linkage_$3=no
+	LIBS="$cf_save_LIBS"
+
+	CF_VERBOSE(find linkage for $3 library)
+	CF_MSG_LOG([Searching for headers in [FIND_LINKAGE]($3,$6)])
+
+	cf_save_CPPFLAGS="$CPPFLAGS"
+	cf_test_CPPFLAGS="$CPPFLAGS"
+
+	CF_HEADER_PATH(cf_search,ifelse([$6],,[$3],[$6]))
+	for cf_cv_header_path_$3 in $cf_search
+	do
+		if test -d $cf_cv_header_path_$3 ; then
+			CF_VERBOSE(... testing $cf_cv_header_path_$3)
+			CPPFLAGS="$cf_save_CPPFLAGS -I$cf_cv_header_path_$3"
+			AC_TRY_COMPILE([$1],[$2],[
+				CF_VERBOSE(... found $3 headers in $cf_cv_header_path_$3)
+				cf_cv_find_linkage_$3=maybe
+				cf_test_CPPFLAGS="$CPPFLAGS"
+				break],[
+				CPPFLAGS="$cf_save_CPPFLAGS"
+				])
+		fi
+	done
+
+	if test "$cf_cv_find_linkage_$3" = maybe ; then
+
+		CF_MSG_LOG([Searching for $3 library in [FIND_LINKAGE]($3,$6)])
+
+		cf_save_LIBS="$LIBS"
+		cf_save_LDFLAGS="$LDFLAGS"
+
+		ifelse([$6],,,[
+		CPPFLAGS="$cf_test_CPPFLAGS"
+		LIBS="-l$3 $7 $cf_save_LIBS"
+		AC_TRY_LINK([$1],[$2],[
+			CF_VERBOSE(... found $3 library in system)
+			cf_cv_find_linkage_$3=yes])
+			CPPFLAGS="$cf_save_CPPFLAGS"
+			LIBS="$cf_save_LIBS"
+			])
+
+		if test "$cf_cv_find_linkage_$3" != yes ; then
+			CF_LIBRARY_PATH(cf_search,$3)
+			for cf_cv_library_path_$3 in $cf_search
+			do
+				if test -d $cf_cv_library_path_$3 ; then
+					CF_VERBOSE(... testing $cf_cv_library_path_$3)
+					CPPFLAGS="$cf_test_CPPFLAGS"
+					LIBS="-l$3 $7 $cf_save_LIBS"
+					LDFLAGS="$cf_save_LDFLAGS -L$cf_cv_library_path_$3"
+					AC_TRY_LINK([$1],[$2],[
+					CF_VERBOSE(... found $3 library in $cf_cv_library_path_$3)
+					cf_cv_find_linkage_$3=yes
+					cf_cv_library_file_$3="-l$3"
+					break],[
+					CPPFLAGS="$cf_save_CPPFLAGS"
+					LIBS="$cf_save_LIBS"
+					LDFLAGS="$cf_save_LDFLAGS"
+					])
+				fi
+			done
+			CPPFLAGS="$cf_save_CPPFLAGS"
+			LDFLAGS="$cf_save_LDFLAGS"
+		fi
+
+	else
+		cf_cv_find_linkage_$3=no
+	fi
+	],$7)
+])
+
+LIBS="$cf_save_LIBS"
+
+if test "$cf_cv_find_linkage_$3" = yes ; then
+ifelse([$4],,[
+	CF_ADD_INCDIR($cf_cv_header_path_$3)
+	CF_ADD_LIBDIR($cf_cv_library_path_$3)
+	CF_ADD_LIB($3)
+],[$4])
+else
+ifelse([$5],,AC_MSG_WARN(Cannot find $3 library),[$5])
+fi
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_GCC_ATTRIBUTES version: 17 updated: 2015/04/12 15:39:00
@@ -2135,31 +2235,6 @@ fi
 
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_PROG_CC_U_D version: 1 updated: 2005/07/14 16:59:30
-dnl --------------
-dnl Check if C (preprocessor) -U and -D options are processed in the order
-dnl given rather than by type of option.  Some compilers insist on apply all
-dnl of the -U options after all of the -D options.  Others allow mixing them,
-dnl and may predefine symbols that conflict with those we define.
-AC_DEFUN([CF_PROG_CC_U_D],
-[
-AC_CACHE_CHECK(if $CC -U and -D options work together,cf_cv_cc_u_d_options,[
-	cf_save_CPPFLAGS="$CPPFLAGS"
-	CPPFLAGS="-UU_D_OPTIONS -DU_D_OPTIONS -DD_U_OPTIONS -UD_U_OPTIONS"
-	AC_TRY_COMPILE([],[
-#ifndef U_D_OPTIONS
-make an undefined-error
-#endif
-#ifdef  D_U_OPTIONS
-make a defined-error
-#endif
-	],[
-	cf_cv_cc_u_d_options=yes],[
-	cf_cv_cc_u_d_options=no])
-	CPPFLAGS="$cf_save_CPPFLAGS"
-])
-])dnl
-dnl ---------------------------------------------------------------------------
 dnl CF_PROG_INSTALL version: 7 updated: 2015/04/18 08:56:57
 dnl ---------------
 dnl Force $INSTALL to be an absolute-path.  Otherwise, edit_man.sh and the
@@ -2483,6 +2558,32 @@ AC_DEFUN([CF_UPPER],
 $1=`echo "$2" | sed y%abcdefghijklmnopqrstuvwxyz./-%ABCDEFGHIJKLMNOPQRSTUVWXYZ___%`
 ])dnl
 dnl ---------------------------------------------------------------------------
+dnl CF_UTF8_LIB version: 8 updated: 2012/10/06 08:57:51
+dnl -----------
+dnl Check for multibyte support, and if not found, utf8 compatibility library
+AC_DEFUN([CF_UTF8_LIB],
+[
+AC_CACHE_CHECK(for multibyte character support,cf_cv_utf8_lib,[
+	cf_save_LIBS="$LIBS"
+	AC_TRY_LINK([
+#include <stdlib.h>],[putwc(0,0);],
+	[cf_cv_utf8_lib=yes],
+	[CF_FIND_LINKAGE([
+#include <libutf8.h>],[putwc(0,0);],utf8,
+		[cf_cv_utf8_lib=add-on],
+		[cf_cv_utf8_lib=no])
+])])
+
+# HAVE_LIBUTF8_H is used by ncurses if curses.h is shared between
+# ncurses/ncursesw:
+if test "$cf_cv_utf8_lib" = "add-on" ; then
+	AC_DEFINE(HAVE_LIBUTF8_H,1,[Define to 1 if we should include libutf8.h])
+	CF_ADD_INCDIR($cf_cv_header_path_utf8)
+	CF_ADD_LIBDIR($cf_cv_library_path_utf8)
+	CF_ADD_LIBS($cf_cv_library_file_utf8)
+fi
+])dnl
+dnl ---------------------------------------------------------------------------
 dnl CF_VERBOSE version: 3 updated: 2007/07/29 09:55:12
 dnl ----------
 dnl Use AC_VERBOSE w/o the warnings
@@ -2569,6 +2670,67 @@ then
 else
 	LIB_PREFIX=$with_lib_prefix
 fi
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_WITH_NCURSES_ETC version: 4 updated: 2015/04/25 20:53:11
+dnl -------------------
+dnl Use this macro for programs which use any variant of "curses", e.g.,
+dnl "ncurses", and "PDCurses".  Programs that can use curses and some unrelated
+dnl library (such as slang) should use a "--with-screen=XXX" option.
+dnl
+dnl This does not use AC_DEFUN, because that would tell autoconf to run each
+dnl of the macros inside this one - before this macro.
+define([CF_WITH_NCURSES_ETC],[
+CF_WITH_CURSES_DIR
+
+cf_cv_screen=curses
+
+AC_MSG_CHECKING(for specified curses library type)
+AC_ARG_WITH(screen,
+	[  --with-screen=XXX       use specified curses-libraries],
+	[cf_cv_screen=$withval],[
+
+AC_ARG_WITH(ncursesw,
+	[  --with-ncursesw         use wide ncurses-libraries],
+	[cf_cv_screen=ncursesw],[
+
+AC_ARG_WITH(ncurses,
+	[  --with-ncurses          use ncurses-libraries],
+	[cf_cv_screen=ncurses],[
+
+AC_ARG_WITH(pdcurses,
+	[  --with-pdcurses         compile/link with pdcurses X11 library],
+	[cf_cv_screen=pdcurses],[
+
+AC_ARG_WITH(curses-colr,
+	[  --with-curses-colr      compile/link with HPUX 10.x color-curses],
+	[cf_cv_screen=curses_colr],[
+
+AC_ARG_WITH(curses-5lib,
+	[  --with-curses-5lib      compile/link with SunOS 5lib curses],
+	[cf_cv_screen=curses_5lib])])])])])])
+
+AC_MSG_RESULT($cf_cv_screen)
+
+case $cf_cv_screen in
+(curses|curses_*)
+	CF_CURSES_CONFIG
+	;;
+(ncursesw*)
+	CF_UTF8_LIB
+	CF_NCURSES_CONFIG($cf_cv_screen)
+	;;
+(ncurses*)
+	CF_NCURSES_CONFIG($cf_cv_screen)
+	;;
+(pdcurses)
+	CF_PDCURSES_X11
+	;;
+(*)
+	AC_MSG_ERROR(unexpected screen-value: $cf_cv_screen)
+	;;
+esac
+
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_WITH_VALGRIND version: 1 updated: 2006/12/14 18:00:21

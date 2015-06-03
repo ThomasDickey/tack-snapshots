@@ -1,5 +1,5 @@
 dnl***************************************************************************
-dnl Copyright (c) 2007-2011,2012 Free Software Foundation, Inc.              *
+dnl Copyright (c) 2007-2013,2015 Free Software Foundation, Inc.              *
 dnl                                                                          *
 dnl Permission is hereby granted, free of charge, to any person obtaining a  *
 dnl copy of this software and associated documentation files (the            *
@@ -28,7 +28,7 @@ dnl***************************************************************************
 dnl
 dnl Author: Thomas E. Dickey	2007-on
 dnl
-dnl $Id: configure.in,v 1.25 2013/07/13 17:23:39 tom Exp $
+dnl $Id: configure.in,v 1.28 2015/06/03 10:30:39 tom Exp $
 dnl This is a simple configuration-script for tack which makes it simpler to
 dnl build outside the ncurses tree (provided that ncurses was configured using
 dnl the --with-ticlib option).
@@ -38,6 +38,10 @@ dnl ---------------------------------------------------------------------------
 AC_PREREQ(2.52)
 AC_INIT(tack.c)
 AC_CONFIG_HEADER(ncurses_cfg.h:ncurses_tst.hin)
+
+AC_DEFUN([CF_PDCURSES_X11],[
+AC_MSG_ERROR(tack cannot be built with PDCurses)
+])dnl
 
 CF_INHERIT_SCRIPT(config.guess)
 CF_INHERIT_SCRIPT(config.sub)
@@ -107,33 +111,33 @@ CF_XOPEN_SOURCE
 CF_LINK_DATAONLY
 
 dnl ---------------------------------------------------------------------------
-dnl NcursesW, installed in conventional location
-AC_MSG_CHECKING(for ncurses/ncursesw flavor)
-AC_ARG_WITH(ncursesw,
-	[  --with-ncursesw         use wide ncurses-libraries (installed)],
-	[cf_cv_screen=ncursesw],[
-
-dnl Ncurses, installed in conventional location
-AC_ARG_WITH(ncurses,
-	[  --with-ncurses          use ncurses-libraries (installed)],
-	[cf_cv_screen=ncurses])])
-AC_MSG_RESULT($cf_cv_screen)
-
-case $cf_cv_screen in
-ncurses)
-	CF_NCURSES_CONFIG
-	;;
-ncursesw)
-	cf_cv_libtype=w
-	CF_NCURSES_CONFIG(ncursesw)
-	;;
-*)
-	CF_CURSES_CONFIG
-	;;
-esac
+CF_PKG_CONFIG
+CF_WITH_NCURSES_ETC
 
 AC_CHECK_FUNC(_nc_tic_expand,,[
-	AC_CHECK_LIB(tic,_nc_tic_expand,[LIBS="-ltic $LIBS"])])
+	cf_ticroot=`echo "$cf_ncuconfig_root" | sed -e 's/^n//' -e 's/curses/tic/'`
+	cf_have_ticconfig=unknown
+	if test "x$PKG_CONFIG" != xnone; then
+		AC_MSG_CHECKING(pkg-config for $cf_ticroot)
+		if "$PKG_CONFIG" --exists $cf_ticroot ; then
+			cf_have_ticconfig=yes
+			CPPFLAGS="$CPPFLAGS `$PKG_CONFIG --cflags $cf_ticroot`"
+			CF_ADD_LIBS(`$PKG_CONFIG --libs $cf_ticroot`)
+		else
+			cf_have_ticconfig=no
+		fi
+		AC_MSG_RESULT($cf_have_ticconfig)
+	fi
+	if test "$cf_have_ticconfig" != yes; then
+		AC_CHECK_LIB($cf_ticroot,_nc_tic_expand,[LIBS="-l$cf_ticroot $LIBS"],[
+			if test "$cf_ticroot" = tic; then
+				AC_MSG_ERROR(cannot find tic library)
+			else
+				AC_CHECK_LIB(tic,_nc_tic_expand,[LIBS="-ltic $LIBS"])
+			fi
+		])
+	fi
+	])
 
 # The CF_*CURSES_CONFIG stuff provides curses/ncurses, which may include tinfo.
 # Check if (a) we have tinfo library and (b) if we need ncurses library too.
