@@ -1,3 +1,18 @@
+2015-06-03  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* configure: regen
+
+	* configure.in:
+	tic functions may/may not be bundled with ncurses.  Add a configure check
+	which works with pkg-config, also handling renaming of library used in
+	the test-packages for ncurses6
+
+	* package/debian/rules: use ncurses6 package
+
+	* configure: regen
+
+	* configure.in: fix order of evaluation for CF_PKG_CONFIG
+
 2015-06-02  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* configure.in:
