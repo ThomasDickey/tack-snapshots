@@ -1,4 +1,4 @@
-# $Id: Makefile.in,v 1.53 2012/09/16 15:15:13 Adrian.Bunk Exp $
+# $Id: Makefile.in,v 1.54 2015/07/06 08:41:32 tom Exp $
 ##############################################################################
 # Copyright (c) 1998-2010,2012 Free Software Foundation, Inc.                #
 #                                                                            #
@@ -188,7 +188,7 @@ clean :: mostlyclean
 
 distclean :: clean
 	-rm -f ncurses_cfg.h
-	-rm -f config.cache config.status config.log *.out
+	-rm -f config.cache config.status config.log *.out man2html.tmp
 	-rm -f Makefile
 
 check:
