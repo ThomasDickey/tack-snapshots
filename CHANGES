@@ -1,3 +1,11 @@
+2015-07-06  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* package/debian/changelog, package/tack.spec, tack.h: bump
+
+	* configure: regen
+
+	* configure.in, Makefile.in, aclocal.m4: add --with-man2html
+
 2015-06-03  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* configure: regen

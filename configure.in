@@ -28,7 +28,7 @@ dnl***************************************************************************
 dnl
 dnl Author: Thomas E. Dickey	2007-on
 dnl
-dnl $Id: configure.in,v 1.28 2015/06/03 10:30:39 tom Exp $
+dnl $Id: configure.in,v 1.29 2015/07/06 08:42:39 tom Exp $
 dnl This is a simple configuration-script for tack which makes it simpler to
 dnl build outside the ncurses tree (provided that ncurses was configured using
 dnl the --with-ticlib option).
@@ -210,6 +210,8 @@ CF_SIG_ATOMIC_T
 TICS_LIBS="$LIBS"
 LIBS=
 
+CF_WITH_MAN2HTML
+
 ### Now that we're done running tests, add the compiler-warnings, if any
 CF_ADD_CFLAGS($EXTRA_CFLAGS)
 
@@ -234,8 +236,8 @@ do
 	$ECHO_CC\$(CC) -c \$(CFLAGS_DEFAULT) $N.c
 TEST_EOF
 done
-CF_MAKE_DOCS(tack,1)
 ],[],
 [set |fgrep _CC= |sed -e s%=%=\'% -e s%\$%\'% -e s%\'\'%\'%g -e s%=\'\$%=\'\'% >>$CONFIG_STATUS
 cat])
 # vi:ts=4 sw=4
+CF_MAKE_DOCS(tack,1)
