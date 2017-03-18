@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1997-2010,2012 Free Software Foundation, Inc.
+** Copyright (C) 1997-2012,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -23,7 +23,7 @@
 #include <time.h>
 #include <tic.h>
 
-MODULE_ID("$Id: edit.c,v 1.19 2012/09/16 22:23:46 tom Exp $")
+MODULE_ID("$Id: edit.c,v 1.20 2017/03/18 19:58:53 tom Exp $")
 
 /*
  * Terminfo edit features
@@ -786,7 +786,7 @@ edit_init(void)
 
     alloc_arrays();
 
-    _nc_copy_termtype(&original_term, &cur_term->type);
+    _nc_copy_termtype(&original_term, CUR_TP);
     for (i = 0; i < BOOLCOUNT; i++) {
 	original_term.Booleans[i] = CUR Booleans[i];
     }

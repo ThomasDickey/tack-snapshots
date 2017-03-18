@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997-2013,2015 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2015,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.38 2015/07/06 08:45:30 tom Exp $ */
+/* $Id: tack.h,v 1.41 2017/03/18 19:56:17 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -28,7 +28,7 @@
 
 #define MAJOR_VERSION 1
 #define MINOR_VERSION 7
-#define PATCH_VERSION 20150706
+#define PATCH_VERSION 20170318
 
 #ifdef HAVE_CONFIG_H
 #include <ncurses_cfg.h>
@@ -100,7 +100,7 @@ extern void ExitProgram(int) GCC_NORETURN;
 
 #define FreeIfNeeded(p) if (p) { free(p); p = 0; }
 
-#define CUR_TP      (&(cur_term->type))
+#define CUR_TP      ((TERMTYPE *)(cur_term))
 #define MAX_STRINGS NUM_STRINGS(CUR_TP)
 #define STR_NAME(n) ExtStrname(CUR_TP,n,strnames)
 

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997-2010,2012 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2013,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -23,11 +23,7 @@
 #include <tack.h>
 #include <tic.h>
 
-MODULE_ID("$Id: init.c,v 1.16 2013/07/13 18:59:47 tom Exp $")
-
-#if NCURSES_VERSION_MAJOR >= 5 || NCURSES_VERSION_PATCH >= 981219
-#define _nc_get_curterm(p) _nc_get_tty_mode(p)
-#endif
+MODULE_ID("$Id: init.c,v 1.18 2017/03/18 20:07:16 tom Exp $")
 
 FILE *debug_fp;
 char temp[1024];
@@ -237,7 +233,7 @@ curses_setup(
 	 * Get the current terminal definitions.  This must be done before
 	 * getting the baudrate.
 	 */
-    _nc_get_curterm(&cur_term->Nttyb);
+    def_prog_mode();
     if (baudrate() > 0)
 	tty_baud_rate = (unsigned) baudrate();
     else

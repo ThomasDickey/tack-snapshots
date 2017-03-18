@@ -1,10 +1,63 @@
+2017-03-18  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* init.c:
+	use def_prog_mode() to eliminate two internal details from ncurses
+
+	* edit.c, tack.h: accommodate opaque TERMINAL structure in ncurses
+
+	* tack.h: update copyright to match version
+
+	* configure: regen
+
+	* aclocal.m4: resync with my-autoconf:
+	 + CF_ADD_CFLAGS
+	   improve formatting of generated lists using CF_APPEND_TEXT
+	 + CF_CC_ENV_FLAGS
+	   several fixes...
+	 + CF_GNU_SOURCE
+	   recent glibc (Debian 2.23-4 for example) has misordered ifdef/checks for
+	   new symbol _DEFAULT_SOURCE, producing warning messages when only _GNU_SOURCE
+	   is defined.  Add a followup check to define _DEFAULT_SOURCE.
+	 + CF_LD_RPATH_OPT
+	   change FreeBSD to use -Wl,-rpath rather than -rpath option.  According to
+	   FreeBSD #178732, either works since FreeBSD 4.x; however scons does not
+	   accept anything except the -Wl,-rpath form.
+	 + CF_LIB_PREFIX
+	   build-fixes for OS/2
+	 + CF_LINK_DATAONLY
+	   quiet strict gcc warning
+	 + CF_MAKEFLAGS
+	   use $SHELL consistently
+	 + CF_NCURSES_CONFIG
+	   PKG_CONFIG may simply be unset - fix
+	 + CF_PROG_LINT
+	   add cpplint to programs to use; drop ad hoc tdlint and alint.
+	 + CF_WITH_MAN2HTML
+	   use configured shell
+	 + CF_WITH_NCURSES_ETC
+	   add check for ncurses pthreads
+	 + CF_XOPEN_SOURCE
+	   add "uclinux" to list of Linux's
+	   use _GNU_SOURCE for cygwin headers, tested with cygwin 2.3, 2.5
+	   build-fixes for OS/2
+
+	* config.sub: 2017-02-07
+
+	* config.guess: 2017-03-05
+
+	* package/debian/changelog, package/tack.spec, tack.h: bump
+
 2015-07-06  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* package/debian/changelog, package/tack.spec, tack.h: bump
 
 	* configure: regen
 
-	* configure.in, Makefile.in, aclocal.m4: add --with-man2html
+	* configure.in, Makefile.in: add --with-man2html
+
+	* Makefile.in: fix copyright date
+
+	* aclocal.m4: add --with-man2html
 
 2015-06-03  Thomas E. Dickey  <dickey@invisible-island.net>
 

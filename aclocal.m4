@@ -1,5 +1,5 @@
 dnl***************************************************************************
-dnl Copyright (c) 2007-2013,2015 Free Software Foundation, Inc.              *
+dnl Copyright (c) 2007-2015,2017 Free Software Foundation, Inc.              *
 dnl                                                                          *
 dnl Permission is hereby granted, free of charge, to any person obtaining a  *
 dnl copy of this software and associated documentation files (the            *
@@ -26,7 +26,7 @@ dnl sale, use or other dealings in this Software without prior written       *
 dnl authorization.                                                           *
 dnl***************************************************************************
 dnl
-dnl $Id: aclocal.m4,v 1.22 2015/07/06 08:37:14 tom Exp $
+dnl $Id: aclocal.m4,v 1.23 2017/03/18 14:20:16 tom Exp $
 dnl
 dnl Author: Thomas E. Dickey
 dnl
@@ -2009,6 +2009,21 @@ CF_UPPER(cf_nculib_ROOT,HAVE_LIB$cf_nculib_root)
 AC_DEFINE_UNQUOTED($cf_nculib_ROOT)
 ])dnl
 dnl ---------------------------------------------------------------------------
+dnl CF_NCURSES_PTHREADS version: 2 updated: 2016/04/22 05:07:41
+dnl -------------------
+dnl Use this followup check to ensure that we link with pthreads if ncurses
+dnl uses it.
+AC_DEFUN([CF_NCURSES_PTHREADS],[
+: ${cf_nculib_root:=ifelse($1,,ncurses,$1)}
+AC_CHECK_LIB($cf_nculib_root,_nc_init_pthreads,
+	cf_cv_ncurses_pthreads=yes,
+	cf_cv_ncurses_pthreads=no)
+if test "$cf_cv_ncurses_pthreads" = yes
+then
+	CF_ADD_LIBS(-lpthread)
+fi
+])dnl
+dnl ---------------------------------------------------------------------------
 dnl CF_NCURSES_VERSION version: 14 updated: 2012/10/06 08:57:51
 dnl ------------------
 dnl Check for the version of ncurses, to aid in reporting bugs, etc.
@@ -2096,43 +2111,6 @@ case .$with_cflags in
 		CF_ADD_CFLAGS([-g])
 		;;
 	esac
-	;;
-esac
-])dnl
-dnl ---------------------------------------------------------------------------
-dnl CF_PATH_SYNTAX version: 16 updated: 2015/04/18 08:56:57
-dnl --------------
-dnl Check the argument to see that it looks like a pathname.  Rewrite it if it
-dnl begins with one of the prefix/exec_prefix variables, and then again if the
-dnl result begins with 'NONE'.  This is necessary to work around autoconf's
-dnl delayed evaluation of those symbols.
-AC_DEFUN([CF_PATH_SYNTAX],[
-if test "x$prefix" != xNONE; then
-	cf_path_syntax="$prefix"
-else
-	cf_path_syntax="$ac_default_prefix"
-fi
-
-case ".[$]$1" in
-(.\[$]\(*\)*|.\'*\'*)
-	;;
-(..|./*|.\\*)
-	;;
-(.[[a-zA-Z]]:[[\\/]]*) # OS/2 EMX
-	;;
-(.\[$]{*prefix}*|.\[$]{*dir}*)
-	eval $1="[$]$1"
-	case ".[$]$1" in
-	(.NONE/*)
-		$1=`echo [$]$1 | sed -e s%NONE%$cf_path_syntax%`
-		;;
-	esac
-	;;
-(.no|.NONE/*)
-	$1=`echo [$]$1 | sed -e s%NONE%$cf_path_syntax%`
-	;;
-(*)
-	ifelse([$2],,[AC_MSG_ERROR([expected a pathname, not \"[$]$1\"])],$2)
 	;;
 esac
 ])dnl

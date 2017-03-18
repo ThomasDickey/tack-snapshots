@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997-2010,2012 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2012,2013 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -22,7 +22,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: scan.c,v 1.12 2013/07/13 18:43:00 tom Exp $")
+MODULE_ID("$Id: scan.c,v 1.13 2013/07/13 18:43:00 tom Exp $")
 
 size_t scan_max;		/* length of longest scan code */
 char **scan_up, **scan_down, **scan_name;

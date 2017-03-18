@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997-2011,2012 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2012,2013 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: fun.c,v 1.20 2013/07/13 18:48:55 tom Exp $")
+MODULE_ID("$Id: fun.c,v 1.21 2013/07/13 18:48:55 tom Exp $")
 
 /*
  * Test the function keys on the terminal.  The code for echo tests
