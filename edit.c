@@ -23,7 +23,7 @@
 #include <time.h>
 #include <tic.h>
 
-MODULE_ID("$Id: edit.c,v 1.20 2017/03/18 19:58:53 tom Exp $")
+MODULE_ID("$Id: edit.c,v 1.22 2017/07/18 22:52:24 tom Exp $")
 
 /*
  * Terminfo edit features
@@ -207,6 +207,268 @@ save_info_string(
 }
 
 /*
+ * This is adapted (and reduced) from ncurses' _nc_tic_expand function.
+ */
+
+/* this deals with differences over whether 0x7f and 0x80..0x9f are controls */
+#define REALPRINT(s) (UChar(*(s)) < 127 && isprint(UChar(*(s))))
+
+#define P_LIMIT(p)   (length - (size_t)(p))
+#define L_BRACE '{'
+#define S_QUOTE '\''
+#define R_BRACE '}'
+
+static char *
+form_terminfo(const char *srcp)
+{
+    static char *buffer;
+    static size_t length;
+
+    int bufp;
+    const char *str = VALID_STRING(srcp) ? srcp : "\0\0";
+    size_t need = (2 + strlen(str)) * 4;
+    int ch;
+
+    if (srcp == 0) {
+#if NO_LEAKS
+	if (buffer != 0) {
+	    FreeAndNull(buffer);
+	    length = 0;
+	}
+#endif
+	return 0;
+    }
+    if (buffer == 0 || need > length) {
+	if ((buffer = (char *) realloc(buffer, length = need)) == 0) {
+	    return 0;
+	}
+    }
+
+    bufp = 0;
+    while ((ch = UChar(*str)) != 0) {
+	if (ch == '%' && REALPRINT(str + 1)) {
+	    buffer[bufp++] = *str++;
+	    /*
+	     * If we have a "%{number}", try to translate it into a "%'char'"
+	     * form, since that will run a little faster when we are
+	     * interpreting it.  Having one form for the constant makes it
+	     * simpler to compare terminal descriptions.
+	     */
+	    if (str[0] == L_BRACE
+		&& isdigit(UChar(str[1]))) {
+		char *dst = 0;
+		long value = strtol(str + 1, &dst, 0);
+		if (dst != 0
+		    && *dst == R_BRACE
+		    && value < 127
+		    && value != '\\'
+		    && isprint((int) value)) {
+		    ch = (int) value;
+		    buffer[bufp++] = S_QUOTE;
+		    if (ch == '\\'
+			|| ch == S_QUOTE)
+			buffer[bufp++] = '\\';
+		    buffer[bufp++] = (char) ch;
+		    buffer[bufp++] = S_QUOTE;
+		    str = dst;
+		} else {
+		    buffer[bufp++] = *str;
+		}
+	    } else {
+		buffer[bufp++] = *str;
+	    }
+	} else if (ch == 128) {
+	    buffer[bufp++] = '\\';
+	    buffer[bufp++] = '0';
+	} else if (ch == '\033') {
+	    buffer[bufp++] = '\\';
+	    buffer[bufp++] = 'E';
+	} else if (ch == '\\' && (str == srcp || str[-1] != '^')) {
+	    buffer[bufp++] = '\\';
+	    buffer[bufp++] = '\\';
+	} else if (ch == ' ' && (str == srcp || strcspn(str, " \t") == 0)) {
+	    buffer[bufp++] = '\\';
+	    buffer[bufp++] = 's';
+	} else if (ch == ',' || ch == ':' || ch == '^') {
+	    buffer[bufp++] = '\\';
+	    buffer[bufp++] = (char) ch;
+	} else if (REALPRINT(str)
+		   && (ch != ','
+		       && ch != ':'
+		       && ch != '^')) {
+	    buffer[bufp++] = (char) ch;
+	} else if (ch == '\r') {
+	    buffer[bufp++] = '\\';
+	    buffer[bufp++] = 'r';
+	} else if (ch == '\n') {
+	    buffer[bufp++] = '\\';
+	    buffer[bufp++] = 'n';
+	} else if (UChar(ch) < 32
+		   && isdigit(UChar(str[1]))) {
+	    sprintf(&buffer[bufp], "^%c", ch + '@');
+	    bufp += 2;
+	} else {
+	    sprintf(&buffer[bufp], "\\%03o", ch);
+	    bufp += 4;
+	}
+
+	str++;
+    }
+
+    buffer[bufp] = '\0';
+
+    return (buffer);
+}
+
+/*
+ * This is adapted (and reduced) from ncurses' _nc_trans_string function.
+ *
+ * Reads characters using next_char() until encountering a separator, nl,
+ * or end-of-file.  The returned value is the character which caused
+ * reading to stop.  The following translations are done on the input:
+ *
+ *	^X  goes to  ctrl-X (i.e. X & 037)
+ *	{\E,\n,\r,\b,\t,\f}  go to
+ *		{ESCAPE,newline,carriage-return,backspace,tab,formfeed}
+ *	{\^,\\}  go to  {carat,backslash}
+ *	\ddd (for ddd = up to three octal digits)  goes to the character ddd
+ *
+ *	\e == \E
+ *	\0 == \200
+ *
+ */
+#define next_char() UChar(*source++)
+
+static void
+scan_terminfo(const char *source, char *target, char *last)
+{
+    int number = 0;
+    int i, c;
+    int last_ch = '\0';
+
+    while ((c = next_char()) != '\0') {
+	if (target >= (last - 1)) {
+	    if (c != '\0') {
+		while ((c = next_char()) != ',' && c != '\0') {
+		    ;
+		}
+	    }
+	    break;
+	}
+	if (c == '^' && last_ch != '%') {
+	    c = next_char();
+	    if (c == '\0')
+		goto error;
+
+	    if (!(c <= 126 && isprint(c))) {
+		fprintf(stderr, "Illegal ^ character - '%s'\n", unctrl(c));
+	    }
+	    if (c == '?') {
+		*(target++) = '\177';
+	    } else {
+		if ((c &= 037) == 0)
+		    c = 128;
+		*(target++) = (char) (c);
+	    }
+	} else if (c == '\\') {
+	    c = next_char();
+	    if (c == '\0')
+		goto error;
+
+	    if ((c >= '0') && (c <= '7')) {
+		number = c - '0';
+		for (i = 0; i < 2; i++) {
+		    c = next_char();
+		    if (c == '\0')
+			goto error;
+
+		    if ((c < '0') || (c > '7')) {
+			if (isdigit(c)) {
+			    fprintf(stderr,
+				    "Non-octal digit `%c' in \\ sequence\n", c);
+			    /* allow the digit; it'll do less harm */
+			} else {
+			    --source;
+			    break;
+			}
+		    }
+
+		    number = (number * 8) + (c - '0');
+		}
+
+		number = UChar(number);
+		if (number == 0)
+		    number = 0200;
+		*(target++) = (char) number;
+	    } else {
+		switch (c) {
+		case 'e':
+		    /* FALLTHRU */
+		case 'E':
+		    c = '\033';
+		    break;
+
+		case 'n':
+		    c = '\n';
+		    break;
+
+		case 'r':
+		    c = '\r';
+		    break;
+
+		case 'b':
+		    c = '\010';
+		    break;
+
+		case 'f':
+		    c = '\014';
+		    break;
+
+		case 't':
+		    c = '\t';
+		    break;
+
+		case 'a':
+		    c = '\007';
+		    break;
+
+		case 'l':
+		    c = '\n';
+		    break;
+
+		case 's':
+		    c = ' ';
+		    break;
+
+		default:
+		    if (strchr("^,|:\\", c) != 0)
+			break;
+		    fprintf(stderr,
+			    "Illegal character '%s' in \\ sequence\n",
+			    unctrl(c));
+		    /* FALLTHRU */
+		case '\n':
+		    /* ignored */
+		    continue;
+		}		/* endswitch (c) */
+		*(target++) = (char) c;
+	    }			/* endelse (c < '0' ||  c > '7') */
+	} else {
+	    *(target++) = (char) c;
+	}
+	last_ch = c;
+    }				/* end while */
+
+    *target = '\0';
+    return;
+
+  error:
+    fprintf(stderr, "Expected more input\n");
+    *target = '\0';
+    return;
+}
+
+/*
 **	save_info(test_list, status, ch)
 **
 **	Write the current terminfo to a file
@@ -248,8 +510,7 @@ save_info(
     }
     for (i = 0; i < (int) MAX_STRINGS; i++) {
 	if (CUR Strings[i]) {
-	    sprintf(buf, "%s=%s", STR_NAME(i),
-		    _nc_tic_expand(CUR Strings[i], TRUE, TRUE));
+	    sprintf(buf, "%s=%s", STR_NAME(i), form_terminfo(CUR Strings[i]));
 	    save_info_string(buf, fp);
 	}
     }
@@ -349,8 +610,7 @@ show_value(
 
     switch (nt->nte_type) {
     case STRING:
-	_nc_reset_input((FILE *) 0, buf);
-	_nc_trans_string(tmp, tmp + sizeof(tmp));
+	scan_terminfo(buf, tmp, tmp + sizeof(tmp));
 	s = (char *) malloc(strlen(tmp) + 1);
 	strcpy(s, tmp);
 	CUR Strings[nt->nte_index] = s;
@@ -474,9 +734,8 @@ show_changed(
 		ptextln(title);
 		header = 0;
 	    }
-	    strcpy(abuf, _nc_tic_expand(a, TRUE, TRUE));
-	    sprintf(temp, "%30s %6s %s", abuf, STR_NAME(i),
-		    _nc_tic_expand(b, TRUE, TRUE));
+	    strcpy(abuf, form_terminfo(a));
+	    sprintf(temp, "%30s %6s %s", abuf, STR_NAME(i), form_terminfo(b));
 	    putln(temp);
 	}
     }
@@ -884,8 +1143,7 @@ change_one_entry(
     if (!current_string) {
 	ptextln("That string is not currently defined.  Please enter a new value, including the padding delay:");
 	read_string(buf, sizeof(buf));
-	_nc_reset_input((FILE *) 0, buf);
-	_nc_trans_string(pad, pad + sizeof(pad));
+	scan_terminfo(buf, pad, pad + sizeof(pad));
 	t = (char *) malloc(strlen(pad) + 1);
 	strcpy(t, pad);
 	CUR Strings[x] = t;
@@ -896,7 +1154,7 @@ change_one_entry(
     }
     sprintf(buf, "Current value: (%s) %s",
 	    pad,
-	    _nc_tic_expand(current_string, TRUE, TRUE));
+	    form_terminfo(current_string));
     putln(buf);
     ptextln("Enter new pad.  0 for no pad.  CR for no change.");
     read_string(buf, (size_t) 32);
@@ -976,7 +1234,7 @@ build_change_menu(
 
     for (i = j = 0; i < txp; i++) {
 	if ((k = tx_index[i]) >= 0) {
-	    s = _nc_tic_expand(tx_cap[i], TRUE, TRUE);
+	    s = form_terminfo(tx_cap[i]);
 	    s[40] = '\0';
 	    sprintf(change_pad_text[j], "%c) (%s) %s",
 		    'a' + j, STR_NAME(k), s);

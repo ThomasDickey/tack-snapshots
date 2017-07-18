@@ -23,7 +23,7 @@
 #include <tack.h>
 #include <tic.h>
 
-MODULE_ID("$Id: init.c,v 1.18 2017/03/18 20:07:16 tom Exp $")
+MODULE_ID("$Id: init.c,v 1.20 2017/07/18 23:20:49 tom Exp $")
 
 FILE *debug_fp;
 char temp[1024];
@@ -176,6 +176,39 @@ display_basic(void)
 }
 
 /*
+ * Conventional infocmp (Unix or ncurses) will print a comment at the
+ * beginning of the terminal description, where the pathname of the terminfo
+ * information is after a "file" or "file:" keyword.
+ */
+static char *
+ask_infocmp(void)
+{
+    char *result = 0;
+    size_t need = strlen(tty_basename) + 20;
+    char *command = malloc(need);
+    FILE *pp;
+    char buffer[BUFSIZ];
+    char *s, *t;
+
+    if (command != 0) {
+	sprintf(command, "infocmp \"%s\"", tty_basename);
+	if ((pp = popen(command, "r")) != 0) {
+	    if (fgets(buffer, sizeof(buffer) - 1, pp) != 0
+		&& *buffer == '#'
+		&& ((t = strstr(buffer, " file: "))
+		    || (t = strstr(buffer, " file ")))
+		&& (s = strchr(buffer, '\n')) != 0) {
+		*s = '\0';
+		s = strchr(t + 1, ' ');
+		result = strdup(s + 1);
+	    }
+	    pclose(pp);
+	}
+    }
+    return result;
+}
+
+/*
 **	curses_setup(exec_name)
 **
 **	Startup ncurses
@@ -185,47 +218,22 @@ curses_setup(
 		char *exec_name)
 {
     int status;
-    TERMTYPE term;
-    char tty_filename[2048];
+    char *tty_name;
 
     tty_init();
 
-    /*
-     * See if the terminal is in the terminfo data base.  This call has two
-     * useful benefits, 1) it returns the filename of the terminfo entry,
-     * and 2) it searches only terminfo's.  This allows us to abort before
-     * ncurses starts scanning the termcap file.
-     */
-    if ((status = _nc_read_entry(tty_basename, tty_filename, &term)) == 0) {
-	const TERMTYPE *fallback = _nc_fallback(tty_basename);
-
-	if (fallback) {
-	    term = *fallback;
-	    sprintf(tty_filename, "(fallback)%s", tty_basename);
-	    status = 1;
-	} else {
-	    fprintf(stderr, "Terminal not found: TERM=%s\n", tty_basename);
-	    show_usage(exec_name);
-	    ExitProgram(EXIT_FAILURE);
-	}
-    }
-    if (status == -1) {
-	fprintf(stderr, "Terminfo database is inaccessible\n");
-	ExitProgram(EXIT_FAILURE);
-    }
-#if NO_LEAKS
-    _nc_free_termtype(&term);
-#endif
-
 	/**
-	 * This call loads the terminfo data base and sets the cur-term
-	 * variable.  Only terminals that actually exist get here so it is
-	 * simpler to handle errors.
+	 * Load the terminfo data base and set the cur_term variable.
 	 */
     if (setupterm(tty_basename, 1, &status) != OK) {
-	fprintf(stderr, "The \"%s\" terminal is listed as %s\n",
-		tty_basename,
-		(status > 0) ? "hardcopy" : "generic");
+	if (status < 0) {
+	    fprintf(stderr, "The terminal database could not be found\n");
+	} else {
+	    fprintf(stderr, "The \"%s\" terminal is listed as %s\n",
+		    tty_basename,
+		    (status > 0) ? "hardcopy" : "generic");
+	}
+	show_usage(exec_name);
 	ExitProgram(EXIT_FAILURE);
     }
 
@@ -274,10 +282,16 @@ curses_setup(
 	tc_putp(enter_ca_mode);
 	put_clear();		/* just in case we switched pages */
     }
-    put_crlf();
-    ptext("Using terminfo from: ");
-    ptextln(tty_filename);
-    put_crlf();
+    /*
+     * "everyone" has infocmp, and its first line of output should be a
+     * comment telling which database is used.
+     */
+    if ((tty_name = ask_infocmp()) != 0) {
+	ptext("Using terminfo from: ");
+	ptextln(tty_name);
+	put_crlf();
+	free(tty_name);
+    }
 
     if (tty_can_sync == SYNC_NEEDED) {
 	verify_time();
