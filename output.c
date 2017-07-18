@@ -23,7 +23,7 @@
 #include <tack.h>
 #include <time.h>
 
-MODULE_ID("$Id: output.c,v 1.20 2012/03/03 16:07:33 tom Exp $")
+MODULE_ID("$Id: output.c,v 1.21 2017/07/18 08:33:59 tom Exp $")
 
 /* globals */
 long char_sent;			/* number of characters sent */
@@ -234,7 +234,11 @@ tt_putparm(
 int
 tc_putp(const char *string)
 {
-    return tputs(string, 1, tc_putch);
+    int rc = -1;
+    if (string != 0 && string != (const char *) (-1)) {
+	rc = tputs(string, 1, tc_putch);
+    }
+    return rc;
 }
 
 void

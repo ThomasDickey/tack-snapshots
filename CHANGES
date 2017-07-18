@@ -1,3 +1,25 @@
+2017-07-18  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* edit.c:
+	reduce calls to _nc_find_entry to single function, as a step toward rewrite.
+	also, allocate the boolean- and numeric-flags arrays since those may have
+	extensions.
+
+	* tack.h: define MAX_BOOLEAN and MAX_NUMBERS for consistency
+
+	* init.c: get the terminfo-entry's filename from infocmp
+
+	* edit.c: eliminate calls to _nc_tic_expand
+
+	* edit.c: eliminate calls to _nc_reset_input and _nc_trans_string
+
+	* init.c:
+	eliminate calls to _nc_read_entry and _nc_fallback, no longer needed.
+
+	* charset.c: eliminate call to _nc_init_acs; tack does not use acs_map
+
+	* output.c: modify tc_putp() to check for invalid string-pointer.
+
 2017-03-18  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* init.c:
