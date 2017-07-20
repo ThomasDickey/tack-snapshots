@@ -1,3 +1,24 @@
+2017-07-20  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* edit.c: eliminate dependency on tic.h
+
+	* edit.c:
+	replace calls to _nc_find_entry + _nc_get_hash_table with generated tackgen.h
+	wrapper
+
+	* tackgen.c: RCS_BASE
+
+	* modules: add tackgen program, used to generate tackgen.h for edit.c
+
+	* configure.in: add tackgen.h dependency for edit.o
+
+	* Makefile.in: add rule for making tackgen.h
+
+	* tack.c, init.c, tack.h: change tty_basename to a pointer
+
+	* configure.in, tack.c, Makefile.in, tack.h:
+	tack no longer uses tic library
+
 2017-07-18  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* edit.c:

@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.41 2017/03/18 19:56:17 tom Exp $ */
+/* $Id: tack.h,v 1.44 2017/07/20 20:47:24 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -87,8 +87,7 @@
 #define IGNORE_RC(func) (void) func
 #endif /* gcc workarounds */
 
-#if NO_LEAKS && defined(HAVE__NC_FREE_TIC)
-extern void _nc_free_tic(int) GCC_NORETURN;
+#if NO_LEAKS
 extern void tack_edit_leaks(void);
 extern void tack_fun_leaks(void);
 extern void ExitProgram(int) GCC_NORETURN;
@@ -101,6 +100,8 @@ extern void ExitProgram(int) GCC_NORETURN;
 #define FreeIfNeeded(p) if (p) { free(p); p = 0; }
 
 #define CUR_TP      ((TERMTYPE *)(cur_term))
+#define MAX_BOOLEAN BOOLCOUNT /* NUM_BOOLEANS(CUR_TP) */
+#define MAX_NUMBERS NUMCOUNT  /* NUM_NUMBERS(CUR_TP) */
 #define MAX_STRINGS NUM_STRINGS(CUR_TP)
 #define STR_NAME(n) ExtStrname(CUR_TP,n,strnames)
 
@@ -110,7 +111,7 @@ extern FILE *log_fp;
 extern FILE *debug_fp;
 extern int debug_level;
 extern char temp[];
-extern char tty_basename[];
+extern char *tty_basename;
 extern char tty_shortname[];
 
 #if defined(__GNUC__) && defined(_FORTIFY_SOURCE)
