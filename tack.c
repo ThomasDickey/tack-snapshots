@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997-2010,2012 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2012,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -20,9 +20,8 @@
 */
 
 #include <tack.h>
-#include <tic.h>
 
-MODULE_ID("$Id: tack.c,v 1.14 2012/09/16 22:12:40 tom Exp $")
+MODULE_ID("$Id: tack.c,v 1.16 2017/07/20 20:49:19 tom Exp $")
 
 /*
    This program is designed to test terminfo, not curses.  Therefore
@@ -609,11 +608,7 @@ main(int argc, char *argv[])
 	    term_variable = argv[i];
 	}
     }
-    sprintf(tty_basename, "%.*s",
-	    MAX_ALIAS,
-	    (term_variable
-	     ? term_variable
-	     : "unknown"));
+    tty_basename = strdup(term_variable ? term_variable : "unknown");
 
     curses_setup(argv[0]);
 
@@ -641,6 +636,5 @@ ExitProgram(int code)
     del_curterm(cur_term);
     tack_edit_leaks();
     tack_fun_leaks();
-    _nc_free_tic(code);
 }
 #endif

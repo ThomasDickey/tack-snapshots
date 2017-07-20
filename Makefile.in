@@ -1,6 +1,6 @@
-# $Id: Makefile.in,v 1.55 2015/07/06 08:41:32 tom Exp $
+# $Id: Makefile.in,v 1.57 2017/07/20 23:54:55 tom Exp $
 ##############################################################################
-# Copyright (c) 1998-2012,2015 Free Software Foundation, Inc.                #
+# Copyright (c) 1998-2015,2017 Free Software Foundation, Inc.                #
 #                                                                            #
 # Permission is hereby granted, free of charge, to any person obtaining a    #
 # copy of this software and associated documentation files (the "Software"), #
@@ -94,8 +94,8 @@ LOCAL_LIBDIR	= @top_builddir@/lib
 
 LD		= @LD@
 LINK		= @LINK_PROGS@ $(LIBTOOL_LINK)
-LDFLAGS		= @EXTRA_LDFLAGS@ @TICS_LDFLAGS@ @TINFO_LDFLAGS@ \
-		  @LDFLAGS@ @LD_MODEL@ @TICS_LIBS@ @TINFO_LIBS@ @LIBS@
+LDFLAGS		= @EXTRA_LDFLAGS@ @TINFO_LDFLAGS@ \
+		  @LDFLAGS@ @LD_MODEL@ @TINFO_LIBS@ @LIBS@
 
 LDFLAGS_LIBTOOL	= $(LDFLAGS) $(CFLAGS_LIBTOOL)
 LDFLAGS_NORMAL	= $(LDFLAGS) $(CFLAGS_NORMAL)
@@ -167,6 +167,12 @@ DEPS_TACK = \
 tack$x: $(DEPS_TACK) @NCURSES_TREE@$(DEPS_CURSES)
 	@ECHO_LINK@ $(LINK) $(DEPS_TACK) $(LDFLAGS_DEFAULT) -o $@
 
+tackgen$x: $(MODEL)/tackgen$o @NCURSES_TREE@$(DEPS_CURSES)
+	@ECHO_LINK@ $(LINK) $(MODEL)/tackgen$o $(LDFLAGS_DEFAULT) -o $@
+
+tackgen.h: tackgen$x
+	./tackgen$x >$@
+
 #
 # Utility productions start here
 #
@@ -183,7 +189,7 @@ mostlyclean ::
 clean :: mostlyclean
 	-sh -c "if test -n '$x' ; then $(MAKE) clean x=''; fi"
 	-rm -f $(DEPS_TACK)
-	-rm -f $(PROGS)
+	-rm -f $(PROGS) tackgen$x tackgen.h
 	-rm -rf .libs
 
 distclean :: clean

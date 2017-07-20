@@ -21,13 +21,12 @@
 /* initialization and wrapup code */
 
 #include <tack.h>
-#include <tic.h>
 
-MODULE_ID("$Id: init.c,v 1.20 2017/07/18 23:20:49 tom Exp $")
+MODULE_ID("$Id: init.c,v 1.21 2017/07/20 20:48:10 tom Exp $")
 
 FILE *debug_fp;
 char temp[1024];
-char tty_basename[MAX_ALIAS * 2];
+char *tty_basename = NULL;
 
 void
 put_name(const char *cap, const char *name)

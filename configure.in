@@ -1,5 +1,5 @@
 dnl***************************************************************************
-dnl Copyright (c) 2007-2013,2015 Free Software Foundation, Inc.              *
+dnl Copyright (c) 2007-2015,2017 Free Software Foundation, Inc.              *
 dnl                                                                          *
 dnl Permission is hereby granted, free of charge, to any person obtaining a  *
 dnl copy of this software and associated documentation files (the            *
@@ -28,7 +28,7 @@ dnl***************************************************************************
 dnl
 dnl Author: Thomas E. Dickey	2007-on
 dnl
-dnl $Id: configure.in,v 1.29 2015/07/06 08:42:39 tom Exp $
+dnl $Id: configure.in,v 1.31 2017/07/20 23:59:07 tom Exp $
 dnl This is a simple configuration-script for tack which makes it simpler to
 dnl build outside the ncurses tree (provided that ncurses was configured using
 dnl the --with-ticlib option).
@@ -77,8 +77,6 @@ LIB_SUFFIX=""					AC_SUBST(LIB_SUFFIX)
 LIB_UNINSTALL=""				AC_SUBST(LIB_UNINSTALL)
 LINK_PROGS=""					AC_SUBST(LINK_PROGS)
 LOCAL_LDFLAGS=""				AC_SUBST(LOCAL_LDFLAGS)
-TICS_LDFLAGS=""					AC_SUBST(TICS_LDFLAGS)
-TICS_LIBS=""					AC_SUBST(TICS_LIBS)
 TINFO_LDFLAGS=""				AC_SUBST(TINFO_LDFLAGS)
 TINFO_LIBS=""					AC_SUBST(TINFO_LIBS)
 cf_cv_abi_version=""			AC_SUBST(cf_cv_abi_version)
@@ -114,31 +112,6 @@ dnl ---------------------------------------------------------------------------
 CF_PKG_CONFIG
 CF_WITH_NCURSES_ETC
 
-AC_CHECK_FUNC(_nc_tic_expand,,[
-	cf_ticroot=`echo "$cf_ncuconfig_root" | sed -e 's/^n//' -e 's/curses/tic/'`
-	cf_have_ticconfig=unknown
-	if test "x$PKG_CONFIG" != xnone; then
-		AC_MSG_CHECKING(pkg-config for $cf_ticroot)
-		if "$PKG_CONFIG" --exists $cf_ticroot ; then
-			cf_have_ticconfig=yes
-			CPPFLAGS="$CPPFLAGS `$PKG_CONFIG --cflags $cf_ticroot`"
-			CF_ADD_LIBS(`$PKG_CONFIG --libs $cf_ticroot`)
-		else
-			cf_have_ticconfig=no
-		fi
-		AC_MSG_RESULT($cf_have_ticconfig)
-	fi
-	if test "$cf_have_ticconfig" != yes; then
-		AC_CHECK_LIB($cf_ticroot,_nc_tic_expand,[LIBS="-l$cf_ticroot $LIBS"],[
-			if test "$cf_ticroot" = tic; then
-				AC_MSG_ERROR(cannot find tic library)
-			else
-				AC_CHECK_LIB(tic,_nc_tic_expand,[LIBS="-ltic $LIBS"])
-			fi
-		])
-	fi
-	])
-
 # The CF_*CURSES_CONFIG stuff provides curses/ncurses, which may include tinfo.
 # Check if (a) we have tinfo library and (b) if we need ncurses library too.
 
@@ -162,27 +135,6 @@ AC_CHECK_FUNC(setupterm,[
 		[cf_tinfo_lib=''])
 ])
 
-# If we have tinfo, check if we do not need intermediate ncurses library to
-# link with tic library.
-if test -n "$cf_tinfo_lib"
-then
-	cf_save_libs="$LIBS"
-	LIBS=`echo "x$LIBS" | sed -e 's,^.,,' -e "s,-l$cf_curses_lib,,g"`
-
-	AC_MSG_CHECKING(if tack would link without $cf_curses_lib library)
-AC_TRY_LINK([#include <${cf_cv_ncurses_header:-curses.h}>],
-[
-	int x = _nc_trans_string (0, 0);
-],[cf_trim_ncurses=yes],[cf_trim_ncurses=no])
-	AC_MSG_RESULT($cf_trim_ncurses)
-
-	if test "$cf_trim_ncurses" = no
-	then
-		LIBS="$cf_save_libs"
-	fi
-
-fi
-
 CF_DISABLE_RPATH_HACK
 CF_DISABLE_LEAKS
 
@@ -200,15 +152,11 @@ sys/time.h \
 )
 
 AC_CHECK_FUNCS( \
-_nc_free_tic \
 gettimeofday \
 select \
 )
 
 CF_SIG_ATOMIC_T
-
-TICS_LIBS="$LIBS"
-LIBS=
 
 CF_WITH_MAN2HTML
 
@@ -227,10 +175,12 @@ TEST_EOF
 LIST=`sed -e 's/[[ 	]].*//' -e '/^[[#@]]/d' $srcdir/modules`
 for N in $LIST
 do
+	P="tack.h"
+	test $N = edit && P="$P tackgen.h"
 	cat >>Makefile <<TEST_EOF
 
 \$(MODEL)/$N.o : $N.c \\
-		tack.h \\
+		$P \\
 		ncurses_cfg.h
 	$SHOW_CC
 	$ECHO_CC\$(CC) -c \$(CFLAGS_DEFAULT) $N.c

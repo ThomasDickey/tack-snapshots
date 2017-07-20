@@ -23,7 +23,7 @@
 #include <time.h>
 #include <tic.h>
 
-MODULE_ID("$Id: edit.c,v 1.22 2017/07/18 22:52:24 tom Exp $")
+MODULE_ID("$Id: edit.c,v 1.23 2017/07/19 00:12:55 tom Exp $")
 
 /*
  * Terminfo edit features
@@ -70,8 +70,8 @@ struct test_menu change_pad_menu =
 
 static TERMTYPE original_term;	/* terminal type description */
 
-static char flag_boolean[BOOLCOUNT];	/* flags for booleans */
-static char flag_numerics[NUMCOUNT];	/* flags for numerics */
+static char *flag_boolean;	/* flags for booleans */
+static char *flag_numbers;	/* flags for numerics */
 static char *flag_strings;	/* flags for strings */
 static int *label_strings;
 static int xon_index;		/* Subscript for (xon) */
@@ -83,10 +83,31 @@ static int display_lines;	/* number of lines displayed */
 static void
 alloc_arrays(void)
 {
+    if (flag_boolean == 0) {
+	flag_boolean = (char *) calloc((size_t) MAX_BOOLEAN, sizeof(char));
+    }
+    if (flag_numbers == 0) {
+	flag_numbers = (char *) calloc((size_t) MAX_NUMBERS, sizeof(char));
+    }
     if (flag_strings == 0) {
 	label_strings = (int *) calloc((size_t) MAX_STRINGS, sizeof(int));
 	flag_strings = (char *) calloc((size_t) MAX_STRINGS, sizeof(char));
     }
+}
+
+static struct name_table_entry const *
+find_capability(const char *name)
+{
+    return _nc_find_entry(name, _nc_get_hash_table(FALSE));
+}
+
+static struct name_table_entry const *
+find_string_capability(const char *name)
+{
+    struct name_table_entry const *result = find_capability(name);
+    if (result->nte_type != STRING)
+	result = 0;
+    return result;
 }
 
 /*
@@ -155,12 +176,12 @@ show_info(
 
     display_lines = 1;
     start_display = 1;
-    for (i = 0; i < BOOLCOUNT; i++) {
+    for (i = 0; i < MAX_BOOLEAN; i++) {
 	if ((i == xon_index) ? xon_shadow : CUR Booleans[i]) {
 	    send_info_string(boolnames[i], ch);
 	}
     }
-    for (i = 0; i < NUMCOUNT; i++) {
+    for (i = 0; i < MAX_NUMBERS; i++) {
 	if (CUR Numbers[i] >= 0) {
 	    sprintf(buf, "%s#%d", numnames[i], CUR Numbers[i]);
 	    send_info_string(buf, ch);
@@ -497,12 +518,12 @@ save_info(
     (void) fprintf(fp, "%s|%s,\n", tty_basename, longname());
 
     display_lines = 0;
-    for (i = 0; i < BOOLCOUNT; i++) {
+    for (i = 0; i < MAX_BOOLEAN; i++) {
 	if (i == xon_index ? xon_shadow : CUR Booleans[i]) {
 	    save_info_string(boolnames[i], fp);
 	}
     }
-    for (i = 0; i < NUMCOUNT; i++) {
+    for (i = 0; i < MAX_NUMBERS; i++) {
 	if (CUR Numbers[i] >= 0) {
 	    sprintf(buf, "%s#%d", numnames[i], CUR Numbers[i]);
 	    save_info_string(buf, fp);
@@ -547,7 +568,7 @@ show_value(
 	put_clear();
     }
     op = t->flags & 255;
-    if ((nt = _nc_find_entry(buf, _nc_get_hash_table(FALSE)))) {
+    if ((nt = find_capability(buf)) != 0) {
 	switch (nt->nte_type) {
 	case BOOLEAN:
 	    if (op == SHOW_DELETE) {
@@ -647,11 +668,9 @@ get_string_cap_byname(
 {
     struct name_table_entry const *nt;
 
-    if ((nt = _nc_find_entry(name, _nc_get_hash_table(FALSE)))) {
-	if (nt->nte_type == STRING) {
-	    *long_name = strfnames[nt->nte_index];
-	    return (CUR Strings[nt->nte_index]);
-	}
+    if ((nt = find_string_capability(name)) != 0) {
+	*long_name = strfnames[nt->nte_index];
+	return (CUR Strings[nt->nte_index]);
     }
     *long_name = "??";
     return (char *) 0;
@@ -702,7 +721,7 @@ show_changed(
     static char title[] = "                     old value   cap  new value";
     char abuf[1024];
 
-    for (i = 0; i < BOOLCOUNT; i++) {
+    for (i = 0; i < MAX_BOOLEAN; i++) {
 	v = (i == xon_index) ? xon_shadow : CUR Booleans[i];
 	if (original_term.Booleans[i] != v) {
 	    if (header) {
@@ -714,7 +733,7 @@ show_changed(
 	    ptextln(temp);
 	}
     }
-    for (i = 0; i < NUMCOUNT; i++) {
+    for (i = 0; i < MAX_NUMBERS; i++) {
 	if (original_term.Numbers[i] != CUR Numbers[i]) {
 	    if (header) {
 		ptextln(title);
@@ -757,13 +776,13 @@ user_modified(void)
     const char *a, *b;
     int i, v;
 
-    for (i = 0; i < BOOLCOUNT; i++) {
+    for (i = 0; i < MAX_BOOLEAN; i++) {
 	v = (i == xon_index) ? xon_shadow : CUR Booleans[i];
 	if (original_term.Booleans[i] != v) {
 	    return TRUE;
 	}
     }
-    for (i = 0; i < NUMCOUNT; i++) {
+    for (i = 0; i < MAX_NUMBERS; i++) {
 	if (original_term.Numbers[i] != CUR Numbers[i]) {
 	    return TRUE;
 	}
@@ -797,7 +816,7 @@ mark_cap(
     struct name_table_entry const *nt;
 
     alloc_arrays();
-    if ((nt = _nc_find_entry(name, _nc_get_hash_table(FALSE)))) {
+    if ((nt = find_capability(name)) != 0) {
 	switch (nt->nte_type) {
 	case BOOLEAN:
 	    flag_boolean[nt->nte_index] = ((char)
@@ -810,9 +829,9 @@ mark_cap(
 					    | flag));
 	    break;
 	case NUMBER:
-	    flag_numerics[nt->nte_index] = ((char)
-					    (flag_numerics[nt->nte_index]
-					     | flag));
+	    flag_numbers[nt->nte_index] = ((char)
+					   (flag_numbers[nt->nte_index]
+					    | flag));
 	    break;
 	default:
 	    sprintf(temp, "unknown cap type (%s)", name);
@@ -881,9 +900,7 @@ cap_index(
 	    if (ch == ' ' || ch == ')' || ch == '(' || ch == 0) {
 		if (j) {
 		    name[j] = '\0';
-		    if ((nt = _nc_find_entry(name,
-					     _nc_get_hash_table(FALSE))) &&
-			(nt->nte_type == STRING)) {
+		    if ((nt = find_string_capability(name)) != 0) {
 			*inx++ = nt->nte_index;
 		    }
 		}
@@ -945,19 +962,19 @@ show_report(
 {
     int i, j, nc, flag;
     const char *s;
-    size_t count = (size_t) (BOOLCOUNT + NUMCOUNT + MAX_STRINGS);
+    size_t count = (size_t) (MAX_BOOLEAN + MAX_NUMBERS + MAX_STRINGS);
     const char **nx = (const char **) calloc(sizeof(const char *), count);
 
     alloc_arrays();
     flag = t->flags & 255;
     nc = 0;
-    for (i = 0; i < BOOLCOUNT; i++) {
+    for (i = 0; i < MAX_BOOLEAN; i++) {
 	if (flag_boolean[i] & flag) {
 	    nx[nc++] = boolnames[i];
 	}
     }
-    for (i = 0; i < NUMCOUNT; i++) {
-	if (flag_numerics[i] & flag) {
+    for (i = 0; i < MAX_NUMBERS; i++) {
+	if (flag_numbers[i] & flag) {
 	    nx[nc++] = numnames[i];
 	}
     }
@@ -1009,14 +1026,14 @@ show_untested(
 
     alloc_arrays();
     ptextln("Caps that are defined but cannot be tested:");
-    for (i = 0; i < BOOLCOUNT; i++) {
+    for (i = 0; i < MAX_BOOLEAN; i++) {
 	if (flag_boolean[i] == 0 && CUR Booleans[i]) {
 	    sprintf(temp, "%s ", boolnames[i]);
 	    ptext(temp);
 	}
     }
-    for (i = 0; i < NUMCOUNT; i++) {
-	if (flag_numerics[i] == 0 && CUR Numbers[i] >= 0) {
+    for (i = 0; i < MAX_NUMBERS; i++) {
+	if (flag_numbers[i] == 0 && CUR Numbers[i] >= 0) {
 	    sprintf(temp, "%s ", numnames[i]);
 	    ptext(temp);
 	}
@@ -1046,10 +1063,10 @@ edit_init(void)
     alloc_arrays();
 
     _nc_copy_termtype(&original_term, CUR_TP);
-    for (i = 0; i < BOOLCOUNT; i++) {
+    for (i = 0; i < MAX_BOOLEAN; i++) {
 	original_term.Booleans[i] = CUR Booleans[i];
     }
-    for (i = 0; i < NUMCOUNT; i++) {
+    for (i = 0; i < MAX_NUMBERS; i++) {
 	original_term.Numbers[i] = CUR Numbers[i];
     }
     /* scan for labels */
@@ -1080,9 +1097,7 @@ edit_init(void)
     }
     /* Lookup the translated strings */
     for (i = 0; i < TM_last; i++) {
-	if ((nt = _nc_find_entry(TM_string[i].name,
-				 _nc_get_hash_table(FALSE)))
-	    && (nt->nte_type == STRING)) {
+	if ((nt = find_string_capability(TM_string[i].name)) != 0) {
 	    TM_string[i].index = nt->nte_index;
 	} else {
 	    sprintf(temp, "TM_string lookup failed for: %s",
@@ -1090,7 +1105,7 @@ edit_init(void)
 	    ptextln(temp);
 	}
     }
-    if ((nt = _nc_find_entry("xon", _nc_get_hash_table(FALSE))) != 0) {
+    if ((nt = find_capability("xon")) != 0) {
 	xon_index = nt->nte_index;
     }
     xon_shadow = xon_xoff;
@@ -1125,8 +1140,7 @@ change_one_entry(
 	    *chp = pad[0];
 	    return;
 	}
-	if ((nt = _nc_find_entry(pad, _nc_get_hash_table(FALSE))) &&
-	    (nt->nte_type == STRING)) {
+	if ((nt = find_string_capability(pad)) != 0) {
 	    x = nt->nte_index;
 	    current_string = CUR Strings[x];
 	} else {
@@ -1275,6 +1289,8 @@ tack_edit_leaks(void)
     _nc_free_termtype(&original_term);
 
     FreeIfNeeded(label_strings);
+    FreeIfNeeded(flag_boolean);
+    FreeIfNeeded(flag_numbers);
     FreeIfNeeded(flag_strings);
 }
 #endif
