@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997,2012 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2012,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: color.c,v 1.12 2012/04/29 14:09:45 tom Exp $")
+MODULE_ID("$Id: color.c,v 1.13 2017/07/21 23:59:24 tom Exp $")
 
 /*
  * Color terminal tests.  Has only one entry point: test_color().
@@ -35,7 +35,7 @@ static void color_ccc(struct test_list *, int *, int *);
 static void color_bce(struct test_list *, int *, int *);
 /* *INDENT-OFF* */
 struct test_list color_test_list[] = {
-    {0,         0,  0,                   0, "e) edit terminfo", 0, &edit_menu},
+    MY_EDIT_MENU
     {MENU_NEXT, 2,  "colors) (pairs",    0, 0,                  color_check, 0},
     {MENU_NEXT, 12, "setf) (setb) (scp", 0, 0,                  color_setf,   0},
     {MENU_NEXT, 24, "op",                0, 0,                  color_matrix, 0},

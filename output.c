@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997-2011,2012 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2012,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -23,7 +23,7 @@
 #include <tack.h>
 #include <time.h>
 
-MODULE_ID("$Id: output.c,v 1.21 2017/07/18 08:33:59 tom Exp $")
+MODULE_ID("$Id: output.c,v 1.22 2017/07/21 20:48:30 tom Exp $")
 
 /* globals */
 long char_sent;			/* number of characters sent */
@@ -487,7 +487,8 @@ char *
 expand(const char *s)
 {				/* convert the string to printable form */
     static char buf[4096];
-    char *t, *v;
+    char *t;
+    const char *v;
     int ch;
 
     if (magic_cookie_glitch <= 0 && exit_attribute_mode) {

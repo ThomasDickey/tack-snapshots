@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997-2012,2015 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2015,2017 Free Software Foundation, Inc.
 ** 
 ** This file is part of TACK.
 ** 
@@ -25,7 +25,7 @@
 #include <sys/time.h>
 #endif
 
-MODULE_ID("$Id: control.c,v 1.15 2015/06/02 10:23:59 tom Exp $")
+MODULE_ID("$Id: control.c,v 1.16 2017/07/21 20:46:53 tom Exp $")
 
 /* terminfo test program control subroutines */
 
@@ -216,7 +216,7 @@ msec_cost(
 **	Return the cap without padding
 */
 char *
-liberated(char *cap)
+liberated(const char *cap)
 {
     static char cb[1024];
     char *ts, *ls;

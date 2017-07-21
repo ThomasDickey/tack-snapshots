@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: tack.c,v 1.16 2017/07/20 20:49:19 tom Exp $")
+MODULE_ID("$Id: tack.c,v 1.18 2017/07/21 23:06:54 tom Exp $")
 
 /*
    This program is designed to test terminfo, not curses.  Therefore
@@ -123,12 +123,14 @@ static struct test_menu tty_menu =
     tty_show_state, tty_test_list, 0, 0, 0
 };
 
+#ifdef NCURSES_VERSION
 struct test_menu edit_menu =
 {
     0, 'q', 0, "Edit terminfo menu",
     "edit", 0,
     0, edit_test_list, 0, 0, 0
 };
+#endif
 
 static struct test_menu mode_menu =
 {
@@ -188,7 +190,7 @@ static struct test_menu pad_menu =
 };
 /* *INDENT-OFF* */
 static struct test_list normal_test_list[] = {
-    {0, 0, 0, 0, "e) edit terminfo", 0, &edit_menu},
+    MY_EDIT_MENU
     {0, 0, 0, 0, "i) send reset and init", menu_reset_init, 0},
     {MENU_NEXT, 0, 0, 0, "x) test modes and glitches", 0, &mode_menu},
     {MENU_NEXT, 0, 0, 0, "a) test alternate character set and graphic rendition", 0, &acs_menu},
@@ -394,14 +396,14 @@ tty_xon(
 	if (exit_xon_mode) {
 	    tc_putp(exit_xon_mode);
 	}
-	xon_xoff = FALSE;
+	ChangeTermInfo(xon_xoff, FALSE);
 	select_xon_xoff = FALSE;
 	strcpy(tty_xon_menu, enable_xon_xoff);
     } else {
 	if (enter_xon_mode) {
 	    tc_putp(enter_xon_mode);
 	}
-	xon_xoff = TRUE;
+	ChangeTermInfo(xon_xoff, TRUE);
 	select_xon_xoff = TRUE;
 	strcpy(tty_xon_menu, disable_xon_xoff);
     }
@@ -615,6 +617,7 @@ main(int argc, char *argv[])
     menu_can_scan(&normal_menu);	/* extract which caps can be tested */
     menu_display(&start_menu, 0);
 
+#ifdef NCURSES_VERSION
     if (user_modified()) {
 	sprintf(temp, "Hit y to save changes to file: %s  ? ",
 		tty_basename);
@@ -623,6 +626,7 @@ main(int argc, char *argv[])
 	    save_info(write_terminfo_list, &i, &j);
 	}
     }
+#endif
 
     put_str("\nTerminal test complete\n");
     bye_kids(EXIT_SUCCESS);

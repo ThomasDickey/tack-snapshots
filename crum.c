@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997,2011 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2011,2017 Free Software Foundation, Inc.
 ** 
 ** This file is part of TACK.
 ** 
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: crum.c,v 1.9 2011/05/01 19:08:32 tom Exp $")
+MODULE_ID("$Id: crum.c,v 1.10 2017/07/21 23:59:35 tom Exp $")
 
 /*
  * Test cursor movement.
@@ -37,7 +37,7 @@ static char crum_text[5][80];
 
 struct test_list crum_test_list[] =
 {
-    {0, 0, 0, 0, "e) edit terminfo", 0, &edit_menu},
+    MY_EDIT_MENU
     {MENU_NEXT, 0, "clear", 0, 0, crum_clear, 0},
     {MENU_NEXT, 0, "home", 0, 0, crum_home, 0},
     {MENU_NEXT, 0, "ll", 0, 0, crum_ll, 0},

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997-2012,2013 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2013,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: fun.c,v 1.21 2013/07/13 18:48:55 tom Exp $")
+MODULE_ID("$Id: fun.c,v 1.23 2017/07/21 23:06:54 tom Exp $")
 
 /*
  * Test the function keys on the terminal.  The code for echo tests
@@ -35,7 +35,7 @@ static void funkey_prog(struct test_list *, int *, int *);
 static void funkey_local(struct test_list *, int *, int *);
 /* *INDENT-OFF* */
 struct test_list funkey_test_list[] = {
-    {0, 0, 0, 0, "e) edit terminfo", 0, &edit_menu},
+    MY_EDIT_MENU
     {MENU_CLEAR + FLAG_FUNCTION_KEY, 0, 0, 0, "f) show a list of function keys", show_report, 0},
     {MENU_NEXT | MENU_CLEAR, 0, "smkx) (rmkx", 0, "k) test function keys", funkey_keys, 0},
     {MENU_NEXT, 10, "km", "smm rmm", 0, funkey_meta, 0},
@@ -51,7 +51,7 @@ static void printer_mc0(struct test_list *, int *, int *);
 
 struct test_list printer_test_list[] =
 {
-    {0, 0, 0, 0, "e) edit terminfo", 0, &edit_menu},
+    MY_EDIT_MENU
     {MENU_NEXT | MENU_CLEAR, 0, "mc4) (mc5) (mc5i", 0, 0, printer_on, 0},
     {MENU_NEXT | MENU_CLEAR, 0, "mc0", 0, 0, printer_mc0, 0},
     {MENU_LAST, 0, 0, 0, 0, 0, 0}
@@ -568,24 +568,25 @@ funkey_label(
 {
     int i;
     char outbuf[256];
+    int my_width = label_width;
 
     if (num_labels == -1) {
 	ptextln("Your terminal has no labels. (nlab)");
     } else {
 	sprintf(temp,
 		"Your terminal has %d labels (nlab) that are %d characters wide (lw) and %d lines high (lh)",
-		num_labels, label_width, label_height);
+		num_labels, my_width, label_height);
 	ptext(temp);
 	ptextln(" Testing (smln) (pln) (rmln)");
 	if (label_on) {
 	    tc_putp(label_on);
 	}
-	if (label_width <= 0) {
-	    label_width = sizeof(outbuf) - 1;
+	if (my_width <= 0) {
+	    my_width = sizeof(outbuf) - 1;
 	}
 	for (i = 1; i <= num_labels; i++) {
 	    sprintf(outbuf, "L%d..............................", i);
-	    outbuf[label_width] = '\0';
+	    outbuf[my_width] = '\0';
 	    tc_putp(TPARM_2(plab_norm, i, outbuf));
 	}
 	if (label_off) {

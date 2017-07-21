@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997,2010 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2010,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: pad.c,v 1.9 2010/09/03 22:24:25 tom Exp $")
+MODULE_ID("$Id: pad.c,v 1.11 2017/07/21 23:25:33 tom Exp $")
 
 /* test the pad counts on the terminal */
 
@@ -69,8 +69,8 @@ const char *pad_repeat_test =
 {"ep-+<>"};
 /* *INDENT-OFF* */
 struct test_list pad_test_list[] = {
-    {0, 0, 0, 0, "e) edit terminfo", 0, &edit_menu},
-    {0, 0, 0, 0, "p) change padding", 0, &change_pad_menu},
+    MY_EDIT_MENU
+    MY_PADS_MENU
     {0, 0, 0, 0, "@) display statistics about the last test", dump_test_stats, 0},
     {0, 0, 0, 0, "c) clear screen", menu_clear_screen, 0},
     {0, 0, 0, 0, "i) send reset and init", menu_reset_init, 0},
@@ -1947,13 +1947,13 @@ pad_crash(
 	return;
     }
     save_xon_xoff = xon_xoff;
-    xon_xoff = 1;
+    ChangeTermInfo(xon_xoff, 1);
     pad_test_startup(0);
     do {
 	put_str("Erase this!");
 	tt_putp(clear_screen);
     } while (still_testing());
-    xon_xoff = save_xon_xoff;
+    ChangeTermInfo(xon_xoff, save_xon_xoff);
     pad_test_shutdown(t, 1);
     pad_done_message(t, state, ch);
 }
