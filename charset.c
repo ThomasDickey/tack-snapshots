@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: charset.c,v 1.16 2017/07/18 08:35:19 tom Exp $")
+MODULE_ID("$Id: charset.c,v 1.18 2017/07/21 23:06:55 tom Exp $")
 
 /*
 	Menu definitions for alternate character set and SGR tests.
@@ -43,7 +43,7 @@ static void charset_sgr(struct test_list *t, int *state, int *ch);
 
 struct test_list acs_test_list[] =
 {
-    {0, 0, 0, 0, "e) edit terminfo", 0, &edit_menu},
+    MY_EDIT_MENU
     {MENU_NEXT, 3, "bel", 0, 0, charset_bel, 0},
     {MENU_NEXT, 3, "flash", 0, 0, charset_flash, 0},
     {MENU_NEXT, 3, "civis", 0, 0, charset_civis, 0},
@@ -253,7 +253,7 @@ eat_cookie(void)
 }
 
 void
-put_mode(char *s)
+put_mode(const char *s)
 {				/* send the attribute string (with or without
 				   % execution) */
     tc_putp(TPARM_0(s));	/* allow % execution */
@@ -350,8 +350,8 @@ charset_sgr(
 static void
 test_one_attr(
 		 int n,
-		 char *begin_mode,
-		 char *end_mode)
+		 const char *begin_mode,
+		 const char *end_mode)
 {
     int i;
 

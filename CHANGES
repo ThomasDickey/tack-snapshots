@@ -1,3 +1,39 @@
+2017-07-21  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* init.c:
+	Solaris (and other Unix) baudrate function uses SP, e.g., newterm.
+	We're using setterm, and most of the baudrate logic here is ncurses-specific.
+
+	* modes.c, crum.c, color.c:
+	most of edit.c is ncurses-only since it relies upon using arrays of capabilities
+	in TERMINAL - ifdef that and related menu-entries.
+
+	* edit.c:
+	partial reorganization/ifdef'ing to get this to compile with Solaris curses
+
+	* tackgen.c, tack.h, pad.c, charset.c, fun.c, tack.c:
+	most of edit.c is ncurses-only since it relies upon using arrays of capabilities
+	in TERMINAL - ifdef that and related menu-entries.
+
+	* Makefile.in: cleanup tackgen.o
+
+	* aclocal.m4: resync with my-autoconf
+	add macro for checking curses-data, e.g., boolnames
+
+	* configure.in: drop checks for unused headers
+	add checks for curses data (boolnames, boolfnames and ttytype)
+
+	* output.c, control.c: const-fixes
+
+	* fun.c, pad.c, tack.c: workaround in case terminfo is readonly
+
+	* tack.h:
+	work around several problems with NetBSD curses to compile most of tack...
+
+	* charset.c: const-fixes
+
+	* tack.h: omit nc_tparm.h, for portability
+
 2017-07-20  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* edit.c: eliminate dependency on tic.h

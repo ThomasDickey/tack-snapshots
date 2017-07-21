@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997,2010 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2010,2017 Free Software Foundation, Inc.
 ** 
 ** This file is part of TACK.
 ** 
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: modes.c,v 1.8 2010/09/03 22:22:49 tom Exp $")
+MODULE_ID("$Id: modes.c,v 1.9 2017/07/21 23:59:45 tom Exp $")
 
 /*
  * Tests boolean flags and terminal modes.
@@ -48,7 +48,7 @@ static void subtest_dadb(struct test_list *, int *, int *);
 
 struct test_list mode_test_list[] =
 {
-    {0, 0, 0, 0, "e) edit terminfo", 0, &edit_menu},
+    MY_EDIT_MENU
     {MENU_NEXT, 3, "os", 0, 0, subtest_os, 0},
     {MENU_NEXT, 1, "rmam", 0, 0, subtest_rmam, 0},
     {MENU_NEXT, 1, "smam", 0, 0, subtest_smam, 0},

@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.44 2017/07/20 20:47:24 tom Exp $ */
+/* $Id: tack.h,v 1.47 2017/07/21 23:41:51 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -48,6 +48,10 @@
 #define HAVE_LONG_FILE_NAMES 0
 #endif
 
+#ifndef NCURSES_CONST
+#define NCURSES_CONST const
+#endif
+
 #ifndef NO_LEAKS
 #define NO_LEAKS 0
 #endif
@@ -72,8 +76,16 @@
 #include <signal.h>		/* include before curses.h to work around glibc bug */
 
 #include <curses.h>
+
+#ifdef NCURSES_VERSION
 #include <term_entry.h>
-#include <nc_tparm.h>
+#else
+#include <term.h>
+#include <termios.h>
+#define TTY struct termios
+#define TERMIOS 1
+#define GET_TTY(fd, buf) tcgetattr(fd, buf)
+#endif
 
 #if USE_RCS_IDS
 #define MODULE_ID(id) static const char Ident[] = id;
@@ -87,6 +99,19 @@
 #define IGNORE_RC(func) (void) func
 #endif /* gcc workarounds */
 
+#ifndef down_half_line
+#define down_half_line 0		/* NetBSD bug */
+#endif
+#ifndef hue_lightness_saturation
+#define hue_lightness_saturation 0	/* NetBSD bug */
+#endif
+#ifndef prtr_off
+#define prtr_off 0			/* NetBSD bug */
+#endif
+#ifndef prtr_on
+#define prtr_on 0			/* NetBSD bug */
+#endif
+
 #if NO_LEAKS
 extern void tack_edit_leaks(void);
 extern void tack_fun_leaks(void);
@@ -97,13 +122,46 @@ extern void ExitProgram(int) GCC_NORETURN;
 #define NO_LEAKS 0
 #endif
 
+#ifdef TERMINFO_READONLY
+#define ChangeTermInfo(name,value) /* nothing */
+#else
+#define ChangeTermInfo(name,value) name = value
+#endif
+
 #define FreeIfNeeded(p) if (p) { free(p); p = 0; }
 
+#ifdef NCURSES_VERSION
 #define CUR_TP      ((TERMTYPE *)(cur_term))
 #define MAX_BOOLEAN BOOLCOUNT /* NUM_BOOLEANS(CUR_TP) */
 #define MAX_NUMBERS NUMCOUNT  /* NUM_NUMBERS(CUR_TP) */
 #define MAX_STRINGS NUM_STRINGS(CUR_TP)
 #define STR_NAME(n) ExtStrname(CUR_TP,n,strnames)
+#elif defined(BOOLCOUNT)
+#define MAX_BOOLEAN BOOLCOUNT
+#define MAX_NUMBERS NUMCOUNT
+#define MAX_STRINGS STRCOUNT
+#define STR_NAME(n) strnames[n]
+#else
+#define MAX_BOOLEAN 1		/* FIXME */
+#define MAX_NUMBERS 1		/* FIXME */
+#define MAX_STRINGS 1		/* FIXME */
+#endif
+
+/* see ncurses' nc_tparm.h */
+#define TPARM_ARG long
+#define TPARM_N(n) (TPARM_ARG)(n)
+
+#define TPARM_9(a,b,c,d,e,f,g,h,i,j) tparm(a,TPARM_N(b),TPARM_N(c),TPARM_N(d),TPARM_N(e),TPARM_N(f),TPARM_N(g),TPARM_N(h),TPARM_N(i),TPARM_N(j))
+#define TPARM_8(a,b,c,d,e,f,g,h,i) TPARM_9(a,b,c,d,e,f,g,h,i,0)
+#define TPARM_7(a,b,c,d,e,f,g,h) TPARM_8(a,b,c,d,e,f,g,h,0)
+#define TPARM_6(a,b,c,d,e,f,g) TPARM_7(a,b,c,d,e,f,g,0)
+#define TPARM_5(a,b,c,d,e,f) TPARM_6(a,b,c,d,e,f,0)
+#define TPARM_4(a,b,c,d,e) TPARM_5(a,b,c,d,e,0)
+#define TPARM_3(a,b,c,d) TPARM_4(a,b,c,d,0)
+#define TPARM_2(a,b,c) TPARM_3(a,b,c,0)
+#define TPARM_1(a,b) TPARM_2(a,b,0)
+#define TPARM_1(a,b) TPARM_2(a,b,0)
+#define TPARM_0(a) TPARM_1(a,0)
 
 #define UChar(c)    ((unsigned char)(c))
 
@@ -318,7 +376,12 @@ struct test_menu {
 #define REQUEST_PROMPT 256
 
 /* tack.c */
+#ifdef NCURSES_VERSION
 extern struct test_menu edit_menu;
+#define MY_EDIT_MENU	{0, 0, 0, 0, "e) edit terminfo", 0, &edit_menu},
+#else
+#define MY_EDIT_MENU	/* nothing */
+#endif
 extern void show_usage(char *);
 extern void print_version(void);
 
@@ -360,7 +423,7 @@ extern void tt_tputs(const char *, int);
 
 /* control.c */
 extern struct test_list color_test_list[];
-extern char *liberated(char *);
+extern char *liberated(const char *);
 extern char txt_longer_augment[80];
 extern char txt_longer_test_time[80];
 extern char txt_shorter_augment[80];
@@ -386,7 +449,7 @@ extern void shorter_test_time(struct test_list *, int *, int *);
 extern struct test_list acs_test_list[];
 extern void set_attr(int);
 extern void eat_cookie(void);
-extern void put_mode(char *);
+extern void put_mode(const char *);
 
 /* crum.c */
 extern struct test_list crum_test_list[];
@@ -397,8 +460,13 @@ extern void tools_charset(struct test_list *, int *, int *);
 extern void tools_sgr(struct test_list *, int *, int *);
 
 /* edit.c */
+#ifdef NCURSES_VERSION
 extern struct test_menu change_pad_menu;
 extern struct test_list edit_test_list[];
+#define MY_PADS_MENU	{0, 0, 0, 0, "p) change padding", 0, &change_pad_menu},
+#else
+#define MY_PADS_MENU	/* nothing */
+#endif
 extern char *get_string_cap_byname(const char *, const char **);
 extern int cap_match(const char *names, const char *cap);
 extern int get_string_cap_byvalue(const char *);
