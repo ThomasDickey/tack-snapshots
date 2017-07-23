@@ -21,27 +21,27 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: charset.c,v 1.18 2017/07/21 23:06:55 tom Exp $")
+MODULE_ID("$Id: charset.c,v 1.19 2017/07/23 16:08:17 tom Exp $")
 
 /*
 	Menu definitions for alternate character set and SGR tests.
 */
 
-static void charset_bel(struct test_list *t, int *state, int *ch);
-static void charset_flash(struct test_list *t, int *state, int *ch);
-static void charset_civis(struct test_list *t, int *state, int *ch);
-static void charset_cvvis(struct test_list *t, int *state, int *ch);
-static void charset_cnorm(struct test_list *t, int *state, int *ch);
-static void charset_hs(struct test_list *t, int *state, int *ch);
-static void charset_eslok(struct test_list *t, int *state, int *ch);
-static void charset_status(struct test_list *t, int *state, int *ch);
-static void charset_dsl(struct test_list *t, int *state, int *ch);
-static void charset_enacs(struct test_list *t, int *state, int *ch);
-static void charset_smacs(struct test_list *t, int *state, int *ch);
-static void charset_attributes(struct test_list *t, int *state, int *ch);
-static void charset_sgr(struct test_list *t, int *state, int *ch);
+static void charset_bel(TestList * t, int *state, int *ch);
+static void charset_flash(TestList * t, int *state, int *ch);
+static void charset_civis(TestList * t, int *state, int *ch);
+static void charset_cvvis(TestList * t, int *state, int *ch);
+static void charset_cnorm(TestList * t, int *state, int *ch);
+static void charset_hs(TestList * t, int *state, int *ch);
+static void charset_eslok(TestList * t, int *state, int *ch);
+static void charset_status(TestList * t, int *state, int *ch);
+static void charset_dsl(TestList * t, int *state, int *ch);
+static void charset_enacs(TestList * t, int *state, int *ch);
+static void charset_smacs(TestList * t, int *state, int *ch);
+static void charset_attributes(TestList * t, int *state, int *ch);
+static void charset_sgr(TestList * t, int *state, int *ch);
 
-struct test_list acs_test_list[] =
+TestList acs_test_list[] =
 {
     MY_EDIT_MENU
     {MENU_NEXT, 3, "bel", 0, 0, charset_bel, 0},
@@ -131,7 +131,7 @@ static struct graphics_pair glyph[] =
 */
 static void
 charset_hs(
-	      struct test_list *t,
+	      TestList * t,
 	      int *state,
 	      int *ch)
 {
@@ -148,7 +148,7 @@ charset_hs(
 */
 static void
 charset_status(
-		  struct test_list *t,
+		  TestList * t,
 		  int *state,
 		  int *ch)
 {
@@ -182,7 +182,7 @@ charset_status(
 */
 static void
 charset_eslok(
-		 struct test_list *t,
+		 TestList * t,
 		 int *state,
 		 int *ch)
 {
@@ -227,7 +227,7 @@ charset_eslok(
 */
 static void
 charset_dsl(
-	       struct test_list *t,
+	       TestList * t,
 	       int *state,
 	       int *ch)
 {
@@ -285,7 +285,7 @@ set_attr(int a)
 */
 static void
 charset_sgr(
-	       struct test_list *t,
+	       TestList * t,
 	       int *state,
 	       int *ch)
 {
@@ -392,7 +392,7 @@ test_one_attr(
 */
 static void
 charset_attributes(
-		      struct test_list *t,
+		      TestList * t,
 		      int *state,
 		      int *ch)
 {
@@ -424,7 +424,7 @@ charset_attributes(
 */
 static void
 charset_smacs(
-		 struct test_list *t,
+		 TestList * t,
 		 int *state,
 		 int *ch)
 {
@@ -581,7 +581,7 @@ test_acs(
 */
 static void
 charset_bel(
-	       struct test_list *t,
+	       TestList * t,
 	       int *state,
 	       int *ch)
 {
@@ -602,7 +602,7 @@ charset_bel(
 */
 static void
 charset_flash(
-		 struct test_list *t,
+		 TestList * t,
 		 int *state,
 		 int *ch)
 {
@@ -623,7 +623,7 @@ charset_flash(
 */
 static void
 charset_civis(
-		 struct test_list *t,
+		 TestList * t,
 		 int *state,
 		 int *ch)
 {
@@ -647,7 +647,7 @@ charset_civis(
 */
 static void
 charset_cvvis(
-		 struct test_list *t,
+		 TestList * t,
 		 int *state,
 		 int *ch)
 {
@@ -671,7 +671,7 @@ charset_cvvis(
 */
 static void
 charset_cnorm(
-		 struct test_list *t,
+		 TestList * t,
 		 int *state,
 		 int *ch)
 {
@@ -693,7 +693,7 @@ charset_cnorm(
 */
 static void
 charset_enacs(
-		 struct test_list *t,
+		 TestList * t,
 		 int *state,
 		 int *ch)
 {

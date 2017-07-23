@@ -25,7 +25,7 @@
 #include <sys/time.h>
 #endif
 
-MODULE_ID("$Id: control.c,v 1.16 2017/07/21 20:46:53 tom Exp $")
+MODULE_ID("$Id: control.c,v 1.17 2017/07/23 16:08:23 tom Exp $")
 
 /* terminfo test program control subroutines */
 
@@ -67,18 +67,20 @@ int tx_delay[TT_MAX];		/* Number of milliseconds delay */
 int txp;			/* number of entries used */
 int tx_characters;		/* printing characters sent by test */
 unsigned long tx_cps;		/* characters per second */
-static struct test_list *tx_source;	/* The test that generated this data */
+static TestList *tx_source;	/* The test that generated this data */
 
 #define RESULT_BLOCK		1024
 static int blocks;		/* number of result blocks available */
-static struct test_results *results;	/* pointer to next available */
-static struct test_results **pads;	/* save pad results here */
+static TestResults *results;	/* pointer to next available */
+static TestResults **pads;	/* save pad results here */
 
 static void
 alloc_arrays(void)
 {
     if (pads == 0) {
-	pads = (struct test_results **) calloc((size_t) MAX_STRINGS, sizeof(struct test_results *));
+	pads = (TestResults **) calloc((size_t) MAX_STRINGS,
+				       sizeof(TestResults
+					      *));
     }
 }
 
@@ -127,15 +129,15 @@ event_time(int n)
 **
 **	Get a results block for pad test data.
 */
-static struct test_results *
+static TestResults *
 get_next_block(void)
 {
     if (blocks <= 0) {
-	results = (struct test_results *)
-	    malloc(sizeof(struct test_results) * RESULT_BLOCK);
+	results = (TestResults *)
+	    malloc(sizeof(TestResults) * RESULT_BLOCK);
 	if (!results) {
 	    ptextln("Malloc failed");
-	    return (struct test_results *) 0;
+	    return (TestResults *) 0;
 	}
 	blocks = RESULT_BLOCK;
     }
@@ -264,7 +266,7 @@ page_loop(void)
 */
 int
 skip_pad_test(
-		 struct test_list *test,
+		 TestList * test,
 		 int *state,
 		 int *ch,
 		 const char *text)
@@ -309,7 +311,7 @@ skip_pad_test(
 */
 void
 pad_done_message(
-		    struct test_list *test,
+		    TestList * test,
 		    int *state,
 		    int *ch)
 {
@@ -347,7 +349,7 @@ pad_done_message(
 	    *ch = 0;
 	    return;
 	}
-	if ((strchr)(pad_repeat_test, *ch)) {
+	if ((strchr) (pad_repeat_test, *ch)) {
 	    /* default action is now repeat */
 	    default_action = 'r';
 	}
@@ -422,7 +424,7 @@ still_testing(void)
 */
 void
 pad_test_shutdown(
-		     struct test_list *t,
+		     TestList * t,
 		     int crlf)
 {
     int i;
@@ -431,7 +433,7 @@ pad_test_shutdown(
     int cpo;			/* characters per operation */
     long delta;			/* difference in characters */
     int bogus;			/* Time is inaccurate */
-    struct test_results *r;	/* Results of current test */
+    TestResults *r;		/* Results of current test */
     int ss_index[TT_MAX];	/* String index */
 
     alloc_arrays();
@@ -498,7 +500,7 @@ static void
 show_cap_results(
 		    int x)
 {
-    struct test_results *r;	/* a result */
+    TestResults *r;		/* a result */
     int delay;
 
     alloc_arrays();
@@ -530,7 +532,7 @@ show_cap_results(
 */
 void
 dump_test_stats(
-		   struct test_list *t,
+		   TestList * t,
 		   int *state,
 		   int *ch)
 {
@@ -577,7 +579,7 @@ dump_test_stats(
 */
 void
 longer_test_time(
-		    struct test_list *t GCC_UNUSED,
+		    TestList * t GCC_UNUSED,
 		    int *state GCC_UNUSED,
 		    int *ch)
 {
@@ -598,7 +600,7 @@ longer_test_time(
 */
 void
 shorter_test_time(
-		     struct test_list *t GCC_UNUSED,
+		     TestList * t GCC_UNUSED,
 		     int *state GCC_UNUSED,
 		     int *ch)
 {
@@ -622,7 +624,7 @@ shorter_test_time(
 */
 void
 longer_augment(
-		  struct test_list *t,
+		  TestList * t,
 		  int *state GCC_UNUSED,
 		  int *ch)
 {
@@ -645,7 +647,7 @@ longer_augment(
 */
 void
 shorter_augment(
-		   struct test_list *t,
+		   TestList * t,
 		   int *state GCC_UNUSED,
 		   int *ch)
 {

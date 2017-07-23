@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: tack.c,v 1.18 2017/07/21 23:06:54 tom Exp $")
+MODULE_ID("$Id: tack.c,v 1.21 2017/07/23 20:04:18 tom Exp $")
 
 /*
    This program is designed to test terminfo, not curses.  Therefore
@@ -66,12 +66,12 @@ int ignore_unused;
  *
  *****************************************************************************/
 
-static void tools_hex_echo(struct test_list *, int *, int *);
-static void tools_debug(struct test_list *, int *, int *);
+static void tools_hex_echo(TestList *, int *, int *);
+static void tools_debug(TestList *, int *, int *);
 
 static char hex_echo_menu_entry[80];
 
-static struct test_list tools_test_list[] =
+static TestList tools_test_list[] =
 {
     {0, 0, 0, 0, "s) ANSI status reports", tools_status, 0},
     {0, 0, 0, 0, "g) ANSI SGR modes (bold, underline, reverse)", tools_sgr, 0},
@@ -86,17 +86,17 @@ static struct test_list tools_test_list[] =
     {MENU_LAST, 0, 0, 0, 0, 0, 0}
 };
 
-static struct test_menu tools_menu =
+static TestMenu tools_menu =
 {
     0, 'q', 0, "Tools Menu", "tools",
     0, 0, tools_test_list, 0, 0, 0
 };
 
-static void tty_width(struct test_list *, int *, int *);
-static void tty_delay(struct test_list *, int *, int *);
-static void tty_xon(struct test_list *, int *, int *);
-static void tty_trans(struct test_list *, int *, int *);
-static void tty_show_state(struct test_menu *);
+static void tty_width(TestList *, int *, int *);
+static void tty_delay(TestList *, int *, int *);
+static void tty_xon(TestList *, int *, int *);
+static void tty_trans(TestList *, int *, int *);
+static void tty_show_state(TestMenu *);
 
 static char tty_width_menu[80];
 static char tty_delay_menu[80];
@@ -107,7 +107,7 @@ static char enable_xon_xoff[] =
 static char disable_xon_xoff[] =
 {"x) disable xon/xoff"};
 
-static struct test_list tty_test_list[] =
+static TestList tty_test_list[] =
 {
     {0, 0, 0, 0, tty_width_menu, tty_width, 0},
     {0, 0, 0, 0, tty_delay_menu, tty_delay, 0},
@@ -116,7 +116,7 @@ static struct test_list tty_test_list[] =
     {MENU_LAST, 0, 0, 0, 0, 0, 0}
 };
 
-static struct test_menu tty_menu =
+static TestMenu tty_menu =
 {
     0, 'q', 0, "Terminal and driver configuration",
     "tty", 0,
@@ -124,7 +124,7 @@ static struct test_menu tty_menu =
 };
 
 #ifdef NCURSES_VERSION
-struct test_menu edit_menu =
+TestMenu edit_menu =
 {
     0, 'q', 0, "Edit terminfo menu",
     "edit", 0,
@@ -132,14 +132,14 @@ struct test_menu edit_menu =
 };
 #endif
 
-static struct test_menu mode_menu =
+static TestMenu mode_menu =
 {
     0, 'n', 0, "Test modes and glitches:",
     "mode", "n) run standard tests",
     0, mode_test_list, 0, 0, 0
 };
 
-static struct test_menu acs_menu =
+static TestMenu acs_menu =
 {
     0, 'n', 0,
     "Test alternate character set and graphics rendition:",
@@ -147,7 +147,7 @@ static struct test_menu acs_menu =
     0, acs_test_list, 0, 0, 0
 };
 
-static struct test_menu color_menu =
+static TestMenu color_menu =
 {
     0, 'n', 0,
     "Test color:",
@@ -155,7 +155,7 @@ static struct test_menu color_menu =
     0, color_test_list, 0, 0, 0
 };
 
-static struct test_menu crum_menu =
+static TestMenu crum_menu =
 {
     0, 'n', 0,
     "Test cursor movement:",
@@ -163,7 +163,7 @@ static struct test_menu crum_menu =
     0, crum_test_list, 0, 0, 0
 };
 
-static struct test_menu funkey_menu =
+static TestMenu funkey_menu =
 {
     0, 'n', 0,
     "Test function keys:",
@@ -171,7 +171,7 @@ static struct test_menu funkey_menu =
     sync_test, funkey_test_list, 0, 0, 0
 };
 
-static struct test_menu printer_menu =
+static TestMenu printer_menu =
 {
     0, 'n', 0,
     "Test printer:",
@@ -179,9 +179,9 @@ static struct test_menu printer_menu =
     0, printer_test_list, 0, 0, 0
 };
 
-static void pad_gen(struct test_list *, int *, int *);
+static void pad_gen(TestList *, int *, int *);
 
-static struct test_menu pad_menu =
+static TestMenu pad_menu =
 {
     0, 'n', 0,
     "Test padding and string capabilities:",
@@ -189,7 +189,7 @@ static struct test_menu pad_menu =
     sync_test, pad_test_list, 0, 0, 0
 };
 /* *INDENT-OFF* */
-static struct test_list normal_test_list[] = {
+static TestList normal_test_list[] = {
     MY_EDIT_MENU
     {0, 0, 0, 0, "i) send reset and init", menu_reset_init, 0},
     {MENU_NEXT, 0, 0, 0, "x) test modes and glitches", 0, &mode_menu},
@@ -206,21 +206,21 @@ static struct test_list normal_test_list[] = {
 };
 /* *INDENT-ON* */
 
-static struct test_menu normal_menu =
+static TestMenu normal_menu =
 {
     0, 'n', 0, "Main test menu",
     "test", "n) run standard tests",
     0, normal_test_list, 0, 0, 0
 };
 
-static void start_tools(struct test_list *, int *, int *);
-static void start_modes(struct test_list *, int *, int *);
-static void start_basic(struct test_list *, int *, int *);
-static void start_log(struct test_list *, int *, int *);
+static void start_tools(TestList *, int *, int *);
+static void start_modes(TestList *, int *, int *);
+static void start_basic(TestList *, int *, int *);
+static void start_log(TestList *, int *, int *);
 
 static char logging_menu_entry[80] = "l) start logging";
 
-static struct test_list start_test_list[] =
+static TestList start_test_list[] =
 {
     {0, 0, 0, 0, "b) display basic information", start_basic, 0},
     {0, 0, 0, 0, "m) change modes", start_modes, 0},
@@ -230,17 +230,19 @@ static struct test_list start_test_list[] =
     {MENU_LAST, 0, 0, 0, 0, 0, 0}
 };
 
-static struct test_menu start_menu =
+static TestMenu start_menu =
 {
     0, 'n', 0, "Main Menu", "tack", 0,
     0, start_test_list, 0, 0, 0
 };
 
-static struct test_list write_terminfo_list[] =
+#ifdef NCURSES_VERSION
+static TestList write_terminfo_list[] =
 {
     {0, 0, 0, 0, "w) write the current terminfo to a file", save_info, 0},
     {MENU_LAST, 0, 0, 0, 0, 0, 0}
 };
+#endif
 
 /*****************************************************************************
  *
@@ -255,7 +257,7 @@ static struct test_list write_terminfo_list[] =
 */
 static void
 tools_hex_echo(
-		  struct test_list *t GCC_UNUSED,
+		  TestList * t GCC_UNUSED,
 		  int *state GCC_UNUSED,
 		  int *ch GCC_UNUSED)
 {
@@ -277,7 +279,7 @@ tools_hex_echo(
 */
 static void
 tools_debug(
-	       struct test_list *t GCC_UNUSED,
+	       TestList * t GCC_UNUSED,
 	       int *state GCC_UNUSED,
 	       int *ch)
 {
@@ -300,7 +302,7 @@ tools_debug(
 */
 static void
 start_tools(
-	       struct test_list *t GCC_UNUSED,
+	       TestList * t GCC_UNUSED,
 	       int *state GCC_UNUSED,
 	       int *ch GCC_UNUSED)
 {
@@ -321,7 +323,7 @@ start_tools(
 */
 static void
 tty_show_state(
-		  struct test_menu *menu GCC_UNUSED)
+		  TestMenu * menu GCC_UNUSED)
 {
     put_crlf();
     (void) sprintf(temp,
@@ -343,7 +345,7 @@ tty_show_state(
 */
 static void
 tty_width(
-	     struct test_list *t GCC_UNUSED,
+	     TestList * t GCC_UNUSED,
 	     int *state GCC_UNUSED,
 	     int *ch GCC_UNUSED)
 {
@@ -363,7 +365,7 @@ tty_width(
 */
 static void
 tty_delay(
-	     struct test_list *t GCC_UNUSED,
+	     TestList * t GCC_UNUSED,
 	     int *state GCC_UNUSED,
 	     int *ch GCC_UNUSED)
 {
@@ -385,7 +387,7 @@ tty_delay(
 */
 static void
 tty_xon(
-	   struct test_list *t GCC_UNUSED,
+	   TestList * t GCC_UNUSED,
 	   int *state GCC_UNUSED,
 	   int *ch GCC_UNUSED)
 {
@@ -417,7 +419,7 @@ tty_xon(
 */
 static void
 tty_trans(
-	     struct test_list *t GCC_UNUSED,
+	     TestList * t GCC_UNUSED,
 	     int *state GCC_UNUSED,
 	     int *ch GCC_UNUSED)
 {
@@ -439,7 +441,7 @@ tty_trans(
 */
 static void
 pad_gen(
-	   struct test_list *t,
+	   TestList * t,
 	   int *state GCC_UNUSED,
 	   int *ch)
 {
@@ -459,7 +461,7 @@ pad_gen(
 */
 static void
 start_modes(
-	       struct test_list *t GCC_UNUSED,
+	       TestList * t GCC_UNUSED,
 	       int *state GCC_UNUSED,
 	       int *ch GCC_UNUSED)
 {
@@ -501,7 +503,7 @@ start_modes(
 */
 static void
 start_basic(
-	       struct test_list *t GCC_UNUSED,
+	       TestList * t GCC_UNUSED,
 	       int *state GCC_UNUSED,
 	       int *ch)
 {
@@ -516,7 +518,7 @@ start_basic(
 */
 static void
 start_log(
-	     struct test_list *t GCC_UNUSED,
+	     TestList * t GCC_UNUSED,
 	     int *state GCC_UNUSED,
 	     int *ch GCC_UNUSED)
 {
@@ -562,12 +564,33 @@ print_version(void)
 	   MAJOR_VERSION,
 	   MINOR_VERSION,
 	   PATCH_VERSION);
-    printf("Copyright (C) 1997 Free Software Foundation, Inc.\n");
+    printf("Copyright (C) 1997-2017 Free Software Foundation, Inc.\n");
     printf("Tack comes with NO WARRANTY, to the extent permitted by law.\n");
     printf("You may redistribute copies of Tack under the terms of the\n");
     printf("GNU General Public License.  For more information about\n");
     printf("these matters, see the file named COPYING.\n");
 }
+
+#ifdef DEBUG
+void
+Trace(const char *fmt,...)
+{
+    static FILE *my_fp;
+    static const char *my_filename = "Trace.out";
+    va_list ap;
+
+    if (my_fp == 0) {
+	if ((my_fp = fopen(my_filename, "w")) == 0) {
+	    fprintf(stderr, "Cannot open %s\n", my_filename);
+	    ExitProgram(EXIT_FAILURE);
+	}
+    }
+    va_start(ap, fmt);
+    vfprintf(my_fp, fmt, ap);
+    va_end(ap);
+    fflush(my_fp);
+}
+#endif
 
 /*****************************************************************************
  *

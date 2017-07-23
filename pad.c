@@ -21,45 +21,45 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: pad.c,v 1.11 2017/07/21 23:25:33 tom Exp $")
+MODULE_ID("$Id: pad.c,v 1.13 2017/07/23 16:53:27 tom Exp $")
 
 /* test the pad counts on the terminal */
 
-static void pad_standard(struct test_list *, int *, int *);
-static void init_xon_xoff(struct test_list *, int *, int *);
-static void init_cup(struct test_list *, int *, int *);
-static void pad_rmxon(struct test_list *, int *, int *);
-static void pad_home1(struct test_list *, int *, int *);
-static void pad_home2(struct test_list *, int *, int *);
-static void pad_clear(struct test_list *, int *, int *);
-static void pad_ech(struct test_list *, int *, int *);
-static void pad_el1(struct test_list *, int *, int *);
-static void pad_el(struct test_list *, int *, int *);
-static void pad_smdc(struct test_list *, int *, int *);
-static void pad_dch(struct test_list *, int *, int *);
-static void pad_dch1(struct test_list *, int *, int *);
-static void pad_smir(struct test_list *, int *, int *);
-static void pad_ich(struct test_list *, int *, int *);
-static void pad_ich1(struct test_list *, int *, int *);
-static void pad_xch1(struct test_list *, int *, int *);
-static void pad_rep(struct test_list *, int *, int *);
-static void pad_cup(struct test_list *, int *, int *);
-static void pad_hd(struct test_list *, int *, int *);
-static void pad_hu(struct test_list *, int *, int *);
-static void pad_rin(struct test_list *, int *, int *);
-static void pad_il(struct test_list *, int *, int *);
-static void pad_indn(struct test_list *, int *, int *);
-static void pad_dl(struct test_list *, int *, int *);
-static void pad_xl(struct test_list *, int *, int *);
-static void pad_scrc(struct test_list *, int *, int *);
-static void pad_csrind(struct test_list *, int *, int *);
-static void pad_sccsrrc(struct test_list *, int *, int *);
-static void pad_csr_nel(struct test_list *, int *, int *);
-static void pad_csr_cup(struct test_list *, int *, int *);
-static void pad_ht(struct test_list *, int *, int *);
-static void pad_smso(struct test_list *, int *, int *);
-static void pad_smacs(struct test_list *, int *, int *);
-static void pad_crash(struct test_list *, int *, int *);
+static void pad_standard(TestList *, int *, int *);
+static void init_xon_xoff(TestList *, int *, int *);
+static void init_cup(TestList *, int *, int *);
+static void pad_rmxon(TestList *, int *, int *);
+static void pad_home1(TestList *, int *, int *);
+static void pad_home2(TestList *, int *, int *);
+static void pad_clear(TestList *, int *, int *);
+static void pad_ech(TestList *, int *, int *);
+static void pad_el1(TestList *, int *, int *);
+static void pad_el(TestList *, int *, int *);
+static void pad_smdc(TestList *, int *, int *);
+static void pad_dch(TestList *, int *, int *);
+static void pad_dch1(TestList *, int *, int *);
+static void pad_smir(TestList *, int *, int *);
+static void pad_ich(TestList *, int *, int *);
+static void pad_ich1(TestList *, int *, int *);
+static void pad_xch1(TestList *, int *, int *);
+static void pad_rep(TestList *, int *, int *);
+static void pad_cup(TestList *, int *, int *);
+static void pad_hd(TestList *, int *, int *);
+static void pad_hu(TestList *, int *, int *);
+static void pad_rin(TestList *, int *, int *);
+static void pad_il(TestList *, int *, int *);
+static void pad_indn(TestList *, int *, int *);
+static void pad_dl(TestList *, int *, int *);
+static void pad_xl(TestList *, int *, int *);
+static void pad_scrc(TestList *, int *, int *);
+static void pad_csrind(TestList *, int *, int *);
+static void pad_sccsrrc(TestList *, int *, int *);
+static void pad_csr_nel(TestList *, int *, int *);
+static void pad_csr_cup(TestList *, int *, int *);
+static void pad_ht(TestList *, int *, int *);
+static void pad_smso(TestList *, int *, int *);
+static void pad_smacs(TestList *, int *, int *);
+static void pad_crash(TestList *, int *, int *);
 
 /*
    Any command found in this list, executed from a "Done" prompt
@@ -68,7 +68,7 @@ static void pad_crash(struct test_list *, int *, int *);
 const char *pad_repeat_test =
 {"ep-+<>"};
 /* *INDENT-OFF* */
-struct test_list pad_test_list[] = {
+TestList pad_test_list[] = {
     MY_EDIT_MENU
     MY_PADS_MENU
     {0, 0, 0, 0, "@) display statistics about the last test", dump_test_stats, 0},
@@ -187,12 +187,12 @@ static char no_visual[] = "This loop test has no visual failure indicator.  ";
 */
 static void
 pad_standard(
-		struct test_list *t,
+		TestList * t,
 		int *state,
 		int *ch)
 {
     const char *long_name;
-    char *cap;
+    const char *cap;
     int l = 2, i;
     char tbuf[128];
 
@@ -238,7 +238,7 @@ pad_standard(
 */
 static void
 init_xon_xoff(
-		 struct test_list *t GCC_UNUSED,
+		 TestList * t GCC_UNUSED,
 		 int *state GCC_UNUSED,
 		 int *ch GCC_UNUSED)
 {
@@ -258,7 +258,7 @@ init_xon_xoff(
 */
 static void
 pad_rmxon(
-	     struct test_list *t,
+	     TestList * t,
 	     int *state,
 	     int *ch)
 {
@@ -275,7 +275,7 @@ pad_rmxon(
 */
 static void
 init_cup(
-	    struct test_list *t,
+	    TestList * t,
 	    int *state,
 	    int *ch)
 {
@@ -301,7 +301,7 @@ init_cup(
 */
 static void
 pad_home1(
-	     struct test_list *t,
+	     TestList * t,
 	     int *state,
 	     int *ch)
 {
@@ -344,7 +344,7 @@ pad_home1(
 */
 static void
 pad_home2(
-	     struct test_list *t,
+	     TestList * t,
 	     int *state,
 	     int *ch)
 {
@@ -392,7 +392,7 @@ pad_home2(
 */
 static void
 pad_clear(
-	     struct test_list *t,
+	     TestList * t,
 	     int *state,
 	     int *ch)
 {
@@ -532,7 +532,7 @@ pad_clear(
 */
 static void
 pad_ech(
-	   struct test_list *t,
+	   TestList * t,
 	   int *state,
 	   int *ch)
 {
@@ -583,7 +583,7 @@ pad_ech(
 */
 static void
 pad_el1(
-	   struct test_list *t,
+	   TestList * t,
 	   int *state,
 	   int *ch)
 {
@@ -635,7 +635,7 @@ pad_el1(
 */
 static void
 pad_el(
-	  struct test_list *t,
+	  TestList * t,
 	  int *state,
 	  int *ch)
 {
@@ -685,7 +685,7 @@ pad_el(
 */
 static void
 pad_smdc(
-	    struct test_list *t,
+	    TestList * t,
 	    int *state,
 	    int *ch)
 {
@@ -728,7 +728,7 @@ pad_smdc(
 */
 static void
 pad_dch(
-	   struct test_list *t,
+	   TestList * t,
 	   int *state,
 	   int *ch)
 {
@@ -780,7 +780,7 @@ pad_dch(
 */
 static void
 pad_dch1(
-	    struct test_list *t,
+	    TestList * t,
 	    int *state,
 	    int *ch)
 {
@@ -837,7 +837,7 @@ pad_dch1(
 */
 static void
 pad_smir(
-	    struct test_list *t,
+	    TestList * t,
 	    int *state,
 	    int *ch)
 {
@@ -880,7 +880,7 @@ pad_smir(
 */
 static void
 pad_ich(
-	   struct test_list *t,
+	   TestList * t,
 	   int *state,
 	   int *ch)
 {
@@ -934,7 +934,7 @@ pad_ich(
 */
 static void
 pad_ich1(
-	    struct test_list *t,
+	    TestList * t,
 	    int *state,
 	    int *ch)
 {
@@ -998,7 +998,7 @@ pad_ich1(
 */
 static void
 pad_xch1(
-	    struct test_list *t,
+	    TestList * t,
 	    int *state,
 	    int *ch)
 {
@@ -1036,7 +1036,7 @@ pad_xch1(
 */
 static void
 pad_rep(
-	   struct test_list *t,
+	   TestList * t,
 	   int *state,
 	   int *ch)
 {
@@ -1083,7 +1083,7 @@ pad_rep(
 */
 static void
 pad_cup(
-	   struct test_list *t,
+	   TestList * t,
 	   int *state,
 	   int *ch)
 {
@@ -1143,7 +1143,7 @@ pad_cup(
 */
 static void
 pad_hd(
-	  struct test_list *t,
+	  TestList * t,
 	  int *state,
 	  int *ch)
 {
@@ -1190,7 +1190,7 @@ pad_hd(
 */
 static void
 pad_hu(
-	  struct test_list *t,
+	  TestList * t,
 	  int *state,
 	  int *ch)
 {
@@ -1238,7 +1238,7 @@ pad_hu(
 */
 static void
 pad_rin(
-	   struct test_list *t,
+	   TestList * t,
 	   int *state,
 	   int *ch)
 {
@@ -1302,7 +1302,7 @@ pad_rin(
 */
 static void
 pad_il(
-	  struct test_list *t,
+	  TestList * t,
 	  int *state,
 	  int *ch)
 {
@@ -1366,7 +1366,7 @@ pad_il(
 */
 static void
 pad_indn(
-	    struct test_list *t,
+	    TestList * t,
 	    int *state,
 	    int *ch)
 {
@@ -1436,7 +1436,7 @@ pad_indn(
 */
 static void
 pad_dl(
-	  struct test_list *t,
+	  TestList * t,
 	  int *state,
 	  int *ch)
 {
@@ -1504,7 +1504,7 @@ pad_dl(
 */
 static void
 pad_xl(
-	  struct test_list *t,
+	  TestList * t,
 	  int *state,
 	  int *ch)
 {
@@ -1553,7 +1553,7 @@ pad_xl(
 */
 static void
 pad_scrc(
-	    struct test_list *t,
+	    TestList * t,
 	    int *state,
 	    int *ch)
 {
@@ -1599,7 +1599,7 @@ pad_scrc(
 */
 static void
 pad_csrind(
-	      struct test_list *t,
+	      TestList * t,
 	      int *state,
 	      int *ch)
 {
@@ -1650,7 +1650,7 @@ pad_csrind(
 */
 static void
 pad_sccsrrc(
-	       struct test_list *t,
+	       TestList * t,
 	       int *state,
 	       int *ch)
 {
@@ -1689,7 +1689,7 @@ pad_sccsrrc(
 */
 static void
 pad_csr_nel(
-	       struct test_list *t,
+	       TestList * t,
 	       int *state,
 	       int *ch)
 {
@@ -1731,7 +1731,7 @@ pad_csr_nel(
 */
 static void
 pad_csr_cup(
-	       struct test_list *t,
+	       TestList * t,
 	       int *state,
 	       int *ch)
 {
@@ -1771,7 +1771,7 @@ pad_csr_cup(
 */
 static void
 pad_ht(
-	  struct test_list *t,
+	  TestList * t,
 	  int *state,
 	  int *ch)
 {
@@ -1838,7 +1838,7 @@ pad_ht(
 */
 static void
 pad_smso(
-	    struct test_list *t,
+	    TestList * t,
 	    int *state,
 	    int *ch)
 {
@@ -1886,7 +1886,7 @@ pad_smso(
 */
 static void
 pad_smacs(
-	     struct test_list *t,
+	     TestList * t,
 	     int *state,
 	     int *ch)
 {
@@ -1929,7 +1929,7 @@ pad_smacs(
 */
 static void
 pad_crash(
-	     struct test_list *t,
+	     TestList * t,
 	     int *state,
 	     int *ch)
 {

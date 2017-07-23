@@ -1,3 +1,88 @@
+2017-07-23  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* tackgen.c: for NetBSD workaround, declare maximums for the arrays
+
+	* tack.h: NetBSD 6 also left out plab_norm
+
+	* tack.c: NetBSD needs stdarg, since its curses.h isn't complete.
+
+	* tack.h:
+	there's no configure check (yet) for readonly terminfo.  But only ncurses
+	is viable -- simplify ifdef.
+
+	* configure.in: no need to check for ttytype[]
+
+	* init.c: provide alternative to ttytype[], using termname()+longname()
+
+	* tackgen.c: build-fix
+
+	* edit.c: NetBSD workaround won't support long-names
+
+	* tackgen.c:
+	for NetBSD, provide a workaround - start by stubbing out the data here
+
+	* tack.h: stub for NetBSD will have strnames
+
+	* aclocal.m4: resync with my-autoconf
+
+	* configure: regen
+
+	* README: update dependency notes
+
+	* package/debian/changelog: bump
+
+	* aclocal.m4: add check for term.h if pkg-config is used
+
+	* aclocal.m4, configure.in:
+	add configure-checks for "ar" and its flags, needed in configure-checks for data
+
+	* edit.c, tackgen.c: gcc warnings
+
+	* package/debian/rules: use "hardening" flags
+
+	* package/debian/copyright, package/tack.spec, tack.h: bump
+
+	* configure: regen
+
+	* configure.in: fix tackgen dependencies
+
+	* tackgen.c: stricter gcc warnings
+
+	* tack.h: with gcc-stricter, "sun" is not defined
+
+	* configure: regen
+
+	* edit.c, configure.in, tack.h:
+	move include of tackgen.h to tack.h to define BOOLCOUNT, etc., for Solaris
+
+	* tack.h, tack.c: add Trace(), for debugging
+
+	* init.c: fill in acs_map[] for Solaris curses (not done in setupterm)
+
+	* edit.c: finish Solaris unused-warnings
+
+	* edit.c: grouped editing functions (not supported with Solaris)
+
+	* edit.c:
+	start changes to make function-key test work with Solaris, using macros and
+	functions to hide differences between the way capabilities are stored in
+	the TERMINAL structure
+
+	* tack.h, pad.c: const-tweaks
+
+	* control.c, tack.h, ansi.c, charset.c, color.c, crum.c, edit.c, fun.c, menu.c, modes.c, pad.c, sync.c, tack.c:
+	improve readability using typedefs
+
+	* tack.h: typo
+
+	* tack.h: help readability using typedef's
+	add workaround to reduce compiler warnings when building with Solaris curses
+
+	* output.c:
+	use workaround to quiet compiler warnings with Solaris curses
+
+	* tack.c: ifdef'd ncurses-specific menu-entry
+
 2017-07-21  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* init.c:

@@ -21,20 +21,20 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: fun.c,v 1.23 2017/07/21 23:06:54 tom Exp $")
+MODULE_ID("$Id: fun.c,v 1.24 2017/07/23 16:08:17 tom Exp $")
 
 /*
  * Test the function keys on the terminal.  The code for echo tests
  * lives here too.
  */
 
-static void funkey_keys(struct test_list *, int *, int *);
-static void funkey_meta(struct test_list *, int *, int *);
-static void funkey_label(struct test_list *, int *, int *);
-static void funkey_prog(struct test_list *, int *, int *);
-static void funkey_local(struct test_list *, int *, int *);
+static void funkey_keys(TestList *, int *, int *);
+static void funkey_meta(TestList *, int *, int *);
+static void funkey_label(TestList *, int *, int *);
+static void funkey_prog(TestList *, int *, int *);
+static void funkey_local(TestList *, int *, int *);
 /* *INDENT-OFF* */
-struct test_list funkey_test_list[] = {
+TestList funkey_test_list[] = {
     MY_EDIT_MENU
     {MENU_CLEAR + FLAG_FUNCTION_KEY, 0, 0, 0, "f) show a list of function keys", show_report, 0},
     {MENU_NEXT | MENU_CLEAR, 0, "smkx) (rmkx", 0, "k) test function keys", funkey_keys, 0},
@@ -46,10 +46,10 @@ struct test_list funkey_test_list[] = {
 };
 /* *INDENT-ON* */
 
-static void printer_on(struct test_list *, int *, int *);
-static void printer_mc0(struct test_list *, int *, int *);
+static void printer_on(TestList *, int *, int *);
+static void printer_mc0(TestList *, int *, int *);
 
-struct test_list printer_test_list[] =
+TestList printer_test_list[] =
 {
     MY_EDIT_MENU
     {MENU_NEXT | MENU_CLEAR, 0, "mc4) (mc5) (mc5i", 0, 0, printer_on, 0},
@@ -448,7 +448,7 @@ found_exit(char *keybuf, int hx, int cc)
 */
 static void
 funkey_keys(
-	       struct test_list *t,
+	       TestList * t,
 	       int *state,
 	       int *ch)
 {
@@ -506,7 +506,7 @@ tty_meta_prep(void)
 */
 static void
 funkey_meta(
-	       struct test_list *t,
+	       TestList * t,
 	       int *state,
 	       int *ch)
 {
@@ -562,7 +562,7 @@ funkey_meta(
 */
 static void
 funkey_label(
-		struct test_list *t,
+		TestList * t,
 		int *state,
 		int *ch)
 {
@@ -605,7 +605,7 @@ funkey_label(
 */
 static void
 funkey_prog(
-	       struct test_list *t,
+	       TestList * t,
 	       int *state,
 	       int *ch)
 {
@@ -655,7 +655,7 @@ funkey_prog(
 */
 static void
 funkey_local(
-		struct test_list *t,
+		TestList * t,
 		int *state,
 		int *ch)
 {
@@ -690,7 +690,7 @@ funkey_local(
 */
 static void
 printer_on(
-	      struct test_list *t,
+	      TestList * t,
 	      int *state,
 	      int *ch)
 {
@@ -719,7 +719,7 @@ printer_on(
 */
 static void
 printer_mc0(
-	       struct test_list *t,
+	       TestList * t,
 	       int *state,
 	       int *ch)
 {
@@ -809,7 +809,7 @@ report_help(int crx)
 */
 void
 tools_report(
-		struct test_list *t,
+		TestList * t,
 		int *state GCC_UNUSED,
 		int *pch GCC_UNUSED)
 {

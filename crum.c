@@ -21,21 +21,21 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: crum.c,v 1.10 2017/07/21 23:59:35 tom Exp $")
+MODULE_ID("$Id: crum.c,v 1.11 2017/07/23 16:08:17 tom Exp $")
 
 /*
  * Test cursor movement.
  */
 
-static void crum_clear(struct test_list *t, int *state, int *ch);
-static void crum_home(struct test_list *t, int *state, int *ch);
-static void crum_ll(struct test_list *t, int *state, int *ch);
-static void crum_move(struct test_list *t, int *state, int *ch);
-static void crum_os(struct test_list *t, int *state, int *ch);
+static void crum_clear(TestList * t, int *state, int *ch);
+static void crum_home(TestList * t, int *state, int *ch);
+static void crum_ll(TestList * t, int *state, int *ch);
+static void crum_move(TestList * t, int *state, int *ch);
+static void crum_os(TestList * t, int *state, int *ch);
 
 static char crum_text[5][80];
 
-struct test_list crum_test_list[] =
+TestList crum_test_list[] =
 {
     MY_EDIT_MENU
     {MENU_NEXT, 0, "clear", 0, 0, crum_clear, 0},
@@ -242,7 +242,7 @@ display_it(
 */
 static void
 crum_clear(
-	      struct test_list *t,
+	      TestList * t,
 	      int *state,
 	      int *ch)
 {
@@ -268,7 +268,7 @@ crum_clear(
 */
 static void
 crum_home(
-	     struct test_list *t,
+	     TestList * t,
 	     int *state,
 	     int *ch)
 {
@@ -297,7 +297,7 @@ crum_home(
 */
 static void
 crum_ll(
-	   struct test_list *t,
+	   TestList * t,
 	   int *state,
 	   int *ch)
 {
@@ -326,7 +326,7 @@ crum_ll(
 */
 static void
 crum_move(
-	     struct test_list *t,
+	     TestList * t,
 	     int *state,
 	     int *ch)
 {
@@ -396,7 +396,7 @@ crum_move(
 */
 static void
 crum_os(
-	   struct test_list *t,
+	   TestList * t,
 	   int *state,
 	   int *ch)
 {

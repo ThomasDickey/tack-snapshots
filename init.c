@@ -22,7 +22,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: init.c,v 1.21 2017/07/20 20:48:10 tom Exp $")
+MODULE_ID("$Id: init.c,v 1.24 2017/07/23 23:14:34 tom Exp $")
 
 FILE *debug_fp;
 char temp[1024];
@@ -141,7 +141,9 @@ void
 display_basic(void)
 {
     put_str("Name: ");
-    putln(ttytype);
+    put_str(termname());
+    put_str("|");
+    putln(longname());
 
     report_cap("\\r ^M (cr)", carriage_return);
     report_cap("\\n ^J (ind)", scroll_forward);
@@ -208,6 +210,32 @@ ask_infocmp(void)
 }
 
 /*
+ * ncurses initializes acs_map[] in setupterm; Unix curses does not.
+ */
+#if defined(unix) && !defined(NCURSES_VERSION)
+static void
+init_acs(void)
+{
+    if (acs_map == 0) {
+	int s, d;
+	char *value = acs_chars;
+	acs_map = calloc(256, sizeof(acs_map[0]));
+	if (value != 0) {
+	    while (*value != '\0') {
+		if ((s = UChar(*value++)) == '\0')
+		    break;
+		if ((d = UChar(*value++)) == '\0')
+		    break;
+		acs_map[s] = d;
+	    }
+	}
+    }
+}
+#else
+#define init_acs()		/* nothing */
+#endif
+
+/*
 **	curses_setup(exec_name)
 **
 **	Startup ncurses
@@ -235,15 +263,18 @@ curses_setup(
 	show_usage(exec_name);
 	ExitProgram(EXIT_FAILURE);
     }
+    init_acs();
 
 	/**
 	 * Get the current terminal definitions.  This must be done before
 	 * getting the baudrate.
 	 */
     def_prog_mode();
+#ifdef NCURSES_VERSION
     if (baudrate() > 0)
 	tty_baud_rate = (unsigned) baudrate();
     else
+#endif
 	tty_baud_rate = 1;
     tty_cps = (tty_baud_rate << 1) / (unsigned) tty_frame_size;
 

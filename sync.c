@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997-2010,2012 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2012,2017 Free Software Foundation, Inc.
 ** 
 ** This file is part of TACK.
 ** 
@@ -22,16 +22,16 @@
 #include <tack.h>
 #include <time.h>
 
-MODULE_ID("$Id: sync.c,v 1.13 2012/03/03 16:03:04 tom Exp $")
+MODULE_ID("$Id: sync.c,v 1.14 2017/07/23 16:08:17 tom Exp $")
 
 /* terminal-synchronization and performance tests */
 
-static void sync_home(struct test_list *, int *, int *);
-static void sync_lines(struct test_list *, int *, int *);
-static void sync_clear(struct test_list *, int *, int *);
-static void sync_summary(struct test_list *, int *, int *);
+static void sync_home(TestList *, int *, int *);
+static void sync_lines(TestList *, int *, int *);
+static void sync_clear(TestList *, int *, int *);
+static void sync_summary(TestList *, int *, int *);
 
-static struct test_list sync_test_list[] =
+static TestList sync_test_list[] =
 {
     {MENU_NEXT, 0, 0, 0, "b) baud rate test", sync_home, 0},
     {MENU_NEXT, 0, 0, 0, "l) scroll performance", sync_lines, 0},
@@ -42,7 +42,7 @@ static struct test_list sync_test_list[] =
     {MENU_LAST, 0, 0, 0, 0, 0, 0}
 };
 
-struct test_menu sync_menu =
+TestMenu sync_menu =
 {
     0, 'n', 0,
     "Performance tests", "perf", "n) run standard tests",
@@ -260,7 +260,7 @@ verify_time(void)
 */
 static void
 sync_home(
-	     struct test_list *t,
+	     TestList * t,
 	     int *state,
 	     int *ch)
 {
@@ -313,7 +313,7 @@ sync_home(
 */
 static void
 sync_lines(
-	      struct test_list *t,
+	      TestList * t,
 	      int *state,
 	      int *ch)
 {
@@ -347,7 +347,7 @@ sync_lines(
 */
 static void
 sync_clear(
-	      struct test_list *t,
+	      TestList * t,
 	      int *state,
 	      int *ch)
 {
@@ -388,7 +388,7 @@ sync_clear(
 */
 static void
 sync_summary(
-		struct test_list *t,
+		TestList * t,
 		int *state,
 		int *ch)
 {
@@ -410,7 +410,7 @@ sync_summary(
 */
 void
 sync_test(
-	     struct test_menu *menu)
+	     TestMenu * menu)
 {
     control_init();
     if (tty_can_sync == SYNC_NOT_TESTED) {
@@ -429,7 +429,7 @@ sync_test(
 */
 void
 sync_handshake(
-		  struct test_list *t GCC_UNUSED,
+		  TestList * t GCC_UNUSED,
 		  int *state GCC_UNUSED,
 		  int *ch GCC_UNUSED)
 {
