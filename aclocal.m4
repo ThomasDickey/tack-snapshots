@@ -26,7 +26,7 @@ dnl sale, use or other dealings in this Software without prior written       *
 dnl authorization.                                                           *
 dnl***************************************************************************
 dnl
-dnl $Id: aclocal.m4,v 1.24 2017/07/21 22:18:31 tom Exp $
+dnl $Id: aclocal.m4,v 1.27 2017/07/23 22:30:58 tom Exp $
 dnl
 dnl Author: Thomas E. Dickey
 dnl
@@ -421,6 +421,63 @@ ifelse([$3],,[    :]dnl
 	$4
 ])dnl
 ])])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_AR_FLAGS version: 6 updated: 2015/10/10 15:25:05
+dnl -----------
+dnl Check for suitable "ar" (archiver) options for updating an archive.
+dnl
+dnl In particular, handle some obsolete cases where the "-" might be omitted,
+dnl as well as a workaround for breakage of make's archive rules by the GNU
+dnl binutils "ar" program.
+AC_DEFUN([CF_AR_FLAGS],[
+AC_REQUIRE([CF_PROG_AR])
+
+AC_CACHE_CHECK(for options to update archives, cf_cv_ar_flags,[
+	cf_cv_ar_flags=unknown
+	for cf_ar_flags in -curvU -curv curv -crv crv -cqv cqv -rv rv
+	do
+
+		# check if $ARFLAGS already contains this choice
+		if test "x$ARFLAGS" != "x" ; then
+			cf_check_ar_flags=`echo "x$ARFLAGS" | sed -e "s/$cf_ar_flags\$//" -e "s/$cf_ar_flags / /"`
+			if test "x$ARFLAGS" != "$cf_check_ar_flags" ; then
+				cf_cv_ar_flags=
+				break
+			fi
+		fi
+
+		rm -f conftest.$ac_cv_objext
+		rm -f conftest.a
+
+		cat >conftest.$ac_ext <<EOF
+#line __oline__ "configure"
+int	testdata[[3]] = { 123, 456, 789 };
+EOF
+		if AC_TRY_EVAL(ac_compile) ; then
+			echo "$AR $ARFLAGS $cf_ar_flags conftest.a conftest.$ac_cv_objext" >&AC_FD_CC
+			$AR $ARFLAGS $cf_ar_flags conftest.a conftest.$ac_cv_objext 2>&AC_FD_CC 1>/dev/null
+			if test -f conftest.a ; then
+				cf_cv_ar_flags=$cf_ar_flags
+				break
+			fi
+		else
+			CF_VERBOSE(cannot compile test-program)
+			break
+		fi
+	done
+	rm -f conftest.a conftest.$ac_ext conftest.$ac_cv_objext
+])
+
+if test -n "$ARFLAGS" ; then
+	if test -n "$cf_cv_ar_flags" ; then
+		ARFLAGS="$ARFLAGS $cf_cv_ar_flags"
+	fi
+else
+	ARFLAGS=$cf_cv_ar_flags
+fi
+
+AC_SUBST(ARFLAGS)
+])
 dnl ---------------------------------------------------------------------------
 dnl CF_CC_ENV_FLAGS version: 7 updated: 2017/02/25 18:57:40
 dnl ---------------
@@ -1549,7 +1606,7 @@ ifelse($1,,,[$1=$LIB_PREFIX])
 	AC_SUBST(LIB_PREFIX)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_LINK_DATAONLY version: 11 updated: 2017/01/21 11:06:25
+dnl CF_LINK_DATAONLY version: 12 updated: 2017/07/23 17:46:07
 dnl ----------------
 dnl Some systems have a non-ANSI linker that doesn't pull in modules that have
 dnl only data (i.e., no functions), for example NeXT.  On those systems we'll
@@ -1571,7 +1628,7 @@ EOF
 	rm -f conftest.$ac_ext data.o
 	cat >conftest.$ac_ext <<EOF
 #line __oline__ "configure"
-int	testfunc()
+int	testfunc(void)
 {
 #if defined(NeXT)
 	${cf_cv_main_return:-return}(1);	/* I'm told this linker is broken */
@@ -1825,7 +1882,7 @@ printf("old\n");
 	,[$1=no])
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_NCURSES_CONFIG version: 17 updated: 2015/07/07 04:22:07
+dnl CF_NCURSES_CONFIG version: 18 updated: 2017/07/23 18:30:00
 dnl -----------------
 dnl Tie together the configure-script macros for ncurses, preferring these in
 dnl order:
@@ -1873,6 +1930,7 @@ if test "x${PKG_CONFIG:=none}" != xnone; then
 			AC_DEFINE(NCURSES,1,[Define to 1 if we are using ncurses headers/libraries])
 			NCURSES_CONFIG_PKG=$cf_ncuconfig_root
 		fi
+		CF_TERM_HEADER
 
 	else
 		AC_MSG_RESULT(no)
@@ -2354,6 +2412,13 @@ if test "$cf_cv_posix_c_source" != no ; then
 fi
 
 ])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_PROG_AR version: 1 updated: 2009/01/01 20:15:22
+dnl ----------
+dnl Check for archiver "ar".
+AC_DEFUN([CF_PROG_AR],[
+AC_CHECK_TOOL(AR, ar, ar)
+])
 dnl ---------------------------------------------------------------------------
 dnl CF_PROG_GROFF version: 2 updated: 2015/07/04 11:16:27
 dnl -------------

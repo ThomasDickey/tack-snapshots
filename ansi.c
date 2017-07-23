@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991-2011,2012 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2012,2017 Free Software Foundation, Inc.
 ** 
 ** This file is part of TACK.
 ** 
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: ansi.c,v 1.15 2012/03/03 16:06:23 tom Exp $")
+MODULE_ID("$Id: ansi.c,v 1.16 2017/07/23 16:08:17 tom Exp $")
 
 /*
  * Standalone tests for ANSI terminals.  Three entry points:
@@ -587,7 +587,7 @@ ansi_report_help(void)
 */
 void
 tools_status(
-		struct test_list *t GCC_UNUSED,
+		TestList * t GCC_UNUSED,
 		int *state GCC_UNUSED,
 		int *ch)
 {
@@ -703,7 +703,7 @@ sgr20(void)
 */
 void
 tools_sgr(
-	     struct test_list *t GCC_UNUSED,
+	     TestList * t GCC_UNUSED,
 	     int *state GCC_UNUSED,
 	     int *ch)
 {
@@ -811,7 +811,7 @@ Dec extended definitions
 */
 void
 tools_charset(
-		 struct test_list *t GCC_UNUSED,
+		 TestList * t GCC_UNUSED,
 		 int *state GCC_UNUSED,
 		 int *chp GCC_UNUSED)
 {

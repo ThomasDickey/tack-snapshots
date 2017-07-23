@@ -21,32 +21,32 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: modes.c,v 1.9 2017/07/21 23:59:45 tom Exp $")
+MODULE_ID("$Id: modes.c,v 1.10 2017/07/23 16:08:17 tom Exp $")
 
 /*
  * Tests boolean flags and terminal modes.
  */
-static void subtest_os(struct test_list *, int *, int *);
-static void subtest_rmam(struct test_list *, int *, int *);
-static void subtest_smam(struct test_list *, int *, int *);
-static void subtest_am(struct test_list *, int *, int *);
-static void subtest_ul(struct test_list *, int *, int *);
-static void subtest_uc(struct test_list *, int *, int *);
-static void subtest_bw(struct test_list *, int *, int *);
-static void subtest_xenl(struct test_list *, int *, int *);
-static void subtest_eo(struct test_list *, int *, int *);
-static void subtest_xmc(struct test_list *, int *, int *);
-static void subtest_xhp(struct test_list *, int *, int *);
-static void subtest_mir(struct test_list *, int *, int *);
-static void subtest_msgr(struct test_list *, int *, int *);
-static void subtest_tbc(struct test_list *, int *, int *);
-static void subtest_xt(struct test_list *, int *, int *);
-static void subtest_hts(struct test_list *, int *, int *);
-static void subtest_cbt(struct test_list *, int *, int *);
-static void subtest_in(struct test_list *, int *, int *);
-static void subtest_dadb(struct test_list *, int *, int *);
+static void subtest_os(TestList *, int *, int *);
+static void subtest_rmam(TestList *, int *, int *);
+static void subtest_smam(TestList *, int *, int *);
+static void subtest_am(TestList *, int *, int *);
+static void subtest_ul(TestList *, int *, int *);
+static void subtest_uc(TestList *, int *, int *);
+static void subtest_bw(TestList *, int *, int *);
+static void subtest_xenl(TestList *, int *, int *);
+static void subtest_eo(TestList *, int *, int *);
+static void subtest_xmc(TestList *, int *, int *);
+static void subtest_xhp(TestList *, int *, int *);
+static void subtest_mir(TestList *, int *, int *);
+static void subtest_msgr(TestList *, int *, int *);
+static void subtest_tbc(TestList *, int *, int *);
+static void subtest_xt(TestList *, int *, int *);
+static void subtest_hts(TestList *, int *, int *);
+static void subtest_cbt(TestList *, int *, int *);
+static void subtest_in(TestList *, int *, int *);
+static void subtest_dadb(TestList *, int *, int *);
 
-struct test_list mode_test_list[] =
+TestList mode_test_list[] =
 {
     MY_EDIT_MENU
     {MENU_NEXT, 3, "os", 0, 0, subtest_os, 0},
@@ -78,7 +78,7 @@ struct test_list mode_test_list[] =
 */
 static void
 subtest_os(
-	      struct test_list *t,
+	      TestList * t,
 	      int *state,
 	      int *ch)
 {
@@ -98,7 +98,7 @@ subtest_os(
 */
 static void
 subtest_rmam(
-		struct test_list *t,
+		TestList * t,
 		int *state,
 		int *ch)
 {
@@ -144,7 +144,7 @@ subtest_rmam(
 */
 static void
 subtest_smam(
-		struct test_list *t,
+		TestList * t,
 		int *state,
 		int *ch)
 {
@@ -190,7 +190,7 @@ subtest_smam(
 */
 static void
 subtest_am(
-	      struct test_list *t,
+	      TestList * t,
 	      int *state,
 	      int *ch)
 {
@@ -274,7 +274,7 @@ ucprint(const char *s)
 */
 static void
 subtest_ul(
-	      struct test_list *t,
+	      TestList * t,
 	      int *state,
 	      int *ch)
 {
@@ -300,7 +300,7 @@ subtest_ul(
 */
 static void
 subtest_uc(
-	      struct test_list *t,
+	      TestList * t,
 	      int *state,
 	      int *ch)
 {
@@ -324,7 +324,7 @@ subtest_uc(
 */
 static void
 subtest_bw(
-	      struct test_list *t,
+	      TestList * t,
 	      int *state,
 	      int *ch)
 {
@@ -368,7 +368,7 @@ subtest_bw(
 */
 static void
 subtest_tbc(
-	       struct test_list *t,
+	       TestList * t,
 	       int *state,
 	       int *ch)
 {
@@ -410,7 +410,7 @@ subtest_tbc(
 */
 static void
 subtest_hts(
-	       struct test_list *t,
+	       TestList * t,
 	       int *state,
 	       int *ch)
 {
@@ -483,7 +483,7 @@ subtest_hts(
 */
 static void
 subtest_xt(
-	      struct test_list *t,
+	      TestList * t,
 	      int *state,
 	      int *ch)
 {
@@ -515,7 +515,7 @@ subtest_xt(
 */
 static void
 subtest_cbt(
-	       struct test_list *t,
+	       TestList * t,
 	       int *state,
 	       int *ch)
 {
@@ -559,7 +559,7 @@ subtest_cbt(
 */
 static void
 subtest_xenl(
-		struct test_list *t,
+		TestList * t,
 		int *state,
 		int *ch)
 {
@@ -656,7 +656,7 @@ subtest_xenl(
 */
 static void
 subtest_eo(
-	      struct test_list *t,
+	      TestList * t,
 	      int *state,
 	      int *ch)
 {
@@ -683,7 +683,7 @@ subtest_eo(
 */
 static void
 subtest_xmc(
-	       struct test_list *t,
+	       TestList * t,
 	       int *state,
 	       int *ch)
 {
@@ -719,7 +719,7 @@ subtest_xmc(
 */
 static void
 subtest_xhp(
-	       struct test_list *t,
+	       TestList * t,
 	       int *state,
 	       int *ch)
 {
@@ -744,7 +744,7 @@ subtest_xhp(
 */
 static void
 subtest_mir(
-	       struct test_list *t,
+	       TestList * t,
 	       int *state,
 	       int *ch)
 {
@@ -797,7 +797,7 @@ subtest_mir(
 */
 static void
 subtest_msgr(
-		struct test_list *t,
+		TestList * t,
 		int *state,
 		int *ch)
 {
@@ -849,7 +849,7 @@ subtest_msgr(
 */
 static void
 subtest_in(
-	      struct test_list *t,
+	      TestList * t,
 	      int *state,
 	      int *ch)
 {
@@ -877,7 +877,7 @@ subtest_in(
 */
 static void
 subtest_dadb(
-		struct test_list *t,
+		TestList * t,
 		int *state,
 		int *ch)
 {

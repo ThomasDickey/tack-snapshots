@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997,2010 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2010,2017 Free Software Foundation, Inc.
 ** 
 ** This file is part of TACK.
 ** 
@@ -21,15 +21,15 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: menu.c,v 1.9 2010/09/03 22:21:57 tom Exp $")
+MODULE_ID("$Id: menu.c,v 1.10 2017/07/23 16:08:17 tom Exp $")
 
 /*
    Menu control
  */
 
-static void test_byname(struct test_menu *, int *, int *);
+static void test_byname(TestMenu *, int *, int *);
 
-struct test_list *augment_test;
+TestList *augment_test;
 char prompt_string[80];		/* menu prompt storage */
 
 /*
@@ -50,7 +50,7 @@ menu_prompt(void)
 */
 static void
 menu_test_loop(
-		  struct test_list *test,
+		  TestList * test,
 		  int *state,
 		  int *ch)
 {
@@ -113,13 +113,13 @@ menu_test_loop(
 */
 void
 menu_display(
-		struct test_menu *menu,
+		TestMenu * menu,
 		int *last_ch)
 {
     int test_state = 0, run_standard_tests;
     int hot_topic, ch = 0, nch = 0;
-    struct test_list *mt;
-    struct test_list *repeat_tests = 0;
+    TestList *mt;
+    TestList *repeat_tests = 0;
     int repeat_state = 0;
     int prompt_length;
 
@@ -254,7 +254,7 @@ menu_display(
 */
 void
 generic_done_message(
-			struct test_list *test,
+			TestList * test,
 			int *state,
 			int *ch)
 {
@@ -283,7 +283,7 @@ generic_done_message(
 */
 void
 menu_clear_screen(
-		     struct test_list *test GCC_UNUSED,
+		     TestList * test GCC_UNUSED,
 		     int *state GCC_UNUSED,
 		     int *ch GCC_UNUSED)
 {
@@ -297,7 +297,7 @@ menu_clear_screen(
 */
 void
 menu_reset_init(
-		   struct test_list *test GCC_UNUSED,
+		   TestList * test GCC_UNUSED,
 		   int *state GCC_UNUSED,
 		   int *ch GCC_UNUSED)
 {
@@ -313,11 +313,11 @@ menu_reset_init(
 */
 int
 subtest_menu(
-		struct test_list *test,
+		TestList * test,
 		int *state,
 		int *ch)
 {
-    struct test_list *mt;
+    TestList *mt;
 
     if (*ch) {
 	for (mt = test; (mt->flags & MENU_LAST) == 0; mt++) {
@@ -338,9 +338,9 @@ subtest_menu(
 */
 void
 menu_can_scan(
-		 const struct test_menu *menu)
+		 const TestMenu * menu)
 {
-    struct test_list *mt;
+    TestList *mt;
 
     for (mt = menu->tests; (mt->flags & MENU_LAST) == 0; mt++) {
 	can_test(mt->caps_done, FLAG_CAN_TEST);
@@ -360,12 +360,12 @@ menu_can_scan(
 */
 static void
 menu_search(
-	       struct test_menu *menu,
+	       TestMenu * menu,
 	       int *state,
 	       int *ch,
 	       char *cap)
 {
-    struct test_list *mt;
+    TestList *mt;
     int nch;
 
     for (mt = menu->tests; (mt->flags & MENU_LAST) == 0; mt++) {
@@ -396,7 +396,7 @@ menu_search(
 */
 static void
 test_byname(
-	       struct test_menu *menu,
+	       TestMenu * menu,
 	       int *state GCC_UNUSED,
 	       int *ch)
 {

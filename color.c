@@ -21,20 +21,20 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: color.c,v 1.13 2017/07/21 23:59:24 tom Exp $")
+MODULE_ID("$Id: color.c,v 1.14 2017/07/23 16:08:17 tom Exp $")
 
 /*
  * Color terminal tests.  Has only one entry point: test_color().
  */
 
-static void color_check(struct test_list *, int *, int *);
-static void color_setf(struct test_list *, int *, int *);
-static void color_matrix(struct test_list *, int *, int *);
-static void color_ncv(struct test_list *, int *, int *);
-static void color_ccc(struct test_list *, int *, int *);
-static void color_bce(struct test_list *, int *, int *);
+static void color_check(TestList *, int *, int *);
+static void color_setf(TestList *, int *, int *);
+static void color_matrix(TestList *, int *, int *);
+static void color_ncv(TestList *, int *, int *);
+static void color_ccc(TestList *, int *, int *);
+static void color_bce(TestList *, int *, int *);
 /* *INDENT-OFF* */
-struct test_list color_test_list[] = {
+TestList color_test_list[] = {
     MY_EDIT_MENU
     {MENU_NEXT, 2,  "colors) (pairs",    0, 0,                  color_check, 0},
     {MENU_NEXT, 12, "setf) (setb) (scp", 0, 0,                  color_setf,   0},
@@ -546,7 +546,7 @@ dump_colors(void)
 */
 static void
 color_check(
-	       struct test_list *t,
+	       TestList * t,
 	       int *state,
 	       int *ch)
 {
@@ -569,7 +569,7 @@ color_check(
 */
 static void
 color_setf(
-	      struct test_list *t,
+	      TestList * t,
 	      int *state,
 	      int *ch)
 {
@@ -634,7 +634,7 @@ color_setf(
 */
 static void
 color_matrix(
-		struct test_list *t,
+		TestList * t,
 		int *state,
 		int *ch)
 {
@@ -700,7 +700,7 @@ color_matrix(
 */
 static void
 color_ncv(
-	     struct test_list *t,
+	     TestList * t,
 	     int *state,
 	     int *ch)
 {
@@ -740,7 +740,7 @@ color_ncv(
 */
 static void
 color_bce(
-	     struct test_list *t,
+	     TestList * t,
 	     int *state,
 	     int *ch)
 {
@@ -764,7 +764,7 @@ color_bce(
 */
 static void
 color_ccc(
-	     struct test_list *t,
+	     TestList * t,
 	     int *state,
 	     int *ch)
 {

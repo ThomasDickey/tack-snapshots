@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.47 2017/07/21 23:41:51 tom Exp $ */
+/* $Id: tack.h,v 1.57 2017/07/23 23:42:17 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -28,7 +28,7 @@
 
 #define MAJOR_VERSION 1
 #define MINOR_VERSION 7
-#define PATCH_VERSION 20170318
+#define PATCH_VERSION 20170723
 
 #ifdef HAVE_CONFIG_H
 #include <ncurses_cfg.h>
@@ -100,16 +100,16 @@
 #endif /* gcc workarounds */
 
 #ifndef down_half_line
-#define down_half_line 0		/* NetBSD bug */
+#define down_half_line 0	/* NetBSD bug */
 #endif
 #ifndef hue_lightness_saturation
 #define hue_lightness_saturation 0	/* NetBSD bug */
 #endif
 #ifndef prtr_off
-#define prtr_off 0			/* NetBSD bug */
+#define prtr_off 0		/* NetBSD bug */
 #endif
 #ifndef prtr_on
-#define prtr_on 0			/* NetBSD bug */
+#define prtr_on 0		/* NetBSD bug */
 #endif
 
 #if NO_LEAKS
@@ -122,18 +122,20 @@ extern void ExitProgram(int) GCC_NORETURN;
 #define NO_LEAKS 0
 #endif
 
-#ifdef TERMINFO_READONLY
-#define ChangeTermInfo(name,value) /* nothing */
-#else
+#ifdef NCURSES_VERSION
 #define ChangeTermInfo(name,value) name = value
+#else
+#define ChangeTermInfo(name,value)	/* nothing */
 #endif
 
 #define FreeIfNeeded(p) if (p) { free(p); p = 0; }
 
+#include <tackgen.h>
+
 #ifdef NCURSES_VERSION
 #define CUR_TP      ((TERMTYPE *)(cur_term))
-#define MAX_BOOLEAN BOOLCOUNT /* NUM_BOOLEANS(CUR_TP) */
-#define MAX_NUMBERS NUMCOUNT  /* NUM_NUMBERS(CUR_TP) */
+#define MAX_BOOLEAN BOOLCOUNT	/* NUM_BOOLEANS(CUR_TP) */
+#define MAX_NUMBERS NUMCOUNT	/* NUM_NUMBERS(CUR_TP) */
 #define MAX_STRINGS NUM_STRINGS(CUR_TP)
 #define STR_NAME(n) ExtStrname(CUR_TP,n,strnames)
 #elif defined(BOOLCOUNT)
@@ -145,6 +147,7 @@ extern void ExitProgram(int) GCC_NORETURN;
 #define MAX_BOOLEAN 1		/* FIXME */
 #define MAX_NUMBERS 1		/* FIXME */
 #define MAX_STRINGS 1		/* FIXME */
+#define STR_NAME(n) strnames[n]
 #endif
 
 /* see ncurses' nc_tparm.h */
@@ -253,22 +256,22 @@ extern int send_reset_init;
 #define MAX_SCAN 256
 
 /* translate mode default strings */
-struct default_string_list {
+typedef struct default_string_list {
     const char *name;		/* terminfo name */
     const char *value;		/* value of default string */
     int index;			/* index into the strfname[] array */
-};
+} DefaultStringList;
 
 #define TM_last 8
 extern struct default_string_list TM_string[TM_last];
 
 /* attribute structure definition */
-struct mode_list {
+typedef struct mode_list {
     const char *name;
     const char *begin_mode;
     const char *end_mode;
     int number;
-};
+} ModeList;
 
 extern const struct mode_list alt_modes[];
 extern const int mode_map[];
@@ -308,38 +311,42 @@ extern unsigned long tx_cps;	/* characters per second */
 	Menu control for tack.
 */
 
-struct test_results {
+struct test_list;
+typedef void (TestFunc) (struct test_list * t, int *state, int *ch);
+
+struct test_menu;
+typedef void (MenuFunc) (struct test_menu *);
+
+typedef struct test_results {
     struct test_results *next;	/* point to next entry */
     struct test_list *test;	/* Test which got these results */
     int reps;			/* repeat count */
     int delay;			/* delay times 10 */
-};
+} TestResults;
 
-struct test_list {
+typedef struct test_list {
     int flags;			/* Test description flags */
     int lines_needed;		/* Lines needed for test (0->no action) */
     const char *caps_done;	/* Caps shown in Done message */
     const char *caps_tested;	/* Other caps also being tested */
     const char *menu_entry;	/* Menu entry text (optional) */
-    /* Function that does testing */
-    void (*test_procedure) (struct test_list *, int *, int *);
+    TestFunc *test_procedure;	/* Function that does testing */
     struct test_menu *sub_menu;	/* Nested sub-menu */
-};
+} TestList;
 
-struct test_menu {
+typedef struct test_menu {
     int flags;			/* Menu feature flag */
     int default_action;		/* Default command if <cr> <lf> entered */
     const char *menu_text;	/* Describe this test_menu */
     const char *menu_title;	/* Title for the menu */
     const char *ident;		/* short menu name */
     const char *standard_tests;	/* Standard test text */
-    /* print current settings (optional) */
-    void (*menu_function) (struct test_menu *);
-    struct test_list *tests;	/* Pointer to the menu/function pairs */
-    struct test_list *resume_tests;	/* Standard test resume point */
+    MenuFunc *menu_function;	/* print current settings (optional) */
+    TestList *tests;		/* Pointer to the menu/function pairs */
+    TestList *resume_tests;	/* Standard test resume point */
     int resume_state;		/* resume state of test group */
     int resume_char;		/* resume ch of test group */
-};
+} TestMenu;
 
 /* menu flags */
 #define MENU_100c	0x00001a00	/* Augment 100% of columns */
@@ -377,10 +384,16 @@ struct test_menu {
 
 /* tack.c */
 #ifdef NCURSES_VERSION
-extern struct test_menu edit_menu;
+extern TestMenu edit_menu;
 #define MY_EDIT_MENU	{0, 0, 0, 0, "e) edit terminfo", 0, &edit_menu},
 #else
-#define MY_EDIT_MENU	/* nothing */
+#define MY_EDIT_MENU		/* nothing */
+#endif
+#ifdef DEBUG
+#define TRACE(p) p
+extern void Trace(const char *,...) GCC_PRINTFLIKE(1,2);
+#else
+#define TRACE(p)		/* nothing */
 #endif
 extern void show_usage(char *);
 extern void print_version(void);
@@ -393,7 +406,6 @@ extern char *hex_expand_to(char *, int);
 extern char *print_expand(char *);
 extern int getchp(int);
 extern int getnext(int);
-extern int tc_putch(int);
 extern int tc_putp(const char *);
 extern int wait_here(void);
 extern void go_home(void);
@@ -419,70 +431,78 @@ extern void tt_putp(const char *);
 extern void tt_putparm(NCURSES_CONST char *, int, int, int);
 extern void tt_tputs(const char *, int);
 
+/* Solaris is out of step - humor it */
+#if defined(__EXTENSIONS__) && !defined(NCURSES_VERSION)
+#define TC_PUTCH char
+#else
+#define TC_PUTCH int
+#endif
+extern int tc_putch(TC_PUTCH);
+
 #define put_that(n) put_this((int) (n))
 
 /* control.c */
-extern struct test_list color_test_list[];
+extern TestList color_test_list[];
 extern char *liberated(const char *);
 extern char txt_longer_augment[80];
 extern char txt_longer_test_time[80];
 extern char txt_shorter_augment[80];
 extern char txt_shorter_test_time[80];
 extern int msec_cost(const char *const, int);
-extern int skip_pad_test(struct test_list *, int *, int *, const char *);
+extern int skip_pad_test(TestList *, int *, int *, const char *);
 extern int sliding_scale(int, int, unsigned long);
 extern int still_testing(void);
 extern long event_time(int);
 extern void control_init(void);
-extern void dump_test_stats(struct test_list *, int *, int *);
+extern void dump_test_stats(TestList *, int *, int *);
 extern void event_start(int);
-extern void longer_augment(struct test_list *, int *, int *);
-extern void longer_test_time(struct test_list *, int *, int *);
-extern void pad_test_shutdown(struct test_list *, int);
+extern void longer_augment(TestList *, int *, int *);
+extern void longer_test_time(TestList *, int *, int *);
+extern void pad_test_shutdown(TestList *, int);
 extern void pad_test_startup(int);
 extern void page_loop(void);
 extern void set_augment_txt(void);
-extern void shorter_augment(struct test_list *, int *, int *);
-extern void shorter_test_time(struct test_list *, int *, int *);
+extern void shorter_augment(TestList *, int *, int *);
+extern void shorter_test_time(TestList *, int *, int *);
 
 /* charset.c */
-extern struct test_list acs_test_list[];
+extern TestList acs_test_list[];
 extern void set_attr(int);
 extern void eat_cookie(void);
 extern void put_mode(const char *);
 
 /* crum.c */
-extern struct test_list crum_test_list[];
+extern TestList crum_test_list[];
 
 /* ansi.c */
-extern void tools_status(struct test_list *, int *, int *);
-extern void tools_charset(struct test_list *, int *, int *);
-extern void tools_sgr(struct test_list *, int *, int *);
+extern void tools_status(TestList *, int *, int *);
+extern void tools_charset(TestList *, int *, int *);
+extern void tools_sgr(TestList *, int *, int *);
 
 /* edit.c */
 #ifdef NCURSES_VERSION
-extern struct test_menu change_pad_menu;
-extern struct test_list edit_test_list[];
+extern TestMenu change_pad_menu;
+extern TestList edit_test_list[];
 #define MY_PADS_MENU	{0, 0, 0, 0, "p) change padding", 0, &change_pad_menu},
 #else
-#define MY_PADS_MENU	/* nothing */
+#define MY_PADS_MENU		/* nothing */
 #endif
-extern char *get_string_cap_byname(const char *, const char **);
+extern const char *get_string_cap_byname(const char *, const char **);
 extern int cap_match(const char *names, const char *cap);
 extern int get_string_cap_byvalue(const char *);
 extern int user_modified(void);
 extern void can_test(const char *, int);
 extern void cap_index(const char *, int *);
 extern void edit_init(void);
-extern void save_info(struct test_list *, int *, int *);
-extern void show_report(struct test_list *, int *, int *);
+extern void save_info(TestList *, int *, int *);
+extern void show_report(TestList *, int *, int *);
 
 /* fun.c */
-extern struct test_list funkey_test_list[];
-extern struct test_list printer_test_list[];
+extern TestList funkey_test_list[];
+extern TestList printer_test_list[];
 extern void enter_key(const char *, char *, char *);
 extern int tty_meta_prep(void);
-extern void tools_report(struct test_list *, int *, int *);
+extern void tools_report(TestList *, int *, int *);
 
 /* init.c */
 extern void reset_init(void);
@@ -513,28 +533,28 @@ extern void tty_set(void);
 
 /* menu.c */
 extern char prompt_string[80];	/* menu prompt storage */
-extern int subtest_menu(struct test_list *, int *, int *);
-extern struct test_list *augment_test;
-extern void generic_done_message(struct test_list *, int *, int *);
-extern void menu_can_scan(const struct test_menu *);
-extern void menu_clear_screen(struct test_list *, int *, int *);
-extern void menu_display(struct test_menu *, int *);
+extern int subtest_menu(TestList *, int *, int *);
+extern TestList *augment_test;
+extern void generic_done_message(TestList *, int *, int *);
+extern void menu_can_scan(const TestMenu *);
+extern void menu_clear_screen(TestList *, int *, int *);
+extern void menu_display(TestMenu *, int *);
 extern void menu_prompt(void);
-extern void menu_reset_init(struct test_list *, int *, int *);
-extern void pad_done_message(struct test_list *, int *, int *);
+extern void menu_reset_init(TestList *, int *, int *);
+extern void pad_done_message(TestList *, int *, int *);
 
 /* modes.c */
-extern struct test_list mode_test_list[];
+extern TestList mode_test_list[];
 
 /* pad.c */
-extern struct test_list pad_test_list[];
+extern TestList pad_test_list[];
 
 /* sync.c */
-extern struct test_menu sync_menu;
+extern TestMenu sync_menu;
 extern int tty_sync_error(void);
 extern void flush_input(void);
-extern void sync_handshake(struct test_list *, int *, int *);
-extern void sync_test(struct test_menu *);
+extern void sync_handshake(TestList *, int *, int *);
+extern void sync_test(TestMenu *);
 extern void verify_time(void);
 
 #endif /* NCURSES_TACK_H_incl */

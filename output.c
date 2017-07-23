@@ -23,7 +23,7 @@
 #include <tack.h>
 #include <time.h>
 
-MODULE_ID("$Id: output.c,v 1.22 2017/07/21 20:48:30 tom Exp $")
+MODULE_ID("$Id: output.c,v 1.23 2017/07/23 15:37:00 tom Exp $")
 
 /* globals */
 long char_sent;			/* number of characters sent */
@@ -115,7 +115,7 @@ getchp(int mask)
 **	Output one character
 */
 int
-tc_putch(int c)
+tc_putch(TC_PUTCH c)
 {
     char_sent++;
     raw_characters_sent++;

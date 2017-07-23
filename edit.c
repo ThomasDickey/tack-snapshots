@@ -22,10 +22,9 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include <tackgen.h>
 #include <tack.h>
 
-MODULE_ID("$Id: edit.c,v 1.26 2017/07/21 23:58:01 tom Exp $")
+MODULE_ID("$Id: edit.c,v 1.33 2017/07/23 22:57:20 tom Exp $")
 
 /*
  * These are adapted from tic.h
@@ -58,7 +57,7 @@ typedef struct {
 #define SHOW_DELETE	3
 
 static char change_pad_text[MAX_CHANGES][80];
-static struct test_list change_pad_list[MAX_CHANGES] =
+static TestList change_pad_list[MAX_CHANGES] =
 {
     {MENU_LAST, 0, 0, 0, 0, 0, 0}
 };
@@ -73,8 +72,10 @@ static int *label_strings;
 static int xon_index;		/* Subscript for (xon) */
 static int xon_shadow;
 
+#ifdef NCURSES_VERSION
 static int start_display;	/* the display has just started */
 static int display_lines;	/* number of lines displayed */
+#endif
 
 static void
 alloc_arrays(void)
@@ -99,83 +100,488 @@ compare_capability(const void *a, const void *b)
     return strcmp(p->nt_name, q->nt_name);
 }
 
+#define DATA(index,name,type) { name,type,index }
+static NAME_TABLE name_table[] =
+{
+#include <tackgen.h>
+};
+#undef DATA
+
+#define SIZEOF_NAME_TABLE (sizeof(name_table) / sizeof(name_table[0]))
+
 static NAME_TABLE const *
 find_capability(const char *name)
 {
-#define DATA(index,name,type) { name,type,index }
-    static NAME_TABLE table[] =
-    {
-#include <tackgen.h>
-    };
     NAME_TABLE key;
     NAME_TABLE *lookup;
     memset(&key, 0, sizeof(key));
     key.nt_name = name;
-    lookup = bsearch(&key, table,
-		     sizeof(table) / sizeof(table[0]), sizeof(table[0]),
+    lookup = bsearch(&key, name_table,
+		     SIZEOF_NAME_TABLE,
+		     sizeof(name_table[0]),
 		     compare_capability);
     return lookup ? lookup : 0;
-#undef DATA
 }
 
+#ifndef NCURSES_VERSION
+/*
+ * This is used to relate array-index to capability name/type.
+ */
 static NAME_TABLE const *
-find_string_capability(const char *name)
+find_cap_by_index(int capIndex, NAME_TYPE capType)
+{
+    static NAME_TABLE const *result = 0;
+    size_t n;
+    for (n = 0; n < SIZEOF_NAME_TABLE; ++n) {
+	if (name_table[n].nt_index == capIndex
+	    && name_table[n].nt_type == capType) {
+	    result = &name_table[n];
+	    break;
+	}
+    }
+    return result;
+}
+#endif
+
+static NAME_TABLE const *
+find_string_cap_by_name(const char *name)
 {
     NAME_TABLE const *result = find_capability(name);
-    if (result->nt_type != STRING)
+    if (result != 0 && result->nt_type != STRING)
 	result = 0;
     return result;
 }
 
+#ifdef NCURSES_VERSION
+
+#define set_saved_boolean(num, value) original_term.Booleans[num] = (char)value
+#define set_saved_number(num, value)  original_term.Numbers[num]  = (short)value
+#define set_saved_string(num, value)  original_term.Strings[num]  = value
+
+#define get_saved_boolean(num)        original_term.Booleans[num]
+#define get_saved_number(num)         original_term.Numbers[num]
+#define get_saved_string(num)         original_term.Strings[num]
+
+#define set_newer_boolean(num, value) CUR Booleans[num] = (char)value
+#define set_newer_number(num, value)  CUR Numbers[num] = (short)value
+#define set_newer_string(num, value)  CUR Strings[num] = value
+
+#define get_newer_boolean(num)        CUR Booleans[num]
+#define get_newer_number(num)         CUR Numbers[num]
+#define get_newer_string(num)         CUR Strings[num]
+
+#else
+
+#define set_saved_boolean(num, value)	/* nothing */
+#define set_saved_number(num, value)	/* nothing */
+#define set_saved_string(num, value)	/* nothing */
+
+#define set_newer_boolean(num, value)	/* nothing */
+#define set_newer_number(num, value)	/* nothing */
+#define set_newer_string(num, value)	/* nothing */
+
+#if 0
+static int
+get_newer_boolean(int num)
+{
+    int result = 0;
+    const NAME_TABLE *p = find_cap_by_index(num, BOOLEAN);
+    if (p != 0)
+	result = tigetflag((char *) p->nt_name);
+    return result;
+}
+
+static int
+get_newer_number(int num)
+{
+    int result = 0;
+    const NAME_TABLE *p = find_cap_by_index(num, NUMBER);
+    if (p != 0)
+	result = tigetnum((char *) p->nt_name);
+    return result;
+}
+#endif
+
+static char *
+get_newer_string(int num)
+{
+    char *result = 0;
+    const NAME_TABLE *p = find_cap_by_index(num, STRING);
+    if (p != 0)
+	result = tigetstr((char *) p->nt_name);
+    return result;
+}
+
+#endif
+
 /*
-**	send_info_string(str)
+**	get_string_cap_byname(name, long_name)
 **
-**	Return the terminfo string prefixed by the correct separator
+**	Given a cap name, find the value
+**	Errors are quietly ignored.
+*/
+const char *
+get_string_cap_byname(
+			 const char *name,
+			 const char **long_name)
+{
+    NAME_TABLE const *nt;
+
+    if ((nt = find_string_cap_by_name(name)) != 0) {
+#ifdef HAVE_CURSES_DATA_BOOLFNAMES
+	*long_name = strfnames[nt->nt_index];
+#endif
+	return (get_newer_string(nt->nt_index));
+    }
+    *long_name = "??";
+    return (char *) 0;
+}
+
+/*
+**	get_string_cap_byvalue(value)
+**
+**	Given a capability string, find its position in the data base.
+**	Return the index or -1 if not found.
+*/
+int
+get_string_cap_byvalue(
+			  const char *value)
+{
+    int i;
+
+    if (value) {
+	for (i = 0; i < (int) MAX_STRINGS; i++) {
+	    /* FIXME - this implies ncurses... */
+	    if (get_newer_string(i) == value) {
+		return i;
+	    }
+	}
+	/* search for translated strings */
+	for (i = 0; i < TM_last; i++) {
+	    if (TM_string[i].value == value) {
+		return TM_string[i].index;
+	    }
+	}
+    }
+    return -1;
+}
+
+/*
+**	user_modified()
+**
+**	Return TRUE if the user has modified the terminfo
+*/
+#ifdef NCURSES_VERSION
+int
+user_modified(void)
+{
+    const char *a, *b;
+    int i, v;
+
+    for (i = 0; i < MAX_BOOLEAN; i++) {
+	v = (i == xon_index) ? xon_shadow : get_newer_boolean(i);
+	if (get_saved_boolean(i) != v) {
+	    return TRUE;
+	}
+    }
+    for (i = 0; i < MAX_NUMBERS; i++) {
+	if (get_saved_number(i) != get_newer_number(i)) {
+	    return TRUE;
+	}
+    }
+    for (i = 0; i < (int) MAX_STRINGS; i++) {
+	if ((a = get_saved_string(i)) == 0)
+	    a = "";
+	if ((b = get_newer_string(i)) == 0)
+	    b = "";
+	if (strcmp(a, b)) {
+	    return TRUE;
+	}
+    }
+    return FALSE;
+}
+#endif
+
+/*****************************************************************************
+ *
+ * Maintain the list of capabilities that can be tested
+ *
+ *****************************************************************************/
+
+/*
+**	mark_cap(name, flag)
+**
+**	Mark the cap data base with the flag provided.
 */
 static void
-send_info_string(
-		    const char *str,
-		    int *ch)
+mark_cap(
+	    char *name,
+	    int flag)
 {
-    int len;
+    NAME_TABLE const *nt;
 
-    if (display_lines == -1) {
-	return;
-    }
-    len = (int) strlen(str);
-    if (len + char_count + 3 >= columns) {
-	if (start_display == 0) {
-	    put_str(",");
+    alloc_arrays();
+    if ((nt = find_capability(name)) != 0) {
+	switch (nt->nt_type) {
+	case BOOLEAN:
+	    flag_boolean[nt->nt_index] = ((char)
+					  (flag_boolean[nt->nt_index]
+					   | flag));
+	    break;
+	case STRING:
+	    flag_strings[nt->nt_index] = ((char)
+					  (flag_strings[nt->nt_index]
+					   | flag));
+	    break;
+	case NUMBER:
+	    flag_numbers[nt->nt_index] = ((char)
+					  (flag_numbers[nt->nt_index]
+					   | flag));
+	    break;
+	default:
+	    sprintf(temp, "unknown cap type (%s)", name);
+	    ptextln(temp);
+	    break;
 	}
-	put_crlf();
-	if (++display_lines > lines) {
-	    ptext("-- more -- ");
-	    *ch = wait_here();
-	    if (*ch == 'q') {
-		display_lines = -1;
-		return;
-	    }
-	    display_lines = 0;
-	}
-	if (len >= columns) {
-	    /* if the terminal does not (am) then this loses */
-	    if (columns) {
-		display_lines += (((int) strlen(str) + 3) / columns) + 1;
-	    }
-	    put_str("   ");
-	    put_str(str);
-	    start_display = 0;
-	    return;
-	}
-	ptext("   ");
-    } else if (start_display == 0) {
-	ptext(", ");
     } else {
-	ptext("   ");
+	sprintf(temp, "Cap not found: %s", name);
+	ptextln(temp);
+	(void) wait_here();
     }
-    ptext(str);
-    start_display = 0;
 }
+
+/*
+**	can_test(name-list, flags)
+**
+**	Scan the name list and get the names.
+**	Enter each name into the can-test data base.
+**	<space> ( and ) may be used as separators.
+*/
+void
+can_test(
+	    const char *s,
+	    int flags)
+{
+    int ch, j;
+    char name[32];
+
+    if (s) {
+	for (j = 0; (ch = name[j] = *s); s++) {
+	    if (ch == ' ' || ch == ')' || ch == '(') {
+		if (j) {
+		    name[j] = '\0';
+		    mark_cap(name, flags);
+		}
+		j = 0;
+	    } else {
+		j++;
+	    }
+	}
+	if (j) {
+	    mark_cap(name, flags);
+	}
+    }
+}
+
+/*
+**	cap_index(name-list, index-list)
+**
+**	Scan the name list and return a list of indexes.
+**	<space> ( and ) may be used as separators.
+**	This list is terminated with -1.
+*/
+void
+cap_index(
+	     const char *s,
+	     int *inx)
+{
+    NAME_TABLE const *nt;
+    int ch, j;
+    char name[32];
+
+    if (s) {
+	for (j = 0;; s++) {
+	    ch = name[j] = *s;
+	    if (ch == ' ' || ch == ')' || ch == '(' || ch == 0) {
+		if (j) {
+		    name[j] = '\0';
+		    if ((nt = find_string_cap_by_name(name)) != 0) {
+			*inx++ = nt->nt_index;
+		    }
+		}
+		if (ch == 0) {
+		    break;
+		}
+		j = 0;
+	    } else {
+		j++;
+	    }
+	}
+    }
+    *inx = -1;
+}
+
+/*
+**	cap_match(name-list, cap)
+**
+**	Scan the name list and see if the cap is in the list.
+**	Return TRUE if we find an exact match.
+**	<space> ( and ) may be used as separators.
+*/
+int
+cap_match(
+	     const char *names,
+	     const char *cap)
+{
+    const char *s;
+    int c, l, t;
+
+    if (names) {
+	l = (int) strlen(cap);
+	while ((s = strstr(names, cap))) {
+	    c = (names == s) ? 0 : *(s - 1);
+	    t = s[l];
+	    if ((c == 0 || c == ' ' || c == '(') &&
+		(t == 0 || t == ' ' || t == ')')) {
+		return TRUE;
+	    }
+	    if (t == 0) {
+		break;
+	    }
+	    names = s + l;
+	}
+    }
+    return FALSE;
+}
+
+/*
+**	show_report(test_list, status, ch)
+**
+**	Display a list of caps that can be tested
+*/
+void
+show_report(
+	       TestList * t,
+	       int *state GCC_UNUSED,
+	       int *ch)
+{
+    int i, j, nc, flag;
+    const char *s;
+    size_t count = (size_t) (MAX_BOOLEAN + MAX_NUMBERS + MAX_STRINGS);
+    const char **nx = (const char **) calloc(sizeof(const char *), count);
+
+    alloc_arrays();
+    flag = t->flags & 255;
+    nc = 0;
+    for (i = 0; i < MAX_BOOLEAN; i++) {
+	if (flag_boolean[i] & flag) {
+	    nx[nc++] = boolnames[i];
+	}
+    }
+    for (i = 0; i < MAX_NUMBERS; i++) {
+	if (flag_numbers[i] & flag) {
+	    nx[nc++] = numnames[i];
+	}
+    }
+    for (i = 0; i < (int) MAX_STRINGS; i++) {
+	if (flag_strings[i] & flag) {
+	    nx[nc++] = STR_NAME(i);
+	}
+    }
+    /* sort */
+    for (i = 0; i < nc - 1; i++) {
+	for (j = i + 1; j < nc; j++) {
+	    if (strcmp(nx[i], nx[j]) > 0) {
+		s = nx[i];
+		nx[i] = nx[j];
+		nx[j] = s;
+	    }
+	}
+    }
+    if (flag & FLAG_FUNCTION_KEY) {
+	ptextln("The following function keys can be tested:");
+    } else if (flag & FLAG_CAN_TEST) {
+	ptextln("The following capabilities can be tested:");
+    } else if (flag & FLAG_TESTED) {
+	ptextln("The following capabilities have been tested:");
+    }
+    put_crlf();
+    for (i = 0; i < nc; i++) {
+	sprintf(temp, "%s ", nx[i]);
+	ptext(temp);
+    }
+    put_newlines(1);
+    *ch = REQUEST_PROMPT;
+    free(nx);
+}
+
+/*
+**	edit_init()
+**
+**	Initialize the function key data base
+*/
+void
+edit_init(void)
+{
+    int i, j, lc;
+    char *lab;
+    NAME_TABLE const *nt;
+
+    alloc_arrays();
+
+#ifdef NCURSES_VERSION
+    _nc_copy_termtype(&original_term, CUR_TP);
+    for (i = 0; i < MAX_BOOLEAN; i++) {
+	set_saved_boolean(i, get_newer_boolean(i));
+    }
+    for (i = 0; i < MAX_NUMBERS; i++) {
+	set_saved_number(i, get_newer_number(i));
+    }
+#endif
+    /* scan for labels */
+    for (i = lc = 0; i < (int) MAX_STRINGS; i++) {
+	set_saved_string(i, get_newer_string(i));
+	if (strncmp(STR_NAME(i), "lf", (size_t) 2) == 0) {
+	    flag_strings[i] |= FLAG_LABEL;
+	    if (get_newer_string(i)) {
+		label_strings[lc++] = i;
+	    }
+	}
+    }
+    /* scan for function keys */
+    for (i = 0; i < (int) MAX_STRINGS; i++) {
+	const char *this_name = STR_NAME(i);
+	if ((this_name[0] == 'k') && strcmp(this_name, "kmous")) {
+	    flag_strings[i] |= FLAG_FUNCTION_KEY;
+	    lab = (char *) 0;
+	    for (j = 0; j < lc; j++) {
+		if (!strcmp(this_name,
+			    STR_NAME(label_strings[j]))) {
+		    lab = get_newer_string(label_strings[j]);
+		    break;
+		}
+	    }
+	    enter_key(this_name, get_newer_string(i), lab);
+	}
+    }
+    /* Lookup the translated strings */
+    for (i = 0; i < TM_last; i++) {
+	if ((nt = find_string_cap_by_name(TM_string[i].name)) != 0) {
+	    TM_string[i].index = nt->nt_index;
+	} else {
+	    sprintf(temp, "TM_string lookup failed for: %s",
+		    TM_string[i].name);
+	    ptextln(temp);
+	}
+    }
+    if ((nt = find_capability("xon")) != 0) {
+	xon_index = nt->nt_index;
+    }
+    xon_shadow = xon_xoff;
+    FreeIfNeeded(label_strings);
+}
+
+#ifdef NCURSES_VERSION
 
 /*
 **	save_info_string(str, fp)
@@ -321,6 +727,147 @@ form_terminfo(const char *srcp)
 }
 
 /*
+**	save_info(test_list, status, ch)
+**
+**	Write the current terminfo to a file
+*/
+void
+save_info(
+	     TestList * t,
+	     int *state,
+	     int *ch)
+{
+    int i;
+    FILE *fp;
+    time_t now;
+    char buf[1024];
+
+    if ((fp = fopen(tty_basename, "w")) == (FILE *) NULL) {
+	(void) sprintf(temp, "can't open: %s", tty_basename);
+	ptextln(temp);
+	generic_done_message(t, state, ch);
+	return;
+    }
+    time(&now);
+    /* Note: ctime() returns a newline at the end of the string */
+    (void) fprintf(fp, "# Terminfo created by TACK for TERM=%s on %s",
+		   tty_basename, ctime(&now));
+    (void) fprintf(fp, "%s|%s,\n", tty_basename, longname());
+
+    display_lines = 0;
+    for (i = 0; i < MAX_BOOLEAN; i++) {
+	if (i == xon_index ? xon_shadow : get_newer_boolean(i)) {
+	    save_info_string(boolnames[i], fp);
+	}
+    }
+    for (i = 0; i < MAX_NUMBERS; i++) {
+	if (get_newer_number(i) >= 0) {
+	    sprintf(buf, "%s#%d", numnames[i], get_newer_number(i));
+	    save_info_string(buf, fp);
+	}
+    }
+    for (i = 0; i < (int) MAX_STRINGS; i++) {
+	const char *value = get_newer_string(i);
+	if (value) {
+	    sprintf(buf, "%s=%s", STR_NAME(i), form_terminfo(value));
+	    save_info_string(buf, fp);
+	}
+    }
+    (void) fprintf(fp, "\n");
+    (void) fclose(fp);
+    sprintf(temp, "Terminfo saved as file: %s", tty_basename);
+    ptextln(temp);
+}
+
+/*
+**	send_info_string(str)
+**
+**	Return the terminfo string prefixed by the correct separator
+*/
+static void
+send_info_string(
+		    const char *str,
+		    int *ch)
+{
+    int len;
+
+    if (display_lines == -1) {
+	return;
+    }
+    len = (int) strlen(str);
+    if (len + char_count + 3 >= columns) {
+	if (start_display == 0) {
+	    put_str(",");
+	}
+	put_crlf();
+	if (++display_lines > lines) {
+	    ptext("-- more -- ");
+	    *ch = wait_here();
+	    if (*ch == 'q') {
+		display_lines = -1;
+		return;
+	    }
+	    display_lines = 0;
+	}
+	if (len >= columns) {
+	    /* if the terminal does not (am) then this loses */
+	    if (columns) {
+		display_lines += (((int) strlen(str) + 3) / columns) + 1;
+	    }
+	    put_str("   ");
+	    put_str(str);
+	    start_display = 0;
+	    return;
+	}
+	ptext("   ");
+    } else if (start_display == 0) {
+	ptext(", ");
+    } else {
+	ptext("   ");
+    }
+    ptext(str);
+    start_display = 0;
+}
+
+/*
+**	show_info(test_list, status, ch)
+**
+**	Display the current terminfo
+*/
+static void
+show_info(
+	     TestList * t GCC_UNUSED,
+	     int *state GCC_UNUSED,
+	     int *ch)
+{
+    int i;
+    char buf[1024];
+
+    display_lines = 1;
+    start_display = 1;
+    for (i = 0; i < MAX_BOOLEAN; i++) {
+	if ((i == xon_index) ? xon_shadow : get_newer_boolean(i)) {
+	    send_info_string(boolnames[i], ch);
+	}
+    }
+    for (i = 0; i < MAX_NUMBERS; i++) {
+	if (get_newer_number(i) >= 0) {
+	    sprintf(buf, "%s#%d", numnames[i], get_newer_number(i));
+	    send_info_string(buf, ch);
+	}
+    }
+    for (i = 0; i < (int) MAX_STRINGS; i++) {
+	char *value = get_newer_string(i);
+	if (value) {
+	    sprintf(buf, "%s=%s", STR_NAME(i), print_expand(value));
+	    send_info_string(buf, ch);
+	}
+    }
+    put_newlines(2);
+    *ch = REQUEST_PROMPT;
+}
+
+/*
  * This is adapted (and reduced) from ncurses' _nc_trans_string function.
  *
  * Reads characters using next_char() until encountering a separator, nl,
@@ -361,7 +908,7 @@ scan_terminfo(const char *source, char *target, char *last)
 		goto error;
 
 	    if (!(c <= 126 && isprint(c))) {
-		fprintf(stderr, "Illegal ^ character - '%s'\n", unctrl(c));
+		fprintf(stderr, "Illegal ^ character - '%s'\n", unctrl(UChar(c)));
 	    }
 	    if (c == '?') {
 		*(target++) = '\177';
@@ -445,7 +992,7 @@ scan_terminfo(const char *source, char *target, char *last)
 			break;
 		    fprintf(stderr,
 			    "Illegal character '%s' in \\ sequence\n",
-			    unctrl(c));
+			    unctrl(UChar(c)));
 		    /* FALLTHRU */
 		case '\n':
 		    /* ignored */
@@ -469,475 +1016,13 @@ scan_terminfo(const char *source, char *target, char *last)
 }
 
 /*
-**	save_info(test_list, status, ch)
-**
-**	Write the current terminfo to a file
-*/
-void
-save_info(
-	     struct test_list *t,
-	     int *state,
-	     int *ch)
-{
-#ifdef NCURSES_VERSION
-    int i;
-    FILE *fp;
-    time_t now;
-    char buf[1024];
-
-    if ((fp = fopen(tty_basename, "w")) == (FILE *) NULL) {
-	(void) sprintf(temp, "can't open: %s", tty_basename);
-	ptextln(temp);
-	generic_done_message(t, state, ch);
-	return;
-    }
-    time(&now);
-    /* Note: ctime() returns a newline at the end of the string */
-    (void) fprintf(fp, "# Terminfo created by TACK for TERM=%s on %s",
-		   tty_basename, ctime(&now));
-    (void) fprintf(fp, "%s|%s,\n", tty_basename, longname());
-
-    display_lines = 0;
-    for (i = 0; i < MAX_BOOLEAN; i++) {
-	if (i == xon_index ? xon_shadow : CUR Booleans[i]) {
-	    save_info_string(boolnames[i], fp);
-	}
-    }
-    for (i = 0; i < MAX_NUMBERS; i++) {
-	if (CUR Numbers[i] >= 0) {
-	    sprintf(buf, "%s#%d", numnames[i], CUR Numbers[i]);
-	    save_info_string(buf, fp);
-	}
-    }
-    for (i = 0; i < (int) MAX_STRINGS; i++) {
-	if (CUR Strings[i]) {
-	    sprintf(buf, "%s=%s", STR_NAME(i), form_terminfo(CUR Strings[i]));
-	    save_info_string(buf, fp);
-	}
-    }
-    (void) fprintf(fp, "\n");
-    (void) fclose(fp);
-    sprintf(temp, "Terminfo saved as file: %s", tty_basename);
-    ptextln(temp);
-#endif
-}
-
-
-/*
-**	get_string_cap_byname(name, long_name)
-**
-**	Given a cap name, find the value
-**	Errors are quietly ignored.
-*/
-char *
-get_string_cap_byname(
-			 const char *name,
-			 const char **long_name)
-{
-#ifdef NCURSES_VERSION
-    NAME_TABLE const *nt;
-
-    if ((nt = find_string_capability(name)) != 0) {
-	*long_name = strfnames[nt->nt_index];
-	return (CUR Strings[nt->nt_index]);
-    }
-    *long_name = "??";
-#endif
-    return (char *) 0;
-}
-
-/*
-**	get_string_cap_byvalue(value)
-**
-**	Given a capability string, find its position in the data base.
-**	Return the index or -1 if not found.
-*/
-int
-get_string_cap_byvalue(
-			  const char *value)
-{
-#ifdef NCURSES_VERSION
-    int i;
-
-    if (value) {
-	for (i = 0; i < (int) MAX_STRINGS; i++) {
-	    if (CUR Strings[i] == value) {
-		return i;
-	    }
-	}
-	/* search for translated strings */
-	for (i = 0; i < TM_last; i++) {
-	    if (TM_string[i].value == value) {
-		return TM_string[i].index;
-	    }
-	}
-    }
-#endif
-    return -1;
-}
-
-
-/*
-**	user_modified()
-**
-**	Return TRUE if the user has modified the terminfo
-*/
-#ifdef NCURSES_VERSION
-int
-user_modified(void)
-{
-    const char *a, *b;
-    int i, v;
-
-    for (i = 0; i < MAX_BOOLEAN; i++) {
-	v = (i == xon_index) ? xon_shadow : CUR Booleans[i];
-	if (original_term.Booleans[i] != v) {
-	    return TRUE;
-	}
-    }
-    for (i = 0; i < MAX_NUMBERS; i++) {
-	if (original_term.Numbers[i] != CUR Numbers[i]) {
-	    return TRUE;
-	}
-    }
-    for (i = 0; i < (int) MAX_STRINGS; i++) {
-	a = original_term.Strings[i] ? original_term.Strings[i] : "";
-	b = CUR Strings[i] ? CUR Strings[i] : "";
-	if (strcmp(a, b)) {
-	    return TRUE;
-	}
-    }
-    return FALSE;
-}
-#endif
-
-/*****************************************************************************
- *
- * Maintain the list of capabilities that can be tested
- *
- *****************************************************************************/
-
-/*
-**	mark_cap(name, flag)
-**
-**	Mark the cap data base with the flag provided.
-*/
-static void
-mark_cap(
-	    char *name,
-	    int flag)
-{
-    NAME_TABLE const *nt;
-
-    alloc_arrays();
-    if ((nt = find_capability(name)) != 0) {
-	switch (nt->nt_type) {
-	case BOOLEAN:
-	    flag_boolean[nt->nt_index] = ((char)
-					  (flag_boolean[nt->nt_index]
-					   | flag));
-	    break;
-	case STRING:
-	    flag_strings[nt->nt_index] = ((char)
-					  (flag_strings[nt->nt_index]
-					   | flag));
-	    break;
-	case NUMBER:
-	    flag_numbers[nt->nt_index] = ((char)
-					  (flag_numbers[nt->nt_index]
-					   | flag));
-	    break;
-	default:
-	    sprintf(temp, "unknown cap type (%s)", name);
-	    ptextln(temp);
-	    break;
-	}
-    } else {
-	sprintf(temp, "Cap not found: %s", name);
-	ptextln(temp);
-	(void) wait_here();
-    }
-}
-
-/*
-**	can_test(name-list, flags)
-**
-**	Scan the name list and get the names.
-**	Enter each name into the can-test data base.
-**	<space> ( and ) may be used as separators.
-*/
-void
-can_test(
-	    const char *s,
-	    int flags)
-{
-    int ch, j;
-    char name[32];
-
-    if (s) {
-	for (j = 0; (ch = name[j] = *s); s++) {
-	    if (ch == ' ' || ch == ')' || ch == '(') {
-		if (j) {
-		    name[j] = '\0';
-		    mark_cap(name, flags);
-		}
-		j = 0;
-	    } else {
-		j++;
-	    }
-	}
-	if (j) {
-	    mark_cap(name, flags);
-	}
-    }
-}
-
-/*
-**	cap_index(name-list, index-list)
-**
-**	Scan the name list and return a list of indexes.
-**	<space> ( and ) may be used as separators.
-**	This list is terminated with -1.
-*/
-void
-cap_index(
-	     const char *s,
-	     int *inx)
-{
-    NAME_TABLE const *nt;
-    int ch, j;
-    char name[32];
-
-    if (s) {
-	for (j = 0;; s++) {
-	    ch = name[j] = *s;
-	    if (ch == ' ' || ch == ')' || ch == '(' || ch == 0) {
-		if (j) {
-		    name[j] = '\0';
-		    if ((nt = find_string_capability(name)) != 0) {
-			*inx++ = nt->nt_index;
-		    }
-		}
-		if (ch == 0) {
-		    break;
-		}
-		j = 0;
-	    } else {
-		j++;
-	    }
-	}
-    }
-    *inx = -1;
-}
-
-/*
-**	cap_match(name-list, cap)
-**
-**	Scan the name list and see if the cap is in the list.
-**	Return TRUE if we find an exact match.
-**	<space> ( and ) may be used as separators.
-*/
-int
-cap_match(
-	     const char *names,
-	     const char *cap)
-{
-    const char *s;
-    int c, l, t;
-
-    if (names) {
-	l = (int) strlen(cap);
-	while ((s = strstr(names, cap))) {
-	    c = (names == s) ? 0 : *(s - 1);
-	    t = s[l];
-	    if ((c == 0 || c == ' ' || c == '(') &&
-		(t == 0 || t == ' ' || t == ')')) {
-		return TRUE;
-	    }
-	    if (t == 0) {
-		break;
-	    }
-	    names = s + l;
-	}
-    }
-    return FALSE;
-}
-
-/*
-**	show_report(test_list, status, ch)
-**
-**	Display a list of caps that can be tested
-*/
-void
-show_report(
-	       struct test_list *t,
-	       int *state GCC_UNUSED,
-	       int *ch)
-{
-    int i, j, nc, flag;
-    const char *s;
-    size_t count = (size_t) (MAX_BOOLEAN + MAX_NUMBERS + MAX_STRINGS);
-    const char **nx = (const char **) calloc(sizeof(const char *), count);
-
-    alloc_arrays();
-    flag = t->flags & 255;
-    nc = 0;
-    for (i = 0; i < MAX_BOOLEAN; i++) {
-	if (flag_boolean[i] & flag) {
-	    nx[nc++] = boolnames[i];
-	}
-    }
-    for (i = 0; i < MAX_NUMBERS; i++) {
-	if (flag_numbers[i] & flag) {
-	    nx[nc++] = numnames[i];
-	}
-    }
-    for (i = 0; i < (int) MAX_STRINGS; i++) {
-	if (flag_strings[i] & flag) {
-	    nx[nc++] = STR_NAME(i);
-	}
-    }
-    /* sort */
-    for (i = 0; i < nc - 1; i++) {
-	for (j = i + 1; j < nc; j++) {
-	    if (strcmp(nx[i], nx[j]) > 0) {
-		s = nx[i];
-		nx[i] = nx[j];
-		nx[j] = s;
-	    }
-	}
-    }
-    if (flag & FLAG_FUNCTION_KEY) {
-	ptextln("The following function keys can be tested:");
-    } else if (flag & FLAG_CAN_TEST) {
-	ptextln("The following capabilities can be tested:");
-    } else if (flag & FLAG_TESTED) {
-	ptextln("The following capabilities have been tested:");
-    }
-    put_crlf();
-    for (i = 0; i < nc; i++) {
-	sprintf(temp, "%s ", nx[i]);
-	ptext(temp);
-    }
-    put_newlines(1);
-    *ch = REQUEST_PROMPT;
-    free(nx);
-}
-
-/*
-**	edit_init()
-**
-**	Initialize the function key data base
-*/
-void
-edit_init(void)
-{
-    int i, j, lc;
-    char *lab;
-    NAME_TABLE const *nt;
-
-    alloc_arrays();
-
-#ifdef NCURSES_VERSION
-    _nc_copy_termtype(&original_term, CUR_TP);
-    for (i = 0; i < MAX_BOOLEAN; i++) {
-	original_term.Booleans[i] = CUR Booleans[i];
-    }
-    for (i = 0; i < MAX_NUMBERS; i++) {
-	original_term.Numbers[i] = CUR Numbers[i];
-    }
-    /* scan for labels */
-    for (i = lc = 0; i < (int) MAX_STRINGS; i++) {
-	original_term.Strings[i] = CUR Strings[i];
-	if (strncmp(STR_NAME(i), "lf", (size_t) 2) == 0) {
-	    flag_strings[i] |= FLAG_LABEL;
-	    if (CUR Strings[i]) {
-		label_strings[lc++] = i;
-	    }
-	}
-    }
-    /* scan for function keys */
-    for (i = 0; i < (int) MAX_STRINGS; i++) {
-	const char *this_name = STR_NAME(i);
-	if ((this_name[0] == 'k') && strcmp(this_name, "kmous")) {
-	    flag_strings[i] |= FLAG_FUNCTION_KEY;
-	    lab = (char *) 0;
-	    for (j = 0; j < lc; j++) {
-		if (!strcmp(this_name,
-			    STR_NAME(label_strings[j]))) {
-		    lab = CUR Strings[label_strings[j]];
-		    break;
-		}
-	    }
-	    enter_key(this_name, CUR Strings[i], lab);
-	}
-    }
-    /* Lookup the translated strings */
-    for (i = 0; i < TM_last; i++) {
-	if ((nt = find_string_capability(TM_string[i].name)) != 0) {
-	    TM_string[i].index = nt->nt_index;
-	} else {
-	    sprintf(temp, "TM_string lookup failed for: %s",
-		    TM_string[i].name);
-	    ptextln(temp);
-	}
-    }
-#endif
-    if ((nt = find_capability("xon")) != 0) {
-	xon_index = nt->nt_index;
-    }
-    xon_shadow = xon_xoff;
-    FreeIfNeeded(label_strings);
-}
-
-#ifdef NCURSES_VERSION
-
-/*
-**	show_info(test_list, status, ch)
-**
-**	Display the current terminfo
-*/
-static void
-show_info(
-	     struct test_list *t GCC_UNUSED,
-	     int *state GCC_UNUSED,
-	     int *ch)
-{
-    int i;
-    char buf[1024];
-
-    display_lines = 1;
-    start_display = 1;
-    for (i = 0; i < MAX_BOOLEAN; i++) {
-	if ((i == xon_index) ? xon_shadow : CUR Booleans[i]) {
-	    send_info_string(boolnames[i], ch);
-	}
-    }
-    for (i = 0; i < MAX_NUMBERS; i++) {
-	if (CUR Numbers[i] >= 0) {
-	    sprintf(buf, "%s#%d", numnames[i], CUR Numbers[i]);
-	    send_info_string(buf, ch);
-	}
-    }
-    for (i = 0; i < (int) MAX_STRINGS; i++) {
-	if (CUR Strings[i]) {
-	    sprintf(buf, "%s=%s", STR_NAME(i),
-		    print_expand(CUR Strings[i]));
-	    send_info_string(buf, ch);
-	}
-    }
-    put_newlines(2);
-    *ch = REQUEST_PROMPT;
-}
-
-/*
 **	show_value(test_list, status, ch)
 **
 **	Display the value of a selected cap
 */
 static void
 show_value(
-	      struct test_list *t,
+	      TestList * t,
 	      int *state GCC_UNUSED,
 	      int *ch)
 {
@@ -964,34 +1049,35 @@ show_value(
 		if (nt->nt_index == xon_index) {
 		    xon_shadow = 0;
 		} else {
-		    CUR Booleans[nt->nt_index] = 0;
+		    set_newer_boolean(nt->nt_index, 0);
 		}
 		return;
 	    }
-	    b = nt->nt_index == xon_index ? xon_shadow :
-		CUR Booleans[nt->nt_index];
+	    b = ((nt->nt_index == xon_index)
+		 ? xon_shadow
+		 : get_newer_boolean(nt->nt_index));
 	    sprintf(temp, "boolean  %s %s", buf,
 		    b ? "True" : "False");
 	    break;
 	case STRING:
 	    if (op == SHOW_DELETE) {
-		CUR Strings[nt->nt_index] = (char *) 0;
+		set_newer_string(nt->nt_index, 0);
 		return;
 	    }
-	    if (CUR Strings[nt->nt_index]) {
+	    if (get_newer_string(nt->nt_index)) {
 		sprintf(temp, "string  %s %s", buf,
-			expand(CUR Strings[nt->nt_index]));
+			expand(get_newer_string(nt->nt_index)));
 	    } else {
 		sprintf(temp, "undefined string %s", buf);
 	    }
 	    break;
 	case NUMBER:
 	    if (op == SHOW_DELETE) {
-		CUR Numbers[nt->nt_index] = -1;
+		set_newer_number(nt->nt_index, -1);
 		return;
 	    }
 	    sprintf(temp, "numeric  %s %d", buf,
-		    CUR Numbers[nt->nt_index]);
+		    get_newer_number(nt->nt_index));
 	    break;
 	default:
 	    sprintf(temp, "unknown");
@@ -1011,7 +1097,8 @@ show_value(
 	if (nt->nt_index == xon_index) {
 	    xon_shadow = !xon_shadow;
 	} else {
-	    CUR Booleans[nt->nt_index] = (char) !CUR Booleans[nt->nt_index];
+	    set_newer_boolean(nt->nt_index,
+			      !get_newer_boolean(nt->nt_index));
 	}
 	return;
     }
@@ -1023,14 +1110,14 @@ show_value(
 	scan_terminfo(buf, tmp, tmp + sizeof(tmp));
 	s = (char *) malloc(strlen(tmp) + 1);
 	strcpy(s, tmp);
-	CUR Strings[nt->nt_index] = s;
+	set_newer_string(nt->nt_index, s);
 	sprintf(temp, "new string value  %s", nt->nt_name);
 	ptextln(temp);
-	ptextln(expand(CUR Strings[nt->nt_index]));
+	ptextln(expand(get_newer_string(nt->nt_index)));
 	break;
     case NUMBER:
 	if (sscanf(buf, "%d", &n) == 1) {
-	    CUR Numbers[nt->nt_index] = (short) n;
+	    set_newer_number(nt->nt_index, n);
 	    sprintf(temp, "new numeric value  %s %d",
 		    nt->nt_name, n);
 	    ptextln(temp);
@@ -1052,7 +1139,7 @@ show_value(
 */
 static void
 show_untested(
-		 struct test_list *t GCC_UNUSED,
+		 TestList * t GCC_UNUSED,
 		 int *state GCC_UNUSED,
 		 int *ch)
 {
@@ -1061,19 +1148,19 @@ show_untested(
     alloc_arrays();
     ptextln("Caps that are defined but cannot be tested:");
     for (i = 0; i < MAX_BOOLEAN; i++) {
-	if (flag_boolean[i] == 0 && CUR Booleans[i]) {
+	if (flag_boolean[i] == 0 && get_newer_boolean(i)) {
 	    sprintf(temp, "%s ", boolnames[i]);
 	    ptext(temp);
 	}
     }
     for (i = 0; i < MAX_NUMBERS; i++) {
-	if (flag_numbers[i] == 0 && CUR Numbers[i] >= 0) {
+	if (flag_numbers[i] == 0 && get_newer_number(i) >= 0) {
 	    sprintf(temp, "%s ", numnames[i]);
 	    ptext(temp);
 	}
     }
     for (i = 0; i < (int) MAX_STRINGS; i++) {
-	if (flag_strings[i] == 0 && CUR Strings[i]) {
+	if (flag_strings[i] == 0 && get_newer_string(i)) {
 	    sprintf(temp, "%s ", STR_NAME(i));
 	    ptext(temp);
 	}
@@ -1089,7 +1176,7 @@ show_untested(
 */
 static void
 show_changed(
-		struct test_list *t GCC_UNUSED,
+		TestList * t GCC_UNUSED,
 		int *state GCC_UNUSED,
 		int *ch)
 {
@@ -1100,32 +1187,34 @@ show_changed(
     char abuf[1024];
 
     for (i = 0; i < MAX_BOOLEAN; i++) {
-	v = (i == xon_index) ? xon_shadow : CUR Booleans[i];
-	if (original_term.Booleans[i] != v) {
+	v = (i == xon_index) ? xon_shadow : get_newer_boolean(i);
+	if (get_saved_boolean(i) != v) {
 	    if (header) {
 		ptextln(title);
 		header = 0;
 	    }
 	    sprintf(temp, "%30d %6s %d",
-		    original_term.Booleans[i], boolnames[i], v);
+		    get_saved_boolean(i), boolnames[i], v);
 	    ptextln(temp);
 	}
     }
     for (i = 0; i < MAX_NUMBERS; i++) {
-	if (original_term.Numbers[i] != CUR Numbers[i]) {
+	if (get_saved_number(i) != get_newer_number(i)) {
 	    if (header) {
 		ptextln(title);
 		header = 0;
 	    }
 	    sprintf(temp, "%30d %6s %d",
-		    original_term.Numbers[i], numnames[i],
-		    CUR Numbers[i]);
+		    get_saved_number(i), numnames[i],
+		    get_newer_number(i));
 	    ptextln(temp);
 	}
     }
     for (i = 0; i < (int) MAX_STRINGS; i++) {
-	a = original_term.Strings[i] ? original_term.Strings[i] : "";
-	b = CUR Strings[i] ? CUR Strings[i] : "";
+	if ((a = get_saved_string(i)) == 0)
+	    a = "";
+	if ((b = get_newer_string(i)) == 0)
+	    b = "";
 	if (strcmp(a, b)) {
 	    if (header) {
 		ptextln(title);
@@ -1150,7 +1239,7 @@ show_changed(
 */
 static void
 change_one_entry(
-		    struct test_list *test,
+		    TestList * test,
 		    int *state,
 		    int *chp)
 {
@@ -1171,9 +1260,9 @@ change_one_entry(
 	    *chp = pad[0];
 	    return;
 	}
-	if ((nt = find_string_capability(pad)) != 0) {
+	if ((nt = find_string_cap_by_name(pad)) != 0) {
 	    x = nt->nt_index;
-	    current_string = CUR Strings[x];
+	    current_string = get_newer_string(x);
 	} else {
 	    sprintf(temp, "%s is not a string capability", pad);
 	    ptext(temp);
@@ -1191,7 +1280,7 @@ change_one_entry(
 	scan_terminfo(buf, pad, pad + sizeof(pad));
 	t = (char *) malloc(strlen(pad) + 1);
 	strcpy(t, pad);
-	CUR Strings[x] = t;
+	set_newer_string(x, t);
 	sprintf(temp, "new string value  %s", STR_NAME(x));
 	ptextln(temp);
 	ptextln(expand(t));
@@ -1257,7 +1346,7 @@ change_one_entry(
     }
     if ((t = (char *) malloc(strlen(buf) + 1))) {
 	strcpy(t, buf);
-	CUR Strings[x] = t;
+	set_newer_string(x, t);
 	if (i != 255) {
 	    tx_cap[i] = t;
 	}
@@ -1272,7 +1361,7 @@ change_one_entry(
 */
 static void
 build_change_menu(
-		     struct test_menu *m)
+		     TestMenu * m)
 {
     int i, j, k;
     char *s;
@@ -1302,9 +1391,8 @@ build_change_menu(
 	ptextln(m->menu_title);
     }
 }
-
 /* *INDENT-OFF* */
-struct test_list edit_test_list[] = {
+TestList edit_test_list[] = {
     {MENU_CLEAR, 0, 0, 0, "i) display current terminfo", show_info, 0},
     {0, 0, 0, 0, "w) write the current terminfo to a file", save_info, 0},
     {SHOW_VALUE, 3, 0, 0, "v) show value of a selected cap", show_value, 0},
@@ -1319,7 +1407,7 @@ struct test_list edit_test_list[] = {
 };
 /* *INDENT-ON* */
 
-struct test_menu change_pad_menu =
+TestMenu change_pad_menu =
 {
     0, 'q', 0,
     "Select cap name", "change", 0,
