@@ -27,7 +27,7 @@
 #include <curses.h>
 #include <term.h>
 
-/* $Id: tackgen.c,v 1.6 2017/07/23 23:01:39 tom Exp $ */
+/* $Id: tackgen.c,v 1.8 2017/07/24 08:47:30 tom Exp $ */
 
 #define DATA_FMT "DATA(\t%3d,\t\"%s\",%s%s%s),\t/* %s */\n"
 
@@ -140,12 +140,15 @@ main(void)
     printf("\n");
     printf("#undef boolnames\n");
     printf("extern char **boolnames;\n");
+    printf("extern size_t max_booleans;\n");
     printf("\n");
     printf("#undef numnames\n");
     printf("extern char **numnames;\n");
+    printf("extern size_t max_numbers;\n");
     printf("\n");
     printf("#undef strnames\n");
     printf("extern char **strnames;\n");
+    printf("extern size_t max_strings;\n");
     printf("\n");
     printf("#endif /* TACKGEN_H */\n");
     printf("\n");

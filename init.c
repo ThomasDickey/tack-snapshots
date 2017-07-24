@@ -22,11 +22,20 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: init.c,v 1.24 2017/07/23 23:14:34 tom Exp $")
+MODULE_ID("$Id: init.c,v 1.28 2017/07/24 09:24:21 tom Exp $")
 
 FILE *debug_fp;
 char temp[1024];
 char *tty_basename = NULL;
+
+#ifndef HAVE_CURSES_DATA_BOOLNAMES
+char **boolnames;
+char **numnames;
+char **strnames;
+size_t max_booleans;
+size_t max_numbers;
+size_t max_strings;
+#endif
 
 void
 put_name(const char *cap, const char *name)
@@ -140,10 +149,13 @@ reset_init(void)
 void
 display_basic(void)
 {
+    char *s;
     put_str("Name: ");
     put_str(termname());
-    put_str("|");
-    putln(longname());
+    if ((s = longname()) != 0) {
+	put_str("|");
+	putln(s);
+    }
 
     report_cap("\\r ^M (cr)", carriage_return);
     report_cap("\\n ^J (ind)", scroll_forward);
@@ -192,17 +204,61 @@ ask_infocmp(void)
     char *s, *t;
 
     if (command != 0) {
-	sprintf(command, "infocmp \"%s\"", tty_basename);
+	sprintf(command, "infocmp -1 \"%s\"", tty_basename);
 	if ((pp = popen(command, "r")) != 0) {
 	    if (fgets(buffer, sizeof(buffer) - 1, pp) != 0
 		&& *buffer == '#'
 		&& ((t = strstr(buffer, " file: "))
-		    || (t = strstr(buffer, " file ")))
+		    || (t = strstr(buffer, " file "))
+		    || ((t = strstr(buffer, " Reconstructed "))
+			&& (t = strstr(t, " from "))))
 		&& (s = strchr(buffer, '\n')) != 0) {
 		*s = '\0';
 		s = strchr(t + 1, ' ');
 		result = strdup(s + 1);
 	    }
+#ifndef HAVE_CURSES_DATA_BOOLNAMES
+	    if (result) {
+		int max_b = 200;
+		int max_n = 200;
+		int max_s = 200;
+		boolnames = calloc(max_b, sizeof(*boolnames));
+		numnames = calloc(max_n, sizeof(*numnames));
+		strnames = calloc(max_s, sizeof(*strnames));
+		while (fgets(buffer, sizeof(buffer) - 1, pp) != 0) {
+		    int mytype = BOOLEAN;
+		    if (*buffer != '\t')
+			continue;
+		    for (s = buffer; isspace(UChar(*s)); ++s) ;
+		    for (t = s; *t != '\0'; ++t) {
+			if (strchr("@,", *t)) {
+			    *t = '\0';
+			    break;
+			} else if (*t == '#') {
+			    mytype = NUMBER;
+			    *t = '\0';
+			    break;
+			} else if (*t == '=') {
+			    mytype = STRING;
+			    *t = '\0';
+			    break;
+			}
+		    }
+		    s = strdup(s);
+		    switch (mytype) {
+		    case 0:
+			boolnames[max_booleans++] = s;
+			break;
+		    case 1:
+			numnames[max_numbers++] = s;
+			break;
+		    case 2:
+			strnames[max_strings++] = s;
+			break;
+		    }
+		}
+	    }
+#endif
 	    pclose(pp);
 	}
     }
@@ -212,28 +268,94 @@ ask_infocmp(void)
 /*
  * ncurses initializes acs_map[] in setupterm; Unix curses does not.
  */
-#if defined(unix) && !defined(NCURSES_VERSION)
 static void
 init_acs(void)
 {
+    int s, d;
+    const char *value = acs_chars;
+
+#ifdef NUM_ACS			/* NetBSD curses */
+#ifndef acs_map
+#define acs_map _acs_map
+#endif
+#elif !defined(NCURSES_VERSION)
     if (acs_map == 0) {
-	int s, d;
-	char *value = acs_chars;
 	acs_map = calloc(256, sizeof(acs_map[0]));
-	if (value != 0) {
-	    while (*value != '\0') {
-		if ((s = UChar(*value++)) == '\0')
-		    break;
-		if ((d = UChar(*value++)) == '\0')
-		    break;
-		acs_map[s] = d;
-	    }
+    }
+#endif
+    if (value != 0) {
+	while (*value != '\0') {
+	    if ((s = UChar(*value++)) == '\0')
+		break;
+	    if ((d = UChar(*value++)) == '\0')
+		break;
+	    acs_map[s] = (chtype) d;
 	}
     }
 }
-#else
-#define init_acs()		/* nothing */
+
+/*
+ * curses provides baudrate(), but not for low-level applications.
+ */
+static unsigned
+init_baudrate(void)
+{
+    struct speed {
+	int given_speed;	/* values for 'ospeed' */
+	unsigned actual_speed;	/* the actual speed */
+    };
+
+#define DATA(number) { B##number, number }
+
+    static struct speed const speeds[] =
+    {
+	DATA(0),
+	DATA(50),
+	DATA(75),
+	DATA(110),
+	DATA(134),
+	DATA(150),
+	DATA(200),
+	DATA(300),
+	DATA(600),
+	DATA(1200),
+	DATA(1800),
+	DATA(2400),
+	DATA(4800),
+	DATA(9600),
+#ifdef B19200
+	DATA(19200),
+#elif defined(EXTA)
+	{EXTA, 19200},
 #endif
+#ifdef B28800
+	DATA(28800),
+#endif
+#ifdef B38400
+	DATA(38400),
+#elif defined(EXTB)
+	{EXTB, 38400},
+#endif
+#ifdef B57600
+	DATA(57600),
+#endif
+    /* ifdef to prevent overflow when OLD_TTY is not available */
+    };
+#undef DATA
+    struct termios data;
+    unsigned result = 1;
+    if (tcgetattr(fileno(stdout), &data) == 0) {
+	int ospeed = (int) cfgetospeed(&data);
+	size_t n;
+	for (n = 0; n < sizeof(speeds) / sizeof(speeds[0]); ++n) {
+	    if (ospeed == speeds[n].given_speed) {
+		result = speeds[n].actual_speed;
+		break;
+	    }
+	}
+    }
+    return result;
+}
 
 /*
 **	curses_setup(exec_name)
@@ -265,18 +387,14 @@ curses_setup(
     }
     init_acs();
 
-	/**
-	 * Get the current terminal definitions.  This must be done before
-	 * getting the baudrate.
-	 */
-    def_prog_mode();
-#ifdef NCURSES_VERSION
-    if (baudrate() > 0)
-	tty_baud_rate = (unsigned) baudrate();
-    else
-#endif
-	tty_baud_rate = 1;
+    tty_baud_rate = init_baudrate();
     tty_cps = (tty_baud_rate << 1) / (unsigned) tty_frame_size;
+
+    /*
+     * "everyone" has infocmp, and its first line of output should be a
+     * comment telling which database is used.
+     */
+    tty_name = ask_infocmp();
 
     /* set up the defaults */
     replace_mode = TRUE;
@@ -316,7 +434,7 @@ curses_setup(
      * "everyone" has infocmp, and its first line of output should be a
      * comment telling which database is used.
      */
-    if ((tty_name = ask_infocmp()) != 0) {
+    if (tty_name != 0) {
 	ptext("Using terminfo from: ");
 	ptextln(tty_name);
 	put_crlf();

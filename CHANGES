@@ -1,3 +1,24 @@
+2017-07-24  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* init.c: gcc warnings
+
+	* init.c: make "baudrate" work portably
+
+	* init.c, edit.c, tackgen.c, tack.h:
+	add configure-checks for "ar" and its flags, needed in configure-checks for data
+
+	* init.c:
+	changes to make NetBSD curses "work".  This asks infocmp for the current
+	terminal description, with the caveat that the type of cancelled capabilities
+	cannot be determined.  Also, it moves the acs initialization earlier to
+	work with the incomplete tables.
+
+	* tack.h: for NetBSD, use variables for the array maximums
+
+	* edit.c:
+	for NetBSD, use the arrays read via infocmp to construct a "good enough"
+	name-table.  Take out the warning for entries not found.
+
 2017-07-23  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* tackgen.c: for NetBSD workaround, declare maximums for the arrays
