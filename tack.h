@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.57 2017/07/23 23:42:17 tom Exp $ */
+/* $Id: tack.h,v 1.60 2017/07/24 08:45:59 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -105,6 +105,9 @@
 #ifndef hue_lightness_saturation
 #define hue_lightness_saturation 0	/* NetBSD bug */
 #endif
+#ifndef plab_norm
+#define plab_norm 0		/* NetBSD bug */
+#endif
 #ifndef prtr_off
 #define prtr_off 0		/* NetBSD bug */
 #endif
@@ -144,11 +147,17 @@ extern void ExitProgram(int) GCC_NORETURN;
 #define MAX_STRINGS STRCOUNT
 #define STR_NAME(n) strnames[n]
 #else
-#define MAX_BOOLEAN 1		/* FIXME */
-#define MAX_NUMBERS 1		/* FIXME */
-#define MAX_STRINGS 1		/* FIXME */
+#define MAX_BOOLEAN max_booleans
+#define MAX_NUMBERS max_numbers
+#define MAX_STRINGS max_strings
 #define STR_NAME(n) strnames[n]
 #endif
+
+typedef enum {
+    BOOLEAN,
+    NUMBER,
+    STRING
+} NAME_TYPE;
 
 /* see ncurses' nc_tparm.h */
 #define TPARM_ARG long

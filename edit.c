@@ -24,7 +24,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: edit.c,v 1.33 2017/07/23 22:57:20 tom Exp $")
+MODULE_ID("$Id: edit.c,v 1.35 2017/07/24 08:48:00 tom Exp $")
 
 /*
  * These are adapted from tic.h
@@ -32,12 +32,6 @@ MODULE_ID("$Id: edit.c,v 1.33 2017/07/23 22:57:20 tom Exp $")
 #define ABSENT_STRING		(char *)0
 #define CANCELLED_STRING	(char *)(-1)
 #define VALID_STRING(s)  ((s) != CANCELLED_STRING && (s) != ABSENT_STRING)
-
-typedef enum {
-    BOOLEAN,
-    NUMBER,
-    STRING
-} NAME_TYPE;
 
 typedef struct {
     const char *nt_name;
@@ -100,20 +94,70 @@ compare_capability(const void *a, const void *b)
     return strcmp(p->nt_name, q->nt_name);
 }
 
+#ifdef HAVE_CURSES_DATA_BOOLNAMES
+
 #define DATA(index,name,type) { name,type,index }
 static NAME_TABLE name_table[] =
 {
 #include <tackgen.h>
 };
 #undef DATA
-
 #define SIZEOF_NAME_TABLE (sizeof(name_table) / sizeof(name_table[0]))
+#define alloc_name_table()	/* nothing */
+
+#else
+
+static NAME_TABLE *name_table;
+static size_t sizeof_name_table;
+#define SIZEOF_NAME_TABLE sizeof_name_table
+
+static int
+compare_data(const void *a, const void *b)
+{
+    const NAME_TABLE *p = (const NAME_TABLE *) a;
+    const NAME_TABLE *q = (const NAME_TABLE *) b;
+    return strcmp(p->nt_name, q->nt_name);
+}
+
+static void
+alloc_name_table(void)
+{
+    if (name_table == 0) {
+	size_t s;
+	size_t d = 0;
+	sizeof_name_table = (size_t) (max_booleans + max_numbers + max_strings);
+	name_table = calloc(sizeof_name_table, sizeof(NAME_TABLE));
+	for (s = 0; s < max_booleans; ++s) {
+	    name_table[d].nt_name = boolnames[s];
+	    name_table[d].nt_type = BOOLEAN;
+	    name_table[d].nt_index = s;
+	    ++d;
+	}
+	for (s = 0; s < max_numbers; ++s) {
+	    name_table[d].nt_name = numnames[s];
+	    name_table[d].nt_type = NUMBER;
+	    name_table[d].nt_index = s;
+	    ++d;
+	}
+	for (s = 0; s < max_strings; ++s) {
+	    name_table[d].nt_name = strnames[s];
+	    name_table[d].nt_type = STRING;
+	    name_table[d].nt_index = s;
+	    ++d;
+	}
+	qsort(name_table, sizeof_name_table, sizeof(NAME_TABLE), compare_data);
+    }
+}
+
+#endif
 
 static NAME_TABLE const *
 find_capability(const char *name)
 {
     NAME_TABLE key;
     NAME_TABLE *lookup;
+
+    alloc_name_table();
     memset(&key, 0, sizeof(key));
     key.nt_name = name;
     lookup = bsearch(&key, name_table,
@@ -132,6 +176,8 @@ find_cap_by_index(int capIndex, NAME_TYPE capType)
 {
     static NAME_TABLE const *result = 0;
     size_t n;
+
+    alloc_name_table();
     for (n = 0; n < SIZEOF_NAME_TABLE; ++n) {
 	if (name_table[n].nt_index == capIndex
 	    && name_table[n].nt_type == capType) {
@@ -344,9 +390,11 @@ mark_cap(
 	    break;
 	}
     } else {
+#ifdef HAVE_CURSES_DATA_BOOLNAMES
 	sprintf(temp, "Cap not found: %s", name);
 	ptextln(temp);
 	(void) wait_here();
+#endif
     }
 }
 

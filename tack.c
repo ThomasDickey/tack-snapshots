@@ -20,8 +20,9 @@
 */
 
 #include <tack.h>
+#include <stdarg.h>
 
-MODULE_ID("$Id: tack.c,v 1.21 2017/07/23 20:04:18 tom Exp $")
+MODULE_ID("$Id: tack.c,v 1.22 2017/07/24 00:14:03 tom Exp $")
 
 /*
    This program is designed to test terminfo, not curses.  Therefore
