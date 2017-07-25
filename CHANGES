@@ -1,3 +1,20 @@
+2017-07-25  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* tack.h, tack.c: fix symbol conflict with TRACE
+
+	* modules: fix dependencies for building in ncurses-tree
+
+	* configure: regen
+
+	* tack.c, tack.h, configure.in:
+	check for _nc_free_tinfo, for memory-leaks
+
+	* tack.c, init.c, edit.c, tack.h: memory-leaks
+
+	* edit.c:
+	initial version of "copy_termtype()", to replace call to ncurses internal
+	_nc_copy_termtype() - not a derived function but rewrite.
+
 2017-07-24  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* init.c: gcc warnings

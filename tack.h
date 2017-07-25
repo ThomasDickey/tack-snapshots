@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.60 2017/07/24 08:45:59 tom Exp $ */
+/* $Id: tack.h,v 1.62 2017/07/25 23:30:41 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -118,7 +118,12 @@
 #if NO_LEAKS
 extern void tack_edit_leaks(void);
 extern void tack_fun_leaks(void);
+#ifdef HAVE__NC_FREE_TINFO
+extern void _nc_free_tinfo(int) GCC_NORETURN;
+#endif
+#ifndef ExitProgram
 extern void ExitProgram(int) GCC_NORETURN;
+#endif
 #else
 #define ExitProgram(code) exit(code)
 #undef  NO_LEAKS

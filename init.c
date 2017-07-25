@@ -22,7 +22,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: init.c,v 1.28 2017/07/24 09:24:21 tom Exp $")
+MODULE_ID("$Id: init.c,v 1.29 2017/07/25 22:58:47 tom Exp $")
 
 FILE *debug_fp;
 char temp[1024];
@@ -261,6 +261,7 @@ ask_infocmp(void)
 #endif
 	    pclose(pp);
 	}
+	free(command);
     }
     return result;
 }

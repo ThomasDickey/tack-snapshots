@@ -28,7 +28,7 @@ dnl***************************************************************************
 dnl
 dnl Author: Thomas E. Dickey	2007-on
 dnl
-dnl $Id: configure.in,v 1.36 2017/07/23 23:37:15 tom Exp $
+dnl $Id: configure.in,v 1.37 2017/07/25 23:28:42 tom Exp $
 dnl This is a simple configuration-script for tack which makes it simpler to
 dnl build outside the ncurses tree (provided that ncurses was configured using
 dnl the --with-ticlib option).
@@ -158,6 +158,7 @@ sys/time.h \
 )
 
 AC_CHECK_FUNCS( \
+_nc_free_tinfo \
 gettimeofday \
 select \
 )
