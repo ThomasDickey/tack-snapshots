@@ -24,7 +24,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: edit.c,v 1.35 2017/07/24 08:48:00 tom Exp $")
+MODULE_ID("$Id: edit.c,v 1.37 2017/07/25 22:56:58 tom Exp $")
 
 /*
  * These are adapted from tic.h
@@ -563,6 +563,113 @@ show_report(
     free(nx);
 }
 
+#ifdef NCURSES_VERSION
+static size_t
+safe_length(const char *value)
+{
+    size_t result = 0;
+    if (VALID_STRING(value))
+	result = strlen(value) + 1;
+    return result;
+}
+
+static size_t
+safe_copy(char *target, const char *source)
+{
+    size_t result = safe_length(source);
+    if (result) {
+	memcpy(target, source, result);
+    }
+    return result;
+}
+
+static void
+copy_termtype(TERMTYPE *target, TERMTYPE *source)
+{
+    size_t need;
+    int n;
+#if NCURSES_XNAMES
+    int num_Names = (source->ext_Booleans + source->ext_Numbers + source->ext_Strings);
+#endif
+
+    memset(target, 0, sizeof(*target));
+
+#define copy_array(member,count) \
+    target->member = calloc(count, sizeof(target->member[0])); \
+    memcpy(target->member, source->member, count * sizeof(target->member[0]))
+
+    copy_array(Booleans, MAX_BOOLEAN);
+    copy_array(Numbers, MAX_NUMBERS);
+    copy_array(Strings, MAX_STRINGS);
+
+    need = safe_length(source->term_names);
+    for (n = 0; n < STRCOUNT; ++n) {
+	need += safe_length(source->Strings[n]);
+    }
+
+    if (need) {
+	size_t have = 0;
+	target->term_names =
+	    target->str_table = malloc(need);
+	have = safe_copy(target->term_names, source->term_names);
+	for (n = 0; n < STRCOUNT; ++n) {
+	    if (VALID_STRING(source->Strings[n])) {
+		target->Strings[n] = target->str_table + have;
+		have = safe_copy(target->Strings[n], source->Strings[n]);
+	    }
+	}
+    }
+#if NCURSES_XNAMES
+    target->num_Booleans = source->num_Booleans;
+    target->num_Numbers = source->num_Numbers;
+    target->num_Strings = source->num_Strings;
+    target->ext_Booleans = source->ext_Booleans;
+    target->ext_Numbers = source->ext_Numbers;
+    target->ext_Strings = source->ext_Strings;
+
+    need = 0;
+    for (n = 0; n < source->ext_Strings; ++n) {
+	need += safe_length(source->ext_str_table + need);
+    }
+    for (n = 0; n < num_Names; ++n) {
+	need += safe_length(source->ext_Names[n]);
+    }
+    if (need) {
+	size_t have = 0;
+	target->ext_Names = calloc((size_t) num_Names,
+				   sizeof(target->ext_Names[0]));
+	target->ext_str_table = malloc(need);
+	for (n = STRCOUNT; n < source->num_Strings; ++n) {
+	    if (safe_length(source->Strings[n])) {
+		target->Strings[n] = target->ext_str_table + have;
+		have += safe_copy(target->Strings[n], source->Strings[n]);
+	    }
+	}
+	for (n = 0; n < num_Names; ++n) {
+	    target->ext_Names[n] = target->ext_str_table + have;
+	    have += safe_copy(target->ext_Names[n], source->ext_Names[n]);
+	}
+    }
+#endif /* NCURSES_XNAMES */
+}
+
+#if NO_LEAKS
+static void
+free_termtype(TERMTYPE *tp)
+{
+    free(tp->Booleans);
+    free(tp->Numbers);
+    free(tp->Strings);
+    free(tp->str_table);
+#if NCURSES_XNAMES
+    free(tp->ext_str_table);
+    free(tp->ext_Names);
+#endif
+    memset(tp, 0, sizeof(*tp));
+}
+#endif /* NO_LEAKS */
+#endif /* NCURSES_VERSION */
+
 /*
 **	edit_init()
 **
@@ -578,7 +685,7 @@ edit_init(void)
     alloc_arrays();
 
 #ifdef NCURSES_VERSION
-    _nc_copy_termtype(&original_term, CUR_TP);
+    copy_termtype(&original_term, CUR_TP);
     for (i = 0; i < MAX_BOOLEAN; i++) {
 	set_saved_boolean(i, get_newer_boolean(i));
     }
@@ -686,7 +793,8 @@ form_terminfo(const char *srcp)
     if (srcp == 0) {
 #if NO_LEAKS
 	if (buffer != 0) {
-	    FreeAndNull(buffer);
+	    free(buffer);
+	    buffer = 0;
 	    length = 0;
 	}
 #endif
@@ -1469,17 +1577,7 @@ TestMenu change_pad_menu =
 void
 tack_edit_leaks(void)
 {
-    /*
-     * 2007/4/8 -
-     * _nc_copy_termtype() does not copy str_table and ext_str_table.
-     * The call to del_curterm() frees those - so we have to cancel
-     * these pointers to prevent a double-free.
-     */
-    original_term.str_table = 0;
-#if NCURSES_XNAMES
-    original_term.ext_str_table = 0;
-#endif
-    _nc_free_termtype(&original_term);
+    free_termtype(&original_term);
 
     FreeIfNeeded(label_strings);
     FreeIfNeeded(flag_boolean);

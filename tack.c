@@ -22,7 +22,7 @@
 #include <tack.h>
 #include <stdarg.h>
 
-MODULE_ID("$Id: tack.c,v 1.22 2017/07/24 00:14:03 tom Exp $")
+MODULE_ID("$Id: tack.c,v 1.24 2017/07/25 23:40:55 tom Exp $")
 
 /*
    This program is designed to test terminfo, not curses.  Therefore
@@ -661,8 +661,14 @@ main(int argc, char *argv[])
 void
 ExitProgram(int code)
 {
+    free(tty_basename);
     del_curterm(cur_term);
     tack_edit_leaks();
     tack_fun_leaks();
+#ifdef HAVE__NC_FREE_TINFO
+    _nc_free_tinfo(code);
+#else
+    exit(code);
+#endif
 }
 #endif
