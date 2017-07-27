@@ -1,3 +1,17 @@
+2017-07-26  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* package/tack.spec: disable debug-package
+
+	* tack.1: typographic fixes prompted by lintian warning
+
+	* Makefile.in:
+	if built in-tree, we may need shlib to fixup shared library paths
+
+	* edit.c: gcc warning
+
+	* HISTORY, package/debian/changelog, package/tack.spec, tack.h:
+	bump to 1.08
+
 2017-07-25  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* tack.h, tack.c: fix symbol conflict with TRACE

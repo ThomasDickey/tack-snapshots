@@ -1,5 +1,5 @@
 .\"***************************************************************************
-.\" Copyright (c) 1998-2006,2011 Free Software Foundation, Inc.              *
+.\" Copyright (c) 1998-2011,2017 Free Software Foundation, Inc.              *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -26,21 +26,25 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: tack.1,v 1.4 2011/06/26 17:17:20 Daniel.Weaver Exp $
-.TH tack 1M ""
+.\" $Id: tack.1,v 1.5 2017/07/26 22:31:58 tom Exp $
+.TH tack 1 ""
+.ie \n(.g .ds `` \(lq
+.el       .ds `` ``
+.ie \n(.g .ds '' \(rq
+.el       .ds '' ''
 .ds n 5
 .ds d @TERMINFO@
 .SH NAME
-\fBtack\fR - \fIterminfo\fR action checker
+\fBtack\fR \- \fIterminfo\fR action checker
 .SH SYNOPSIS
-\fBtack\fR [-itV] [term]
+\fBtack\fR [\-itV] [term]
 .br
 .SH DESCRIPTION
 The \fBtack\fR program has three purposes:
 (1) to help you build a new terminfo entry describing an unknown terminal,
 (2) to test the correctness of an existing entry, and
 (3) to develop the correct pad timings needed to ensure that screen updates
-don't fall behind the incoming data stream.
+do not fall behind the incoming data stream.
 .PP
 \fBTack\fR presents a series of screen-painting and interactive
 tests in ways which are intended to make any mismatches between the
@@ -51,7 +55,7 @@ the terminal operates.
 .TP
 .I "\-i"
 Usually \fBtack\fR will send the reset and init strings to the terminal
-when the program starts up.  The \fI-i\fR option will inhibit the
+when the program starts up.  The \fI\-i\fR option will inhibit the
 terminal initialization.
 .TP
 .I "\-t"
@@ -67,7 +71,7 @@ Display the version information and exit.
 Terminfo terminal name to be tested.  If not present then the $TERM
 environment variable will be used.
 .SH OVERVIEW
-Since \fBtack\fR is designed to test terminfo's it is not possible
+Since \fBtack\fR is designed to test terminfo entries it is not possible
 to rely on the correctness of the terminfo data base.  Because of this
 the menuing system used with \fBtack\fR is vary primitive.  When a
 menu is printed it will scroll the entire screen.  To compensate
@@ -103,17 +107,17 @@ with options \fI\-it\fR.  This will turn off initialization
 and default the standard entries.
 .PP
 These tools may be reached from the main menu by selecting
-the 'tools' entry.
+the \*(``tools\*('' entry.
 .PP
 \fBEcho tool\fR:  All data typed from the keyboard will be echoed back
 to the terminal.  Control characters are not translated to the up arrow format
 but are sent as control characters.  This allows you to test an escape
 sequence and see what it actually does.  You may also elect to
 \fBenable hex output on echo tool\fR this will echo the characters in
-hexadecimal.  Once the test is running you may enter the 'lines'
-or 'columns' keywords which will display a pattern that will help
+hexadecimal.  Once the test is running you may enter the \*(``lines\*(''
+or \*(``columns\*('' keywords which will display a pattern that will help
 you determine your screen size.  A complete list of keywords will
-be displayed when the test starts.  Type 'help' to redisplay
+be displayed when the test starts.  Type \*(``help\*('' to redisplay
 the list of available commands.
 .PP
 \fBReply tool\fR:  This tool acts much like the echo tool, but
@@ -150,7 +154,7 @@ combinations.  Private use character sets are defined by the digits.
 Standard character sets are located in the alphabetic range.
 .SH VERIFYING AN EXISTING ENTRY
 .PP
-You can verify the correctness of an entry with the `begin testing'
+You can verify the correctness of an entry with the \*(``begin testing\*(''
 function.  This entry is the default action and will be chosen
 if you hit carriage return (or enter).  This will bring up a
 secondary menu that allows you to select more specific tests.
@@ -162,7 +166,7 @@ capabilities) the program will ask you to enter input for it to check.
 .PP
 If the test fails then you have the option of dynamically changing
 the terminfo entry and re-running the test.  This is done with
-the 'edit terminfo' menu item.  The edit submenu allows you to change
+the \*(``edit terminfo\*('' menu item.  The edit submenu allows you to change
 the offending terminfo entry and immediately retest the capability.
 The edit menu lets you do other things with the terminfo, such as;
 display the entire terminfo entry,
@@ -191,7 +195,7 @@ break at higher speeds.
 .PP
 Similar problems result if the host machine is simply sending characters at a
 sustained rate faster than the terminal can buffer and process them.  In either
-case, when the terminal cannot process them and can't tell the host to stop
+case, when the terminal cannot process them and cannot tell the host to stop
 soon enough, it will just drop them.  The dropped characters could be text,
 escape sequences or the escape character itself, causing some really
 strange-looking displays.  This kind of glitch is called an \fIoverrun\fR.
@@ -235,7 +239,7 @@ needs to send a request to the terminal and wait for its reply.
 Many terminals will respond with an ACK when they receive an ENQ.
 This is the preferred method since the sequence is short.
 ANSI/VT-100 style terminals can mimic this handshake with the
-escape sequence that requests 'primary device attributes'.
+escape sequence that requests \*(``primary device attributes\*(''.
 
    ESC [ c
 
@@ -250,7 +254,7 @@ Acknowledge strings fall into two categories.
 1) Strings with a unique terminating character and,
 2) strings of fixed length.
 The acknowledge string for the VT-100 is of the first type since
-it always ends with the letter 'c'.  Some Tektronics terminals
+it always ends with the letter \*(``c\*(''.  Some Tektronics terminals
 have fixed length acknowledge strings.  \fBTack\fR supports both
 types of strings by scanning for the terminating character until
 the length of the expected acknowledge string has arrived.
@@ -273,8 +277,8 @@ major motivation for this program is to make it relatively easy to tune these
 timings.
 .PP
 You can verify and edit the pad timings for a terminal with
-the `test string capabilities'
-function (this is also part of the `normal test sequence' function).
+the \*(``test string capabilities\*(''
+function (this is also part of the \*(``normal test sequence\*('' function).
 .PP
 The key to determining pad times is to find out the effective baud rate of
 the terminal.  The effective baud rate determines the number of characters
@@ -287,7 +291,7 @@ how much a particular escape sequence will perturb the terminal.
 .PP
 Each pad test has two associated variables that can be tweaked to help verify
 the correctness of the pad timings.  One is the pad test length.  The other is
-the pad multiplier, which is used if the pad prefix includes `*'.  In curses
+the pad multiplier, which is used if the pad prefix includes \*(``*\*(''.  In curses
 use, it is often the first parameter of the capability (if there is one).
 For a capability like (dch) or (il) this will be the number of character
 positions or lines affected, respectively.

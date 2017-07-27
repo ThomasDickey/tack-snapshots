@@ -1,8 +1,8 @@
 Summary:  tack - terminfo action checker
 %define AppProgram tack
-%define AppVersion 1.07
-%define AppRelease 20170723
-# $XTermId: tack.spec,v 1.12 2017/07/23 21:21:30 tom Exp $
+%define AppVersion 1.08
+%define AppRelease 20170726
+# $XTermId: tack.spec,v 1.14 2017/07/27 00:45:16 tom Exp $
 Name: %{AppProgram}
 Version: %{AppVersion}
 Release: %{AppRelease}
@@ -19,12 +19,14 @@ descriptions that are not included in the standard ncurses release.
 
 %prep
 
+%define debug_package %{nil}
+
 %setup -q -n %{AppProgram}-%{AppVersion}-%{AppRelease}
 
 %build
 
 INSTALL_PROGRAM='${INSTALL}' \
-	./configure \
+%configure \
 		--target %{_target_platform} \
 		--prefix=%{_prefix} \
 		--bindir=%{_bindir} \
@@ -51,6 +53,9 @@ strip $RPM_BUILD_ROOT%{_bindir}/%{AppProgram}
 
 %changelog
 # each patch should add its ChangeLog entries here
+
+* Wed Jul 26 2017 Thomas Dickey
+  use system-defined build-flags
 
 * Sat Sep 04 2010 Thomas Dickey
 - initial version
