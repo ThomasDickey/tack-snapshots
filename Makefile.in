@@ -1,4 +1,4 @@
-# $Id: Makefile.in,v 1.58 2017/07/21 22:31:03 tom Exp $
+# $Id: Makefile.in,v 1.59 2017/07/26 08:50:34 tom Exp $
 ##############################################################################
 # Copyright (c) 1998-2015,2017 Free Software Foundation, Inc.                #
 #                                                                            #
@@ -171,7 +171,11 @@ tackgen$x: $(MODEL)/tackgen$o @NCURSES_TREE@$(DEPS_CURSES)
 	@ECHO_LINK@ $(LINK) $(MODEL)/tackgen$o $(LDFLAGS_DEFAULT) -o $@
 
 tackgen.h: tackgen$x
-	./tackgen$x >$@
+	$(SHELL) -c "if test -f $(srcdir)/../misc/shlib; then\
+		$(srcdir)/../misc/shlib ./tackgen$x >$@; \
+		else \
+		./tackgen$x >$@; \
+		fi"
 
 #
 # Utility productions start here

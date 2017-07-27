@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.62 2017/07/25 23:30:41 tom Exp $ */
+/* $Id: tack.h,v 1.64 2017/07/26 08:08:21 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -27,8 +27,8 @@
 /* terminfo action checker include file */
 
 #define MAJOR_VERSION 1
-#define MINOR_VERSION 7
-#define PATCH_VERSION 20170723
+#define MINOR_VERSION 8
+#define PATCH_VERSION 20170726
 
 #ifdef HAVE_CONFIG_H
 #include <ncurses_cfg.h>
@@ -404,10 +404,10 @@ extern TestMenu edit_menu;
 #define MY_EDIT_MENU		/* nothing */
 #endif
 #ifdef DEBUG
-#define TRACE(p) p
-extern void Trace(const char *,...) GCC_PRINTFLIKE(1,2);
+#define TACKMSG(p) p
+extern void TackMsg(const char *,...) GCC_PRINTFLIKE(1,2);
 #else
-#define TRACE(p)		/* nothing */
+#define TACKMSG(p)		/* nothing */
 #endif
 extern void show_usage(char *);
 extern void print_version(void);

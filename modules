@@ -1,4 +1,4 @@
-# $Id: modules,v 1.7 2017/07/20 23:59:23 tom Exp $
+# $Id: modules,v 1.8 2017/07/26 01:36:10 tom Exp $
 ##############################################################################
 # Copyright (c) 1998-2006,2017 Free Software Foundation, Inc.                #
 #                                                                            #
@@ -30,22 +30,22 @@
 # Author: Thomas E. Dickey	1997-on
 #
 @ base
-ansi      progs   $(srcdir) $(srcdir)/tack.h ../include/term.h
-charset   progs   $(srcdir) $(srcdir)/tack.h ../include/term.h
-color     progs   $(srcdir) $(srcdir)/tack.h ../include/term.h
-control   progs   $(srcdir) $(srcdir)/tack.h ../include/term.h
-crum      progs   $(srcdir) $(srcdir)/tack.h ../include/term.h
+ansi      progs   $(srcdir) $(srcdir)/tack.h ../include/term.h tackgen.h
+charset   progs   $(srcdir) $(srcdir)/tack.h ../include/term.h tackgen.h
+color     progs   $(srcdir) $(srcdir)/tack.h ../include/term.h tackgen.h
+control   progs   $(srcdir) $(srcdir)/tack.h ../include/term.h tackgen.h
+crum      progs   $(srcdir) $(srcdir)/tack.h ../include/term.h tackgen.h
 edit      progs   $(srcdir) $(srcdir)/tack.h ../include/term.h tackgen.h
-fun       progs   $(srcdir) $(srcdir)/tack.h ../include/term.h
-init      progs   $(srcdir) $(srcdir)/tack.h ../include/term.h
-menu      progs   $(srcdir) $(srcdir)/tack.h ../include/term.h
-modes     progs   $(srcdir) $(srcdir)/tack.h ../include/term.h
-output    progs   $(srcdir) $(srcdir)/tack.h ../include/term.h
-pad       progs   $(srcdir) $(srcdir)/tack.h ../include/term.h
-scan      progs   $(srcdir) $(srcdir)/tack.h ../include/term.h
-sync      progs   $(srcdir) $(srcdir)/tack.h ../include/term.h
-sysdep    progs   $(srcdir) $(srcdir)/tack.h ../include/term.h
+fun       progs   $(srcdir) $(srcdir)/tack.h ../include/term.h tackgen.h
+init      progs   $(srcdir) $(srcdir)/tack.h ../include/term.h tackgen.h
+menu      progs   $(srcdir) $(srcdir)/tack.h ../include/term.h tackgen.h
+modes     progs   $(srcdir) $(srcdir)/tack.h ../include/term.h tackgen.h
+output    progs   $(srcdir) $(srcdir)/tack.h ../include/term.h tackgen.h
+pad       progs   $(srcdir) $(srcdir)/tack.h ../include/term.h tackgen.h
+scan      progs   $(srcdir) $(srcdir)/tack.h ../include/term.h tackgen.h
+sync      progs   $(srcdir) $(srcdir)/tack.h ../include/term.h tackgen.h
+sysdep    progs   $(srcdir) $(srcdir)/tack.h ../include/term.h tackgen.h
 tackgen   progs   $(srcdir) $(srcdir)/tack.h ../include/term.h
-tack      progs   $(srcdir) $(srcdir)/tack.h ../include/term.h
+tack      progs   $(srcdir) $(srcdir)/tack.h ../include/term.h tackgen.h
 
 # vile:makemode

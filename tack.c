@@ -22,7 +22,7 @@
 #include <tack.h>
 #include <stdarg.h>
 
-MODULE_ID("$Id: tack.c,v 1.24 2017/07/25 23:40:55 tom Exp $")
+MODULE_ID("$Id: tack.c,v 1.25 2017/07/26 01:40:17 tom Exp $")
 
 /*
    This program is designed to test terminfo, not curses.  Therefore
@@ -574,10 +574,10 @@ print_version(void)
 
 #ifdef DEBUG
 void
-Trace(const char *fmt,...)
+TackMsg(const char *fmt,...)
 {
     static FILE *my_fp;
-    static const char *my_filename = "Trace.out";
+    static const char *my_filename = "TackMsg.out";
     va_list ap;
 
     if (my_fp == 0) {

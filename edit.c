@@ -24,7 +24,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: edit.c,v 1.37 2017/07/25 22:56:58 tom Exp $")
+MODULE_ID("$Id: edit.c,v 1.38 2017/07/26 08:46:44 tom Exp $")
 
 /*
  * These are adapted from tic.h
@@ -1282,6 +1282,7 @@ show_value(
 	    ptextln(temp);
 	}
 	break;
+    case BOOLEAN:
     default:
 	break;
     }
