@@ -27,7 +27,7 @@
 #include <curses.h>
 #include <term.h>
 
-/* $Id: tackgen.c,v 1.8 2017/07/24 08:47:30 tom Exp $ */
+/* $Id: tackgen.c,v 1.10 2017/07/28 23:28:52 tom Exp $ */
 
 #define DATA_FMT "DATA(\t%3d,\t\"%s\",%s%s%s),\t/* %s */\n"
 
@@ -38,7 +38,31 @@ tabbed(const char *value, int extra)
     return (len < 8) ? "\t\t" : "\t";
 }
 
-#ifdef HAVE_CURSES_DATA_BOOLNAMES
+#if defined(HAVE_CURSES_DATA_BOOLNAMES) || defined(DECL_CURSES_DATA_BOOLNAMES)
+
+#ifdef DECL_CURSES_DATA_BOOLNAMES
+#undef boolnames
+extern char *boolnames[];
+extern size_t max_booleans;
+
+#undef numnames
+extern char *numnames[];
+extern size_t max_numbers;
+
+#undef strnames
+extern char *strnames[];
+extern size_t max_strings;
+
+#undef boolfnames
+extern char *boolfnames[];
+
+#undef numfnames
+extern char *numfnames[];
+
+#undef strfnames
+extern char *strfnames[];
+
+#endif
 
 typedef struct {
     int name_index;
@@ -88,7 +112,7 @@ main(void)
 
     num_values = num_b + num_n + num_s;
 
-    values = calloc(num_values, sizeof(DATA));
+    values = calloc(num_values + 1, sizeof(DATA));
 
     d = 0;
     for (s = 0; boolnames[s] != 0; ++s) {

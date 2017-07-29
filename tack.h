@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.64 2017/07/26 08:08:21 tom Exp $ */
+/* $Id: tack.h,v 1.67 2017/07/28 23:14:18 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -28,13 +28,11 @@
 
 #define MAJOR_VERSION 1
 #define MINOR_VERSION 8
-#define PATCH_VERSION 20170726
+#define PATCH_VERSION 20170728
 
 #ifdef HAVE_CONFIG_H
 #include <ncurses_cfg.h>
 #else
-#define GCC_UNUSED		/*nothing */
-#define GCC_NORETURN		/*nothing */
 #define HAVE_GETTIMEOFDAY 1
 #define HAVE_SELECT 1
 #define HAVE_SYS_TIME_H 1
@@ -42,6 +40,14 @@
 
 #ifndef BROKEN_LINKER
 #define BROKEN_LINKER 0
+#endif
+
+#ifndef GCC_NORETURN
+#define GCC_NORETURN		/*nothing */
+#endif
+
+#ifndef GCC_UNUSED
+#define GCC_UNUSED		/*nothing */
 #endif
 
 #ifndef HAVE_LONG_FILE_NAMES
@@ -140,6 +146,30 @@ extern void ExitProgram(int) GCC_NORETURN;
 
 #include <tackgen.h>
 
+#ifdef DECL_CURSES_DATA_BOOLNAMES
+#undef boolnames
+extern char *boolnames[];
+extern size_t max_booleans;
+
+#undef numnames
+extern char *numnames[];
+extern size_t max_numbers;
+
+#undef strnames
+extern char *strnames[];
+extern size_t max_strings;
+
+#undef boolfnames
+extern char *boolfnames[];
+
+#undef numfnames
+extern char *numfnames[];
+
+#undef strfnames
+extern char *strfnames[];
+
+#endif
+
 #ifdef NCURSES_VERSION
 #define CUR_TP      ((TERMTYPE *)(cur_term))
 #define MAX_BOOLEAN BOOLCOUNT	/* NUM_BOOLEANS(CUR_TP) */
@@ -182,10 +212,12 @@ typedef enum {
 
 #define UChar(c)    ((unsigned char)(c))
 
+#define TEMP_SIZE 1024
+
 extern FILE *log_fp;
 extern FILE *debug_fp;
 extern int debug_level;
-extern char temp[];
+extern char temp[TEMP_SIZE];
 extern char *tty_basename;
 extern char tty_shortname[];
 

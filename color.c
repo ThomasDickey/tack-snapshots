@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: color.c,v 1.14 2017/07/23 16:08:17 tom Exp $")
+MODULE_ID("$Id: color.c,v 1.15 2017/07/29 00:11:21 tom Exp $")
 
 /*
  * Color terminal tests.  Has only one entry point: test_color().
@@ -351,11 +351,11 @@ load_palette(int n)
 static void
 reset_palette(void)
 {
-    int n;
-
     reset_colors();
     init_palette();
     if (set_a_foreground || set_foreground) {
+	int n;
+
 	/*
 	 * Reset the colors to a usable ANSI palette.  Aside from xterm, none
 	 * of the other terminals have a way to determine what the original
@@ -378,7 +378,7 @@ reset_palette(void)
 static int
 rainbow(int n)
 {				/* print the programmable color display */
-    int i, c, d, palette_full, initial_pair;
+    int i, d, palette_full, initial_pair;
     static const struct {
 	const char *name;
 	char ch;
@@ -414,7 +414,7 @@ rainbow(int n)
     }
     palette_full = load_palette(n);
     for (d = 0; splat[d].name; d++) {
-	c = splat[d].ch;
+	int c = splat[d].ch;
 	if (d == 1) {
 	    put_mode(enter_reverse_mode);
 	}
@@ -491,19 +491,19 @@ dump_colors(void)
 				   pattern */
     static int xmap[8] =
     {0, 3, 4, 7, 1, 2, 5, 6};
-    int i, j, k, xi, xj, width, p, cs;
+    int xi, xj, width, p, cs;
     int found_one;
 
     cs = color_step <= 125 ? 125 : color_step;
     width = (1000 / cs) + 1;
     for (xi = 0; xi < 16; xi++) {
-	i = (xi & 8) ? xi ^ 15 : xi;
+	int i = (xi & 8) ? xi ^ 15 : xi;
 	R = i * cs;
 	if (R <= 1000) {
 	    found_one = FALSE;
 	    for (xj = 0; xj < 32; xj++) {
-		j = ((xj & 8) ? xj ^ 15 : xj) & 7;
-		k = xmap[((xi >> 1) & 4) + (xj >> 3)];
+		int j = ((xj & 8) ? xj ^ 15 : xj) & 7;
+		int k = xmap[((xi >> 1) & 4) + (xj >> 3)];
 		G = j * cs;
 		B = k * cs;
 		if (G <= 1000 && B <= 1000) {

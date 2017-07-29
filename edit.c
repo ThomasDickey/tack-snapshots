@@ -24,7 +24,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: edit.c,v 1.38 2017/07/26 08:46:44 tom Exp $")
+MODULE_ID("$Id: edit.c,v 1.40 2017/07/29 00:07:07 tom Exp $")
 
 /*
  * These are adapted from tic.h
@@ -94,7 +94,7 @@ compare_capability(const void *a, const void *b)
     return strcmp(p->nt_name, q->nt_name);
 }
 
-#ifdef HAVE_CURSES_DATA_BOOLNAMES
+#if (defined(HAVE_CURSES_DATA_BOOLNAMES) || defined(DECL_CURSES_DATA_BOOLNAMES))
 
 #define DATA(index,name,type) { name,type,index }
 static NAME_TABLE name_table[] =
@@ -130,19 +130,19 @@ alloc_name_table(void)
 	for (s = 0; s < max_booleans; ++s) {
 	    name_table[d].nt_name = boolnames[s];
 	    name_table[d].nt_type = BOOLEAN;
-	    name_table[d].nt_index = s;
+	    name_table[d].nt_index = (int) s;
 	    ++d;
 	}
 	for (s = 0; s < max_numbers; ++s) {
 	    name_table[d].nt_name = numnames[s];
 	    name_table[d].nt_type = NUMBER;
-	    name_table[d].nt_index = s;
+	    name_table[d].nt_index = (int) s;
 	    ++d;
 	}
 	for (s = 0; s < max_strings; ++s) {
 	    name_table[d].nt_name = strnames[s];
 	    name_table[d].nt_type = STRING;
-	    name_table[d].nt_index = s;
+	    name_table[d].nt_index = (int) s;
 	    ++d;
 	}
 	qsort(name_table, sizeof_name_table, sizeof(NAME_TABLE), compare_data);
@@ -293,9 +293,9 @@ int
 get_string_cap_byvalue(
 			  const char *value)
 {
-    int i;
-
     if (value) {
+	int i;
+
 	for (i = 0; i < (int) MAX_STRINGS; i++) {
 	    /* FIXME - this implies ncurses... */
 	    if (get_newer_string(i) == value) {
@@ -410,10 +410,10 @@ can_test(
 	    const char *s,
 	    int flags)
 {
-    int ch, j;
-    char name[32];
-
     if (s) {
+	int ch, j;
+	char name[32];
+
 	for (j = 0; (ch = name[j] = *s); s++) {
 	    if (ch == ' ' || ch == ')' || ch == '(') {
 		if (j) {
@@ -443,15 +443,15 @@ cap_index(
 	     const char *s,
 	     int *inx)
 {
-    NAME_TABLE const *nt;
-    int ch, j;
-    char name[32];
-
     if (s) {
+	int j;
+	char name[32];
+
 	for (j = 0;; s++) {
-	    ch = name[j] = *s;
+	    int ch = name[j] = *s;
 	    if (ch == ' ' || ch == ')' || ch == '(' || ch == 0) {
 		if (j) {
+		    NAME_TABLE const *nt;
 		    name[j] = '\0';
 		    if ((nt = find_string_cap_by_name(name)) != 0) {
 			*inx++ = nt->nt_index;
@@ -481,14 +481,13 @@ cap_match(
 	     const char *names,
 	     const char *cap)
 {
-    const char *s;
-    int c, l, t;
-
     if (names) {
-	l = (int) strlen(cap);
+	int l = (int) strlen(cap);
+	const char *s;
+
 	while ((s = strstr(names, cap))) {
-	    c = (names == s) ? 0 : *(s - 1);
-	    t = s[l];
+	    int c = (names == s) ? 0 : *(s - 1);
+	    int t = s[l];
 	    if ((c == 0 || c == ' ' || c == '(') &&
 		(t == 0 || t == ' ' || t == ')')) {
 		return TRUE;

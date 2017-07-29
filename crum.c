@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: crum.c,v 1.11 2017/07/23 16:08:17 tom Exp $")
+MODULE_ID("$Id: crum.c,v 1.12 2017/07/29 00:07:37 tom Exp $")
 
 /*
  * Test cursor movement.
@@ -246,9 +246,9 @@ crum_clear(
 	      int *state,
 	      int *ch)
 {
-    int i;
-
     if (clear_screen) {
+	int i;
+
 	for (i = lines; i > 1; i--) {
 	    putln("garbage");
 	}
@@ -400,9 +400,9 @@ crum_os(
 	   int *state,
 	   int *ch)
 {
-    int i;
-
     if (cursor_address && over_strike) {
+	int i;
+
 	put_clear();
 	for (i = 0; i < columns - 2; i++) {
 	    tc_putch('|');

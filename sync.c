@@ -22,7 +22,7 @@
 #include <tack.h>
 #include <time.h>
 
-MODULE_ID("$Id: sync.c,v 1.14 2017/07/23 16:08:17 tom Exp $")
+MODULE_ID("$Id: sync.c,v 1.15 2017/07/28 23:38:20 tom Exp $")
 
 /* terminal-synchronization and performance tests */
 
@@ -73,10 +73,12 @@ static char tty_ACK[TTY_ACK_SIZE];	/* ACK response, set by tty_sync_error() */
 int
 tty_sync_error(void)
 {
-    int ch, trouble, ack;
+    int trouble;
 
     trouble = FALSE;
     for (;;) {
+	int ch, ack;
+
 	tt_putp(tty_ENQ);	/* send ENQ */
 	ch = getnext(STRIP_PARITY);
 	event_start(TIME_SYNC);	/* start the timer */
@@ -139,7 +141,7 @@ flush_input(void)
 static void
 probe_enq_ok(void)
 {
-    int tc, len, ulen;
+    int len;
 
     put_str("Testing ENQ/ACK, standby...");
     fflush(stdout);
@@ -191,10 +193,10 @@ probe_enq_ok(void)
 	ACK_length = 4096;
 	return;
     }
-    tc = tty_ACK[len - 1];
 #ifdef user8
     if (user8) {
-	ulen = (int) strlen(user8);
+	int ulen = (int) strlen(user8);
+	int tc = tty_ACK[len - 1];
 	if (tc == user8[ulen - 1]) {
 	    /* ANSI style acknowledge string */
 	    ACK_terminator = tc;

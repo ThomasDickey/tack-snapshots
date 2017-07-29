@@ -20,15 +20,19 @@
 */
 /* initialization and wrapup code */
 
+#ifdef _ALL_SOURCE
+#define _ACS_COMPAT_CODE	/* hack for AIX */
+#endif
+
 #include <tack.h>
 
-MODULE_ID("$Id: init.c,v 1.29 2017/07/25 22:58:47 tom Exp $")
+MODULE_ID("$Id: init.c,v 1.35 2017/07/28 23:57:59 tom Exp $")
 
 FILE *debug_fp;
-char temp[1024];
+char temp[TEMP_SIZE];
 char *tty_basename = NULL;
 
-#ifndef HAVE_CURSES_DATA_BOOLNAMES
+#if !(defined(HAVE_CURSES_DATA_BOOLNAMES) || defined(DECL_CURSES_DATA_BOOLNAMES))
 char **boolnames;
 char **numnames;
 char **strnames;
@@ -75,14 +79,13 @@ reset_init(void)
     /* run the reset file */
     if (reset_file && reset_file[0]) {
 	FILE *fp;
-	int ch;
 
 	can_test("rf", FLAG_TESTED);
 	if ((fp = fopen(reset_file, "r"))) {	/* send the reset file */
 	    sprintf(temp, " (rf) %s", reset_file);
 	    ptextln(temp);
 	    while (1) {
-		ch = getc(fp);
+		int ch = getc(fp);
 		if (ch == EOF)
 		    break;
 		put_this(ch);
@@ -114,14 +117,13 @@ reset_init(void)
     /* run the initialization file */
     if (init_file && init_file[0]) {
 	FILE *fp;
-	int ch;
 
 	can_test("if", FLAG_TESTED);
 	if ((fp = fopen(init_file, "r"))) {	/* send the init file */
 	    sprintf(temp, " (if) %s", init_file);
 	    ptextln(temp);
 	    while (1) {
-		ch = getc(fp);
+		int ch = getc(fp);
 		if (ch == EOF)
 		    break;
 		put_this(ch);
@@ -199,13 +201,15 @@ ask_infocmp(void)
     char *result = 0;
     size_t need = strlen(tty_basename) + 20;
     char *command = malloc(need);
-    FILE *pp;
-    char buffer[BUFSIZ];
-    char *s, *t;
 
     if (command != 0) {
+	FILE *pp;
+
 	sprintf(command, "infocmp -1 \"%s\"", tty_basename);
 	if ((pp = popen(command, "r")) != 0) {
+	    char buffer[BUFSIZ];
+	    char *s, *t;
+
 	    if (fgets(buffer, sizeof(buffer) - 1, pp) != 0
 		&& *buffer == '#'
 		&& ((t = strstr(buffer, " file: "))
@@ -217,7 +221,7 @@ ask_infocmp(void)
 		s = strchr(t + 1, ' ');
 		result = strdup(s + 1);
 	    }
-#ifndef HAVE_CURSES_DATA_BOOLNAMES
+#if !(defined(HAVE_CURSES_DATA_BOOLNAMES) || defined(DECL_CURSES_DATA_BOOLNAMES))
 	    if (result) {
 		int max_b = 200;
 		int max_n = 200;
@@ -272,20 +276,30 @@ ask_infocmp(void)
 static void
 init_acs(void)
 {
-    int s, d;
     const char *value = acs_chars;
 
-#ifdef NUM_ACS			/* NetBSD curses */
-#ifndef acs_map
+#ifdef HAVE_CURSES_DATA_ACS_MAP
+#elif defined(HAVE_CURSES_DATA__ACS_MAP)
 #define acs_map _acs_map
+#elif defined(HAVE_CURSES_DATA___ACS_MAP)
+#define acs_map __acs_map
+#elif !defined(DECL_CURSES_DATA_ACS32MAP)
+#define NEED_ACS_MAP
 #endif
-#elif !defined(NCURSES_VERSION)
+
+    /*
+     * HPUX and AIX, which do #define's for acs_map, make those arrays.
+     * Solaris makes it a pointer (which we allocate).
+     */
+#if (defined(HAVE_CURSES_DATA_ACS_MAP) || defined(NEED_ACS_MAP)) && ! (defined(NUM_ACS) || defined(NCURSES_VERSION))
     if (acs_map == 0) {
 	acs_map = calloc(256, sizeof(acs_map[0]));
     }
 #endif
     if (value != 0) {
 	while (*value != '\0') {
+	    int s, d;
+
 	    if ((s = UChar(*value++)) == '\0')
 		break;
 	    if ((d = UChar(*value++)) == '\0')

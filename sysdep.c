@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997-2010,2012 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2012,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -44,7 +44,7 @@
 #endif
 #endif
 
-MODULE_ID("$Id: sysdep.c,v 1.23 2012/09/16 15:16:00 Adrian.Bunk Exp $")
+MODULE_ID("$Id: sysdep.c,v 1.27 2017/07/28 23:37:53 tom Exp $")
 
 #ifdef TERMIOS
 #define PUT_TTY(fd, buf) tcsetattr(fd, TCSAFLUSH, buf)
@@ -110,7 +110,7 @@ tty_raw(int minch GCC_UNUSED, int mask)
     new_modes.c_lflag &=
 	(unsigned) ~(ISIG | ICANON | XCASE | ECHO | ECHOE | ECHOK | ECHONL);
 #ifdef LOBLK
-    new_modes.c_lflag &= ~LOBLK;
+    new_modes.c_lflag &= (unsigned) ~LOBLK;
 #endif
     new_modes.c_oflag &= (unsigned) ~(OPOST | OLCUC | TABDLY);
     if (mask == ALLOW_PARITY) {
@@ -371,7 +371,7 @@ spin_flush(void)
     event_start(TIME_FLUSH);	/* start the timer */
     do {
 	if (char_ready()) {
-	    if (read(fileno(stdin), &buf, sizeof(buf)))
+	    if (read(fileno(stdin), &buf, sizeof(buf)) != 0)
 		break;
 	}
     } while (event_time(TIME_FLUSH) < 400000);
@@ -386,7 +386,7 @@ spin_flush(void)
 void
 read_key(char *buf, size_t max)
 {
-    int got, ask, i, l;
+    int ask, i, l;
     char *s;
 
     *buf = '\0';
@@ -399,6 +399,8 @@ read_key(char *buf, size_t max)
     ++s;
     --max;
     while ((int) max > 0 && (ask = char_ready()) > 0) {
+	int got;
+
 	if (ask > (int) max) {
 	    ask = (int) max;
 	}

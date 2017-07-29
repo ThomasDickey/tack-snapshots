@@ -23,7 +23,7 @@
 #include <tack.h>
 #include <time.h>
 
-MODULE_ID("$Id: output.c,v 1.23 2017/07/23 15:37:00 tom Exp $")
+MODULE_ID("$Id: output.c,v 1.24 2017/07/28 23:51:37 tom Exp $")
 
 /* globals */
 long char_sent;			/* number of characters sent */
@@ -153,9 +153,9 @@ tc_putch(TC_PUTCH c)
 void
 tt_tputs(const char *string, int reps)
 {
-    int i;
-
     if (string) {
+	int i;
+
 	for (i = 0; i < TT_MAX; i++) {
 	    if (i >= ttp) {
 		tt_cap[i] = string;
@@ -200,9 +200,9 @@ tt_putparm(
 	      int arg1,
 	      int arg2)
 {
-    int i;
-
     if (string) {
+	int i;
+
 	for (i = 0; i < TT_MAX; i++) {
 	    if (i >= ttp) {
 		tt_cap[i] = string;
@@ -489,16 +489,18 @@ expand(const char *s)
     static char buf[4096];
     char *t;
     const char *v;
-    int ch;
 
     if (magic_cookie_glitch <= 0 && exit_attribute_mode) {
 	v = enter_reverse_mode;
     } else {
 	v = NULL;
     }
+
     expand_chars = 0;
     t = buf;
+
     if (s) {
+	int ch;
 	for (; (ch = *s); s++) {
 	    if ((ch & 0x80) && v) {	/* print it in reverse video
 					   mode */
@@ -521,11 +523,12 @@ print_expand(char *s)
 {				/* convert the string to 7-bit printable form */
     static char buf[4096];
     char *t;
-    int ch;
 
     expand_chars = 0;
     t = buf;
+
     if (s) {
+	int ch;
 	for (; (ch = *s); s++) {
 	    expand_one(ch, &t);
 	}
@@ -707,13 +710,12 @@ put_clear(void)
 int
 wait_here(void)
 {
-    int ch;
     char cc[64];
     char message[16];
     int i, j;
 
     for (i = 0; i < (int) sizeof(cc); i++) {
-	ch = getchp(STRIP_PARITY);
+	int ch = getchp(STRIP_PARITY);
 	if (ch == EOF)
 	    return ch;
 	cc[i] = (char) ch;
@@ -768,12 +770,11 @@ void
 read_string(char *buf,
 	    size_t length)
 {
-    int ch;
     size_t i;
 
     if (length > 1) {
 	for (i = 0; i < length - 1;) {
-	    ch = getchp(STRIP_PARITY);
+	    int ch = getchp(STRIP_PARITY);
 	    if (ch == '\r' || ch == '\n' || ch == EOF) {
 		break;
 	    }

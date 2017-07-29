@@ -1,3 +1,9 @@
+tack (1.08+20170728) unstable; urgency=low
+
+  * port to AIX and HPUX
+
+ -- Thomas E. Dickey <dickey@invisible-island.net>  Fri, 28 Jul 2017 14:40:33 -0400
+
 tack (1.08+20170726) unstable; urgency=low
 
   * new release

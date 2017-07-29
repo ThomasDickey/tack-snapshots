@@ -1,3 +1,51 @@
+2017-07-28  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* ansi.c:
+	cppcheck reported an sprintf using output buffer as an input - fix
+
+	* scan.c, ansi.c, charset.c, color.c, control.c, crum.c, edit.c, fun.c, init.c, menu.c, modes.c, output.c, pad.c, sync.c, sysdep.c:
+	cppcheck:style-warnings
+
+	* fun.c: quiet a bogus warning from clang --analyze
+
+	* tackgen.c: avoid a zero-sized allocation
+
+	* sysdep.c, tack.c, init.c, tack.h:
+	help the compiler know how large temp[] is, for better warnings
+
+	* aclocal.m4: resync with my-autoconf
+
+	* package/debian/changelog: bump
+
+	* configure: regen
+
+	* init.c: build-fix
+
+	* configure.in:
+	AIX has acs_map renamed and optionally available as "acs32map"
+
+	* init.c:
+	workaround for AIX to turn on optional feature that declares acs32map[]
+
+	* aclocal.m4:
+	suppress the second loop-exit, to avoid making undeclared data match first
+
+	* aclocal.m4:
+	modify CF_CURSES_CHECK_DATA to accept a list of names to check
+
+	* configure.in:
+	add configure check for acs_map and the most common aliases
+
+	* init.c: improve initial port for HPUX to use autoconf to find acs_map
+
+	* sysdep.c: copyright-date
+
+	* package/tack.spec, tack.h: bump
+
+	* sysdep.c, edit.c, init.c, tackgen.c, tack.h:
+	initial port to HPUX, which does not declare the name-arrays in its X/Open
+	curses header.
+
 2017-07-26  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* package/tack.spec: disable debug-package

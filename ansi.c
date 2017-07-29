@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: ansi.c,v 1.16 2017/07/23 16:08:17 tom Exp $")
+MODULE_ID("$Id: ansi.c,v 1.18 2017/07/29 00:22:16 tom Exp $")
 
 /*
  * Standalone tests for ANSI terminals.  Three entry points:
@@ -214,13 +214,14 @@ valid_mode(int expected)
 static int
 read_reports(void)
 {
-    int i, j, k, tc, vcr, lc;
-    char *s;
-    const char *t;
+    int i, tc, lc;
 
     lc = 5;
     terminal_class = tc = 0;
     for (i = 0; report_list[i].text; i++, lc++) {
+	int j, vcr;
+	char *s;
+
 	if (terminal_class < report_list[i].lvl &&
 	    tc < report_list[i].lvl) {
 	    put_crlf();
@@ -257,6 +258,8 @@ read_reports(void)
 	    }
 	j = UChar(pack_buf[0]);
 	if (j != A_CSI && j != A_DCS) {
+	    const char *t;
+
 	    put_crlf();
 	    t = "*** The above request gives illegal response ***";
 	    ptext(t);
@@ -270,6 +273,8 @@ read_reports(void)
 	}
 	putln(s);
 	if (vcr) {		/* find out how big the screen is */
+	    int k;
+
 	    tc_putp(report_list[i].request);
 	    if (!valid_mode('R'))
 		continue;
@@ -405,21 +410,29 @@ mode_display(const char *p, int n, int c, int s, int r)
 static void
 terminal_state(void)
 {
-    static const char *puc[] =
-    {"", "<", "=", ">", "?", 0};
-
-    int i, j, k, l, modes_found;
-    char *s;
-    char buf[256], tms[256];
-    int mode_puc[MAX_MODES], mode_number[MAX_MODES];
-    char set_value[MAX_MODES], reset_value[MAX_MODES];
-    char current_value[MAX_MODES];
+    int modes_found;
+    char tms[256];
 
     ptext("Testing terminal mode status. (CSI 0 $ p)");
     tc_putp("\033[0$p");
     modes_found = 0;
     tms[0] = '\0';
+
     if (valid_mode(('$' << 8) | 'y')) {
+	static const char *puc[] =
+	{"", "<", "=", ">", "?", 0};
+
+	int i, j, k, l;
+	char *s;
+	char buf[256];
+
+	int mode_puc[MAX_MODES];
+	int mode_number[MAX_MODES];
+
+	char set_value[MAX_MODES];
+	char reset_value[MAX_MODES];
+	char current_value[MAX_MODES];
+
 	for (i = 0; puc[i]; i++) {
 	    put_crlf();
 	    if (i) {
@@ -436,7 +449,7 @@ terminal_state(void)
 		if (!valid_mode(('$' << 8) | 'y')) {
 		    /* not valid, save terminating value */
 		    s = expand((const char *) ansi_buf);
-		    sprintf(tms, "%s%s%d %s  ", tms,
+		    sprintf(tms + strlen(tms), "%s%d %s  ",
 			    puc[i], j, s);
 		    break;
 		}
