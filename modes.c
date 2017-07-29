@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: modes.c,v 1.10 2017/07/23 16:08:17 tom Exp $")
+MODULE_ID("$Id: modes.c,v 1.11 2017/07/28 23:54:14 tom Exp $")
 
 /*
  * Tests boolean flags and terminal modes.
@@ -328,9 +328,11 @@ subtest_bw(
 	      int *state,
 	      int *ch)
 {
-    int i, j;
+    int i;
 
     if (over_strike) {
+	int j;
+
 	/* test (bw) */
 	ptext("\n(bw) should ");
 	i = char_count;
@@ -488,10 +490,12 @@ subtest_xt(
 	      int *ch)
 {
     int tabat;			/* the tab spacing we end up with */
-    int cc;
 
     tabat = set_tab ? 8 : init_tabs;
+
     if (!over_strike && (tabat > 0)) {
+	int cc;
+
 	ptext("(xt) should not ");
 	put_cr();
 	ptext("(xt) should");
@@ -519,9 +523,9 @@ subtest_cbt(
 	       int *state,
 	       int *ch)
 {
-    int i;
-
     if (back_tab) {
+	int i;
+
 	put_clear();
 	ptext("Back-tab (cbt)");
 	go_home();
@@ -563,9 +567,9 @@ subtest_xenl(
 		int *state,
 		int *ch)
 {
-    int i, j, k;
-
     if (over_strike) {
+	int i, j, k;
+
 	/* test (xenl) on overstrike terminals */
 	if (!can_go_home || !can_clear_screen) {
 	    ptextln("(xenl) Newline-glitch not tested, can't home cursor and clear.");
@@ -605,6 +609,8 @@ subtest_xenl(
 		eat_newline_glitch ? "true" : "false");
 	ptextln(temp);
     } else {
+	int j;
+
 	/* test (xenl) when (os) is reset */
 	if (!can_go_home) {
 	    ptextln("(xenl) Newline-glitch not tested, can't home cursor");
@@ -687,9 +693,9 @@ subtest_xmc(
 	       int *state,
 	       int *ch)
 {
-    int i, j;
-
     if (enter_standout_mode) {
+	int i, j;
+
 	sprintf(temp, "\n(xmc) Magic-cookie-glitch is %d in the data base", magic_cookie_glitch);
 	ptextln(temp);
 	j = magic_cookie_glitch * 8;
@@ -748,10 +754,10 @@ subtest_mir(
 	       int *state,
 	       int *ch)
 {
-    int i;
-    char *s;
-
     if (enter_insert_mode && exit_insert_mode && cursor_address) {
+	int i;
+	char *s;
+
 	put_clear();
 	i = line_count;
 	put_str("\nXXX\nXXX\nXXX\nXXX");
@@ -801,11 +807,11 @@ subtest_msgr(
 		int *state,
 		int *ch)
 {
-    int i;
-
     if (cursor_address &&
 	((enter_standout_mode && exit_standout_mode) ||
 	 (enter_alt_charset_mode && exit_alt_charset_mode))) {
+	int i;
+
 	put_crlf();
 	i = line_count + 1;
 	tputs(TPARM_2(cursor_address, i, 0), lines, tc_putch);

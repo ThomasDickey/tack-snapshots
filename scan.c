@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997-2012,2013 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2013,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -22,7 +22,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: scan.c,v 1.13 2013/07/13 18:43:00 tom Exp $")
+MODULE_ID("$Id: scan.c,v 1.14 2017/07/29 00:19:32 tom Exp $")
 
 size_t scan_max;		/* length of longest scan code */
 char **scan_up, **scan_down, **scan_name;
@@ -210,11 +210,12 @@ scan_key(void)
 {				/* read a key and translate scan mode to
 				   ASCII */
     unsigned i;
-    int j, ch;
     char buf[64];
 
     for (i = 1;; i++) {
-	ch = getchar();
+	int j;
+	int ch = getchar();
+
 	if (ch == EOF)
 	    return EOF;
 	if (debug_fp) {

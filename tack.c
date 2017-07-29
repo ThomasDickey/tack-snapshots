@@ -22,7 +22,7 @@
 #include <tack.h>
 #include <stdarg.h>
 
-MODULE_ID("$Id: tack.c,v 1.25 2017/07/26 01:40:17 tom Exp $")
+MODULE_ID("$Id: tack.c,v 1.26 2017/07/28 23:15:29 tom Exp $")
 
 /*
    This program is designed to test terminfo, not curses.  Therefore
@@ -643,7 +643,7 @@ main(int argc, char *argv[])
 
 #ifdef NCURSES_VERSION
     if (user_modified()) {
-	sprintf(temp, "Hit y to save changes to file: %s  ? ",
+	sprintf(temp, "Hit y to save changes to file: %.256s  ? ",
 		tty_basename);
 	ptext(temp);
 	if (wait_here() == 'y') {

@@ -26,7 +26,7 @@ dnl sale, use or other dealings in this Software without prior written       *
 dnl authorization.                                                           *
 dnl***************************************************************************
 dnl
-dnl $Id: aclocal.m4,v 1.27 2017/07/23 22:30:58 tom Exp $
+dnl $Id: aclocal.m4,v 1.30 2017/07/28 23:07:28 tom Exp $
 dnl
 dnl Author: Thomas E. Dickey
 dnl
@@ -594,50 +594,60 @@ cf_save_CFLAGS="$cf_save_CFLAGS -Qunused-arguments"
 fi
 ])
 dnl ---------------------------------------------------------------------------
-dnl CF_CURSES_CHECK_DATA version: 5 updated: 2014/07/19 18:41:17
+dnl CF_CURSES_CHECK_DATA version: 6 updated: 2017/07/28 19:05:31
 dnl --------------------
 dnl Check if curses.h defines the given data/variable.
 dnl Use this after CF_NCURSES_CONFIG or CF_CURSES_CONFIG.
+dnl
+dnl $1 = data item(s) to check for
+dnl $2 = action on success, e.g., "break" to quit checking a series of choices
 AC_DEFUN([CF_CURSES_CHECK_DATA],
 [
-AC_MSG_CHECKING(for data $1 declaration in ${cf_cv_ncurses_header:-curses.h})
+for cf_data in $1
+do
+AC_MSG_CHECKING(for data $cf_data declaration in ${cf_cv_ncurses_header:-curses.h})
 
 AC_TRY_COMPILE(CF__CURSES_HEAD,[
-void *foo = &($1)
-],cf_result=yes,cf_result=no)
+void *foo = &($cf_data)
+],[cf_result=yes
+],[cf_result=no])
 AC_MSG_RESULT($cf_result)
 
 if test $cf_result = yes ; then
-	CF_UPPER(cf_result,have_curses_data_$1)
+	CF_UPPER(cf_result,have_curses_data_$cf_data)
 	AC_DEFINE_UNQUOTED($cf_result)
+	ifelse($2,,,[$2])
 else
-	AC_MSG_CHECKING(for data $1 in library)
+	AC_MSG_CHECKING(for data $cf_data in library)
 	# BSD linkers insist on making weak linkage, but resolve at runtime.
 	AC_TRY_RUN(CF__CURSES_HEAD
 [
-extern char $1;
+extern char $cf_data;
 int main(void)
 {
-	void *foo = &($1);
-	fprintf(stderr, "testing linkage of $1:%p\n", foo);
+	void *foo = &($cf_data);
+	fprintf(stderr, "testing linkage of $cf_data:%p\n", foo);
 	${cf_cv_main_return:-return}(foo == 0);
-}],[cf_result=yes],[cf_result=no],[
+}],[cf_result=yes
+],[cf_result=no],[
 	# cross-compiling
 	AC_TRY_LINK(CF__CURSES_HEAD
-[extern char $1;],[
+[extern char $cf_data;],[
 	do {
-		void *foo = &($1);
-		fprintf(stderr, "testing linkage of $1:%p\n", foo);
+		void *foo = &($cf_data);
+		fprintf(stderr, "testing linkage of $cf_data:%p\n", foo);
 		${cf_cv_main_return:-return}(foo == 0);
 	} while (0)
 ],[cf_result=yes],[cf_result=no])
 ])
 	AC_MSG_RESULT($cf_result)
 	if test $cf_result = yes ; then
-		CF_UPPER(cf_result,decl_curses_data_$1)
+		CF_UPPER(cf_result,decl_curses_data_$cf_data)
 		AC_DEFINE_UNQUOTED($cf_result)
+		# do not exit loop here, since we prefer system's declarations
 	fi
 fi
+done
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_CURSES_CONFIG version: 2 updated: 2006/10/29 11:06:27

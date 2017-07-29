@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: charset.c,v 1.19 2017/07/23 16:08:17 tom Exp $")
+MODULE_ID("$Id: charset.c,v 1.20 2017/07/29 00:12:52 tom Exp $")
 
 /*
 	Menu definitions for alternate character set and SGR tests.
@@ -428,9 +428,9 @@ charset_smacs(
 		 int *state,
 		 int *ch)
 {
-    int i, c;
-
     if (enter_alt_charset_mode) {
+	int i, c;
+
 	put_clear();
 	ptextln("The following characters are available. (smacs) (rmacs)");
 	for (i = ' '; i <= '`'; i += 32) {
@@ -457,10 +457,9 @@ static void
 test_acs(
 	    int attr)
 {				/* alternate character set */
-    int i, j;
+    int i;
     char valid_glyph[GLYPHS];
     char acs_table[GLYPHS];
-    static unsigned char vt100[] = "`afgjklmnopqrstuvwxyz{|}~";
 
     line_count = 0;
     for (i = 0; i < GLYPHS; i++) {
@@ -472,6 +471,8 @@ test_acs(
 		expand(acs_chars));
 	putln(temp);
 	for (i = 0; acs_chars[i]; i += 2) {
+	    int j;
+
 	    if (acs_chars[i + 1] == 0) {
 		break;
 	    }
@@ -496,6 +497,8 @@ test_acs(
 	    }
 	}
     } else {
+	static unsigned char vt100[] = "`afgjklmnopqrstuvwxyz{|}~";
+
 	ptextln("acs_chars not defined (acsc)");
 	/* enable the VT-100 graphics characters (default) */
 	for (i = 0; vt100[i]; i++) {
@@ -697,9 +700,9 @@ charset_enacs(
 		 int *state,
 		 int *ch)
 {
-    int c, i;
-
     if (enter_alt_charset_mode || acs_chars) {
+	int c, i;
+
 	c = 0;
 	while (1) {
 	    put_clear();

@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: pad.c,v 1.13 2017/07/23 16:53:27 tom Exp $")
+MODULE_ID("$Id: pad.c,v 1.14 2017/07/28 23:46:14 tom Exp $")
 
 /* test the pad counts on the terminal */
 
@@ -193,10 +193,12 @@ pad_standard(
 {
     const char *long_name;
     const char *cap;
-    int l = 2, i;
-    char tbuf[128];
 
     if ((cap = get_string_cap_byname(t->caps_done, &long_name))) {
+	int i;
+	int l = 2;
+	char tbuf[128];
+
 	sprintf(tbuf, "(%s) %s, start testing", t->caps_done,
 		long_name);
 	if (skip_pad_test(t, state, ch, tbuf)) {
@@ -305,7 +307,6 @@ pad_home1(
 	     int *state,
 	     int *ch)
 {
-    int j, k;
 
     if (can_go_home && auto_right_margin) {
 	/*
@@ -317,8 +318,12 @@ pad_home1(
 	}
 	pad_test_startup(1);
 	do {
+	    int j;
+
 	    go_home();
 	    for (j = 1; j < lines; j++) {
+		int k;
+
 		for (k = 0; k < columns; k++) {
 		    if (k & 0xF) {
 			put_this(letter);
@@ -348,8 +353,6 @@ pad_home2(
 	     int *state,
 	     int *ch)
 {
-    int j, k;
-
     if (can_go_home) {
 	if (skip_pad_test(t, state, ch,
 			  "(home) Home, (nel) newline start testing")) {
@@ -357,8 +360,12 @@ pad_home2(
 	}
 	pad_test_startup(1);
 	do {
+	    int j;
+
 	    go_home();
 	    for (j = 1; j < lines; j++) {
+		int k;
+
 		for (k = 2; k < columns; k++) {
 		    if (k & 0xF) {
 			put_this(letter);
@@ -1242,7 +1249,6 @@ pad_rin(
 	   int *state,
 	   int *ch)
 {
-    int i;
     const char *start_message;
 
     if (t->flags & 1) {
@@ -1268,6 +1274,7 @@ pad_rin(
     if (skip_pad_test(t, state, ch, start_message)) {
 	return;
     }
+
     pad_test_startup(1);
     do {
 	sprintf(temp, "%d\r", test_complete);
@@ -1278,8 +1285,12 @@ pad_rin(
 	    tt_putparm(parm_rindex, repeats, repeats, 0);
 	}
     } while (still_testing());
+
     put_str("This line should be on the bottom.\r");
+
     if (scroll_reverse && augment == 1) {
+	int i;
+
 	for (i = 1; i < lines; i++) {
 	    tt_putp(scroll_reverse);
 	}
@@ -1306,7 +1317,6 @@ pad_il(
 	  int *state,
 	  int *ch)
 {
-    int i;
     const char *start_message;
 
     if (t->flags & 1) {
@@ -1332,6 +1342,7 @@ pad_il(
     if (skip_pad_test(t, state, ch, start_message)) {
 	return;
     }
+
     pad_test_startup(1);
     do {
 	sprintf(temp, "%d\r", test_complete);
@@ -1342,8 +1353,12 @@ pad_il(
 	    tt_putparm(parm_insert_line, repeats, repeats, 0);
 	}
     } while (still_testing());
+
     put_str("This line should be on the bottom.\r");
+
     if (insert_line && augment == 1) {
+	int i;
+
 	for (i = 1; i < lines; i++) {
 	    tt_putp(insert_line);
 	}
@@ -1370,7 +1385,6 @@ pad_indn(
 	    int *state,
 	    int *ch)
 {
-    int i;
     const char *start_message;
 
     if (t->flags & 1) {
@@ -1401,6 +1415,7 @@ pad_indn(
     if (skip_pad_test(t, state, ch, start_message)) {
 	return;
     }
+
     pad_test_startup(1);
     /* go to the bottom of the screen */
     home_down();
@@ -1413,8 +1428,12 @@ pad_indn(
 	    tt_putparm(parm_index, repeats, repeats, 0);
 	}
     } while (still_testing());
+
     put_str("This line should be on the top.\r");
+
     if (scroll_forward && augment == 1) {
+	int i;
+
 	for (i = 1; i < lines; i++) {
 	    put_ind();
 	}
@@ -1440,7 +1459,6 @@ pad_dl(
 	  int *state,
 	  int *ch)
 {
-    int i = 0;
     const char *start_message;
 
     if (t->flags & 1) {
@@ -1480,10 +1498,13 @@ pad_dl(
 	    tt_putparm(parm_delete_line, repeats, repeats, 0);
 	}
     } while (still_testing());
+
     home_down();
     put_str("This line should be on the top.");
     go_home();
+
     if (delete_line && augment == 1) {
+	int i;
 	for (i = 1; i < lines; i++) {
 	    tt_putp(delete_line);
 	}
@@ -1842,8 +1863,6 @@ pad_smso(
 	    int *state,
 	    int *ch)
 {
-    int i, j;
-
     if (!enter_standout_mode || !exit_standout_mode) {
 	CAP_NOT_FOUND;
 	ptext("(smso) (rmso) Enter/Exit-standout-mode not present.  ");
@@ -1862,6 +1881,8 @@ pad_smso(
      */
     pad_test_startup(1);
     do {
+	int i, j;
+
 	page_loop();
 	j = magic_cookie_glitch > 0 ? magic_cookie_glitch : 0;
 	for (i = 2 + j + j; i < columns;) {
@@ -1873,6 +1894,7 @@ pad_smso(
 	}
     } while (still_testing());
     pad_test_shutdown(t, 0);
+
     home_down();
     ptext(above_line);
     pad_done_message(t, state, ch);
@@ -1890,7 +1912,6 @@ pad_smacs(
 	     int *state,
 	     int *ch)
 {
-    int i, j;
 
     /* test enter even if exit is missing */
     if (!enter_alt_charset_mode) {
@@ -1903,8 +1924,11 @@ pad_smacs(
 		      "(smacs) (rmacs) Enter/Exit-altcharset-mode start testing")) {
 	return;
     }
+
     pad_test_startup(1);
     do {
+	int i, j;
+
 	page_loop();
 	j = magic_cookie_glitch > 0 ? magic_cookie_glitch : 0;
 	for (i = 2 + j + j; i < columns;) {
@@ -1916,6 +1940,7 @@ pad_smacs(
 	}
     } while (still_testing());
     pad_test_shutdown(t, 0);
+
     home_down();
     ptext("Every other character is from the alternate character set.  ");
     pad_done_message(t, state, ch);

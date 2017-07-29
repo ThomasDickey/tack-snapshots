@@ -28,7 +28,7 @@ dnl***************************************************************************
 dnl
 dnl Author: Thomas E. Dickey	2007-on
 dnl
-dnl $Id: configure.in,v 1.37 2017/07/25 23:28:42 tom Exp $
+dnl $Id: configure.in,v 1.39 2017/07/28 19:56:15 tom Exp $
 dnl This is a simple configuration-script for tack which makes it simpler to
 dnl build outside the ncurses tree (provided that ncurses was configured using
 dnl the --with-ticlib option).
@@ -118,8 +118,8 @@ dnl ---------------------------------------------------------------------------
 CF_PKG_CONFIG
 CF_WITH_NCURSES_ETC
 
-CF_CURSES_CHECK_DATA(boolnames)
-CF_CURSES_CHECK_DATA(boolfnames)
+CF_CURSES_CHECK_DATA(boolnames boolfnames)
+CF_CURSES_CHECK_DATA(acs_map _acs_map __acs_map acs32map, break)
 
 # The CF_*CURSES_CONFIG stuff provides curses/ncurses, which may include tinfo.
 # Check if (a) we have tinfo library and (b) if we need ncurses library too.

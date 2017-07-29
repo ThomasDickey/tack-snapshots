@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: menu.c,v 1.10 2017/07/23 16:08:17 tom Exp $")
+MODULE_ID("$Id: menu.c,v 1.11 2017/07/28 23:56:42 tom Exp $")
 
 /*
    Menu control
@@ -54,9 +54,11 @@ menu_test_loop(
 		  int *state,
 		  int *ch)
 {
-    int nch, p;
+    int nch;
 
     if ((test->flags & MENU_REP_MASK) && (augment_test != test)) {
+	int p;
+
 	/* set the augment variable (first time only) */
 	p = (test->flags >> 8) & 15;
 	if ((test->flags & MENU_REP_MASK) == MENU_LM1) {
@@ -258,9 +260,9 @@ generic_done_message(
 			int *state,
 			int *ch)
 {
-    char done_message[128];
-
     if (test->caps_done) {
+	char done_message[128];
+
 	sprintf(done_message, "(%s) Done ", test->caps_done);
 	ptext(done_message);
     } else {
@@ -317,9 +319,9 @@ subtest_menu(
 		int *state,
 		int *ch)
 {
-    TestList *mt;
-
     if (*ch) {
+	TestList *mt;
+
 	for (mt = test; (mt->flags & MENU_LAST) == 0; mt++) {
 	    if (mt->menu_entry && (*ch == mt->menu_entry[0])) {
 		*ch = 0;

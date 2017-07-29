@@ -25,7 +25,7 @@
 #include <sys/time.h>
 #endif
 
-MODULE_ID("$Id: control.c,v 1.17 2017/07/23 16:08:23 tom Exp $")
+MODULE_ID("$Id: control.c,v 1.18 2017/07/29 00:09:45 tom Exp $")
 
 /* terminfo test program control subroutines */
 
@@ -501,7 +501,6 @@ show_cap_results(
 		    int x)
 {
     TestResults *r;		/* a result */
-    int delay;
 
     alloc_arrays();
     if ((r = pads[x])) {
@@ -515,7 +514,7 @@ show_cap_results(
 	r = pads[x];
 	while (r) {
 	    if (r->reps > 1) {
-		delay = r->delay / (r->reps * 100);
+		int delay = r->delay / (r->reps * 100);
 		sprintf(temp, "$<%d.%d*>", delay / 10, delay % 10);
 		put_columns(temp, (int) strlen(temp), 10);
 	    }
@@ -536,12 +535,13 @@ dump_test_stats(
 		   int *state,
 		   int *ch)
 {
-    int i, j;
+    int i;
     char tbuf[32];
-    int x[32];
 
     put_crlf();
     if (tx_source && tx_source->caps_done) {
+	int x[32];
+
 	cap_index(tx_source->caps_done, x);
 	if (x[0] >= 0) {
 	    sprintf(temp, "Caps summary for (%s)",
@@ -558,7 +558,9 @@ dump_test_stats(
 	    "Test time: %lu.%s, characters per second %lu, characters %d",
 	    usec_run_time / 1000000UL, &tbuf[5], tx_cps, tx_characters);
     ptextln(temp);
+
     for (i = 0; i < txp; i++) {
+	int j;
 	if ((j = get_string_cap_byvalue(tx_cap[i])) >= 0) {
 	    sprintf(tbuf, "(%s)", strnames[j]);
 	} else {

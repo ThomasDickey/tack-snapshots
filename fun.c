@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: fun.c,v 1.24 2017/07/23 16:08:17 tom Exp $")
+MODULE_ID("$Id: fun.c,v 1.26 2017/07/29 00:02:52 tom Exp $")
 
 /*
  * Test the function keys on the terminal.  The code for echo tests
@@ -200,13 +200,12 @@ enter_key(
 	     char *value,
 	     char *lab)
 {
-    size_t j;
 
     alloc_strings();
     if (value) {
 	int found = 0;
 	if (key_count != 0) {
-	    j = strlen(value);
+	    size_t j = strlen(value);
 	    fkmax = (fkmax > j) ? fkmax : j;
 	    /* do not permit duplicates */
 	    for (j = 0; j < (size_t) key_count; j++) {
@@ -288,7 +287,6 @@ static int
 found_match(char *s, int hx, int cc)
 {				/* return true if this string is a match */
     int j, f;
-    char outbuf[256];
 
     alloc_strings();
     if (!*s) {
@@ -346,7 +344,9 @@ found_match(char *s, int hx, int cc)
 	}
     } else {
 	for (j = f = 0; j < key_count; j++) {
-	    if (!strcmp(s, fkval[j])) {
+	    if (fkval[j] && !strcmp(s, fkval[j])) {
+		char outbuf[256];
+
 		if (!f) {	/* first match */
 		    put_cr();
 		    if (hx) {
@@ -377,7 +377,7 @@ found_match(char *s, int hx, int cc)
 static int
 found_exit(char *keybuf, int hx, int cc)
 {				/* return true if the user wants to exit */
-    int j, k;
+    int j;
     char *s;
 
     if (scan_mode) {
@@ -385,6 +385,8 @@ found_exit(char *keybuf, int hx, int cc)
 	    return TRUE;
 	}
     } else {
+	int k;
+
 	/* break is a special case */
 	if (*keybuf == '\0') {
 	    fresh_line();
@@ -510,10 +512,10 @@ funkey_meta(
 	       int *state,
 	       int *ch)
 {
-    int i, j, k, len;
-    char outbuf[256];
-
     if (has_meta_key) {
+	int i, j, k, len;
+	char outbuf[256];
+
 	put_crlf();
 	if (char_mask != ALLOW_PARITY) {
 	    if (tty_meta_prep()) {
@@ -566,13 +568,13 @@ funkey_label(
 		int *state,
 		int *ch)
 {
-    int i;
-    char outbuf[256];
-    int my_width = label_width;
-
     if (num_labels == -1) {
 	ptextln("Your terminal has no labels. (nlab)");
     } else {
+	int i;
+	int my_width = label_width;
+	char outbuf[256];
+
 	sprintf(temp,
 		"Your terminal has %d labels (nlab) that are %d characters wide (lw) and %d lines high (lh)",
 		num_labels, my_width, label_height);
@@ -609,11 +611,11 @@ funkey_prog(
 	       int *state,
 	       int *ch)
 {
-    int i, fk;
-    char mm[256];
-
-    fk = 1;			/* use function key 1 for now */
     if (pkey_xmit) {
+	int i;
+	int fk = 1;
+	char mm[256];
+
 	/* test program function key */
 	sprintf(temp,
 		"(pfx) Set function key %d to transmit abc\\n", fk);
@@ -659,10 +661,9 @@ funkey_local(
 		int *state,
 		int *ch)
 {
-    int fk;
-
-    fk = 1;
     if (pkey_local) {
+	int fk = 1;
+
 	/* test local function key */
 	sprintf(temp,
 		"(pfloc) Set function key %d to execute a clear and print \"Done!\"", fk);
@@ -739,11 +740,13 @@ static void
 line_pattern(void)
 {				/* put up a pattern that will help count the
 				   number of lines */
-    int i, j;
+    int i;
 
     put_clear();
     if (over_strike) {
 	for (i = 0; i < 100; i++) {
+	    int j;
+
 	    if (i) {
 		put_crlf();
 	    }
@@ -813,7 +816,7 @@ tools_report(
 		int *state GCC_UNUSED,
 		int *pch GCC_UNUSED)
 {
-    int i, j, ch, crp, crx, high_bit, save_scan_mode, hex_display;
+    int i, j, crp, crx, high_bit, save_scan_mode, hex_display;
     char buf[1024];
     char txt[8];
 
@@ -831,7 +834,7 @@ tools_report(
     save_scan_mode = scan_mode;
     tty_raw(1, char_mask);
     for (i = crp = high_bit = 0;;) {
-	ch = getchp(char_mask);
+	int ch = getchp(char_mask);
 	if (ch == EOF) {
 	    break;
 	}
