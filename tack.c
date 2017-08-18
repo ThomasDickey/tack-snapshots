@@ -22,7 +22,7 @@
 #include <tack.h>
 #include <stdarg.h>
 
-MODULE_ID("$Id: tack.c,v 1.26 2017/07/28 23:15:29 tom Exp $")
+MODULE_ID("$Id: tack.c,v 1.27 2017/08/18 16:16:20 tom Exp $")
 
 /*
    This program is designed to test terminfo, not curses.  Therefore
@@ -124,7 +124,7 @@ static TestMenu tty_menu =
     tty_show_state, tty_test_list, 0, 0, 0
 };
 
-#ifdef NCURSES_VERSION
+#if TACK_CAN_EDIT
 TestMenu edit_menu =
 {
     0, 'q', 0, "Edit terminfo menu",
@@ -237,7 +237,7 @@ static TestMenu start_menu =
     0, start_test_list, 0, 0, 0
 };
 
-#ifdef NCURSES_VERSION
+#if TACK_CAN_EDIT
 static TestList write_terminfo_list[] =
 {
     {0, 0, 0, 0, "w) write the current terminfo to a file", save_info, 0},
@@ -641,7 +641,7 @@ main(int argc, char *argv[])
     menu_can_scan(&normal_menu);	/* extract which caps can be tested */
     menu_display(&start_menu, 0);
 
-#ifdef NCURSES_VERSION
+#if TACK_CAN_EDIT
     if (user_modified()) {
 	sprintf(temp, "Hit y to save changes to file: %.256s  ? ",
 		tty_basename);

@@ -26,7 +26,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: init.c,v 1.35 2017/07/28 23:57:59 tom Exp $")
+MODULE_ID("$Id: init.c,v 1.36 2017/08/18 15:27:05 tom Exp $")
 
 FILE *debug_fp;
 char temp[TEMP_SIZE];
@@ -41,7 +41,7 @@ size_t max_numbers;
 size_t max_strings;
 #endif
 
-void
+static void
 put_name(const char *cap, const char *name)
 {				/* send the cap name followed by the cap */
     if (cap) {
@@ -497,4 +497,13 @@ bye_kids(int n)
     if (not_a_tty)
 	sleep(1);
     ExitProgram(n);
+}
+
+const char *
+safe_tgets(NCURSES_CONST char *name)
+{
+    char *value = tigetstr(name);
+    if (!VALID_STRING(value))
+	value = 0;
+    return value;
 }
