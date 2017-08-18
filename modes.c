@@ -21,55 +21,11 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: modes.c,v 1.11 2017/07/28 23:54:14 tom Exp $")
+MODULE_ID("$Id: modes.c,v 1.12 2017/08/17 09:22:51 tom Exp $")
 
 /*
  * Tests boolean flags and terminal modes.
  */
-static void subtest_os(TestList *, int *, int *);
-static void subtest_rmam(TestList *, int *, int *);
-static void subtest_smam(TestList *, int *, int *);
-static void subtest_am(TestList *, int *, int *);
-static void subtest_ul(TestList *, int *, int *);
-static void subtest_uc(TestList *, int *, int *);
-static void subtest_bw(TestList *, int *, int *);
-static void subtest_xenl(TestList *, int *, int *);
-static void subtest_eo(TestList *, int *, int *);
-static void subtest_xmc(TestList *, int *, int *);
-static void subtest_xhp(TestList *, int *, int *);
-static void subtest_mir(TestList *, int *, int *);
-static void subtest_msgr(TestList *, int *, int *);
-static void subtest_tbc(TestList *, int *, int *);
-static void subtest_xt(TestList *, int *, int *);
-static void subtest_hts(TestList *, int *, int *);
-static void subtest_cbt(TestList *, int *, int *);
-static void subtest_in(TestList *, int *, int *);
-static void subtest_dadb(TestList *, int *, int *);
-
-TestList mode_test_list[] =
-{
-    MY_EDIT_MENU
-    {MENU_NEXT, 3, "os", 0, 0, subtest_os, 0},
-    {MENU_NEXT, 1, "rmam", 0, 0, subtest_rmam, 0},
-    {MENU_NEXT, 1, "smam", 0, 0, subtest_smam, 0},
-    {MENU_NEXT, 1, "am", 0, 0, subtest_am, 0},
-    {MENU_NEXT, 3, "ul", 0, 0, subtest_ul, 0},
-    {MENU_NEXT, 3, "uc", 0, 0, subtest_uc, 0},
-    {MENU_NEXT, 3, "bw", 0, 0, subtest_bw, 0},
-    {MENU_NEXT, 4, "xenl", 0, 0, subtest_xenl, 0},
-    {MENU_NEXT, 3, "eo", 0, 0, subtest_eo, 0},
-    {MENU_NEXT, 3, "xmc", 0, 0, subtest_xmc, 0},
-    {MENU_NEXT, 3, "xhp", 0, 0, subtest_xhp, 0},
-    {MENU_NEXT, 6, "mir", 0, 0, subtest_mir, 0},
-    {MENU_NEXT, 6, "msgr", 0, 0, subtest_msgr, 0},
-    {MENU_NEXT | MENU_CLEAR, 0, "tbc", "it", 0, subtest_tbc, 0},
-    {MENU_NEXT | MENU_CLEAR, 0, "hts", "it", 0, subtest_hts, 0},
-    {MENU_NEXT, 4, "xt", "it", 0, subtest_xt, 0},
-    {MENU_NEXT, 1, "cbt", "it", 0, subtest_cbt, 0},
-    {MENU_NEXT, 6, "in", 0, 0, subtest_in, 0},
-    {MENU_NEXT, 1, "da) (db", 0, 0, subtest_dadb, 0},
-    {MENU_LAST, 0, 0, 0, 0, 0, 0}
-};
 
 /*
 **	subtest_os(test_list, status, ch)
@@ -914,3 +870,28 @@ subtest_dadb(
     }
     generic_done_message(t, state, ch);
 }
+
+TestList mode_test_list[] =
+{
+    MY_EDIT_MENU
+    {MENU_NEXT, 3, "os", 0, 0, subtest_os, 0},
+    {MENU_NEXT, 1, "rmam", 0, 0, subtest_rmam, 0},
+    {MENU_NEXT, 1, "smam", 0, 0, subtest_smam, 0},
+    {MENU_NEXT, 1, "am", 0, 0, subtest_am, 0},
+    {MENU_NEXT, 3, "ul", 0, 0, subtest_ul, 0},
+    {MENU_NEXT, 3, "uc", 0, 0, subtest_uc, 0},
+    {MENU_NEXT, 3, "bw", 0, 0, subtest_bw, 0},
+    {MENU_NEXT, 4, "xenl", 0, 0, subtest_xenl, 0},
+    {MENU_NEXT, 3, "eo", 0, 0, subtest_eo, 0},
+    {MENU_NEXT, 3, "xmc", 0, 0, subtest_xmc, 0},
+    {MENU_NEXT, 3, "xhp", 0, 0, subtest_xhp, 0},
+    {MENU_NEXT, 6, "mir", 0, 0, subtest_mir, 0},
+    {MENU_NEXT, 6, "msgr", 0, 0, subtest_msgr, 0},
+    {MENU_NEXT | MENU_CLEAR, 0, "tbc", "it", 0, subtest_tbc, 0},
+    {MENU_NEXT | MENU_CLEAR, 0, "hts", "it", 0, subtest_hts, 0},
+    {MENU_NEXT, 4, "xt", "it", 0, subtest_xt, 0},
+    {MENU_NEXT, 1, "cbt", "it", 0, subtest_cbt, 0},
+    {MENU_NEXT, 6, "in", 0, 0, subtest_in, 0},
+    {MENU_NEXT, 1, "da) (db", 0, 0, subtest_dadb, 0},
+    {MENU_LAST, 0, 0, 0, 0, 0, 0}
+};

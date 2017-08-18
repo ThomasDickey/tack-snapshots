@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.67 2017/07/28 23:14:18 tom Exp $ */
+/* $Id: tack.h,v 1.71 2017/08/18 16:43:54 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -28,7 +28,7 @@
 
 #define MAJOR_VERSION 1
 #define MINOR_VERSION 8
-#define PATCH_VERSION 20170728
+#define PATCH_VERSION 20170818
 
 #ifdef HAVE_CONFIG_H
 #include <ncurses_cfg.h>
@@ -83,9 +83,11 @@
 
 #include <curses.h>
 
-#ifdef NCURSES_VERSION
+#if defined(NCURSES_VERSION) && defined(HAVE_TERM_ENTRY_H)
 #include <term_entry.h>
+#define TACK_CAN_EDIT 1
 #else
+#define TACK_CAN_EDIT 0
 #include <term.h>
 #include <termios.h>
 #define TTY struct termios
@@ -170,7 +172,11 @@ extern char *strfnames[];
 
 #endif
 
-#ifdef NCURSES_VERSION
+#define ABSENT_STRING		(char *)0
+#define CANCELLED_STRING	(char *)(-1)
+#define VALID_STRING(s)  ((s) != CANCELLED_STRING && (s) != ABSENT_STRING)
+
+#if TACK_CAN_EDIT
 #define CUR_TP      ((TERMTYPE *)(cur_term))
 #define MAX_BOOLEAN BOOLCOUNT	/* NUM_BOOLEANS(CUR_TP) */
 #define MAX_NUMBERS NUMCOUNT	/* NUM_NUMBERS(CUR_TP) */
@@ -429,7 +435,7 @@ typedef struct test_menu {
 #define REQUEST_PROMPT 256
 
 /* tack.c */
-#ifdef NCURSES_VERSION
+#if TACK_CAN_EDIT
 extern TestMenu edit_menu;
 #define MY_EDIT_MENU	{0, 0, 0, 0, "e) edit terminfo", 0, &edit_menu},
 #else
@@ -526,7 +532,7 @@ extern void tools_charset(TestList *, int *, int *);
 extern void tools_sgr(TestList *, int *, int *);
 
 /* edit.c */
-#ifdef NCURSES_VERSION
+#if TACK_CAN_EDIT
 extern TestMenu change_pad_menu;
 extern TestList edit_test_list[];
 #define MY_PADS_MENU	{0, 0, 0, 0, "p) change padding", 0, &change_pad_menu},
@@ -551,9 +557,9 @@ extern int tty_meta_prep(void);
 extern void tools_report(TestList *, int *, int *);
 
 /* init.c */
+extern const char *safe_tgets(NCURSES_CONST char *);
 extern void reset_init(void);
 extern void display_basic(void);
-extern void put_name(const char *, const char *);
 extern void charset_can_test(void);
 extern void curses_setup(char *);
 extern void bye_kids(int);

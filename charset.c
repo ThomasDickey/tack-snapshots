@@ -21,58 +21,30 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: charset.c,v 1.20 2017/07/29 00:12:52 tom Exp $")
+MODULE_ID("$Id: charset.c,v 1.24 2017/08/18 16:18:53 tom Exp $")
 
 /*
 	Menu definitions for alternate character set and SGR tests.
 */
 
-static void charset_bel(TestList * t, int *state, int *ch);
-static void charset_flash(TestList * t, int *state, int *ch);
-static void charset_civis(TestList * t, int *state, int *ch);
-static void charset_cvvis(TestList * t, int *state, int *ch);
-static void charset_cnorm(TestList * t, int *state, int *ch);
-static void charset_hs(TestList * t, int *state, int *ch);
-static void charset_eslok(TestList * t, int *state, int *ch);
-static void charset_status(TestList * t, int *state, int *ch);
-static void charset_dsl(TestList * t, int *state, int *ch);
-static void charset_enacs(TestList * t, int *state, int *ch);
-static void charset_smacs(TestList * t, int *state, int *ch);
-static void charset_attributes(TestList * t, int *state, int *ch);
-static void charset_sgr(TestList * t, int *state, int *ch);
-
-TestList acs_test_list[] =
-{
-    MY_EDIT_MENU
-    {MENU_NEXT, 3, "bel", 0, 0, charset_bel, 0},
-    {MENU_NEXT, 3, "flash", 0, 0, charset_flash, 0},
-    {MENU_NEXT, 3, "civis", 0, 0, charset_civis, 0},
-    {MENU_NEXT, 3, "cvvis", 0, 0, charset_cvvis, 0},
-    {MENU_NEXT, 3, "cnorm", 0, 0, charset_cnorm, 0},
-    {MENU_NEXT, 3, "hs", 0, 0, charset_hs, 0},
-    {MENU_NEXT, 3, "tsl) (fsl) (wsl", "hs", 0, charset_status, 0},
-    {MENU_NEXT, 3, "eslok", "hs", 0, charset_eslok, 0},
-    {MENU_NEXT, 3, "dsl", "hs", 0, charset_dsl, 0},
-    {MENU_NEXT, 0, "acsc) (enacs) (smacs) (rmacs", 0, 0, charset_enacs, 0},
-    {MENU_NEXT, 0, "smacs) (rmacs", 0, 0, charset_smacs, 0},
-    {MENU_NEXT, 11, 0, 0, 0, charset_attributes, 0},
-    {MENU_NEXT, 11, "sgr) (sgr0", "ma", 0, charset_sgr, 0},
-    {MENU_LAST, 0, 0, 0, 0, 0, 0}
-};
+#undef  BIT
+#define BIT(n) (1 << (n))
+/* *INDENT-OFF* */
 
 const struct mode_list alt_modes[] =
 {
-    {"normal", "(sgr0)", "(sgr0)", 1},
-    {"standout", "(smso)", "(rmso)", 2},
-    {"underline", "(smul)", "(rmul)", 4},
-    {"reverse", "(rev)", "(sgr0)", 8},
-    {"blink", "(blink)", "(sgr0)", 16},
-    {"dim", "(dim)", "(sgr0)", 32},
-    {"bold", "(bold)", "(sgr0)", 64},
-    {"invis", "(invis)", "(sgr0)", 128},
-    {"protect", "(prot)", "(sgr0)", 256},
-    {"altcharset", "(smacs)", "(rmacs)", 512}
+    {"normal",     "(sgr0)",  "(sgr0)",  BIT(0)},
+    {"standout",   "(smso)",  "(rmso)",  BIT(1)},
+    {"underline",  "(smul)",  "(rmul)",  BIT(2)},
+    {"reverse",    "(rev)",   "(sgr0)",  BIT(3)},
+    {"blink",      "(blink)", "(sgr0)",  BIT(4)},
+    {"dim",        "(dim)",   "(sgr0)",  BIT(5)},
+    {"bold",       "(bold)",  "(sgr0)",  BIT(6)},
+    {"invis",      "(invis)", "(sgr0)",  BIT(7)},
+    {"protect",    "(prot)",  "(sgr0)",  BIT(8)},
+    {"altcharset", "(smacs)", "(rmacs)", BIT(9)},
 };
+/* *INDENT-ON* */
 
 /* On many terminals the underline attribute is the last scan line.
    This is OK unless the following line is reverse video.
@@ -262,7 +234,8 @@ put_mode(const char *s)
 void
 set_attr(int a)
 {				/* set the attribute from the bits in a */
-    int i, b[32];
+    int i, b[10];
+    int use_sgr = 0;
 
     if (magic_cookie_glitch > 0) {
 	char_count += magic_cookie_glitch;
@@ -271,11 +244,17 @@ set_attr(int a)
 	put_mode(exit_attribute_mode);
 	return;
     }
-    for (i = 0; i < 31; i++) {
+    memset(b, 0, sizeof(b));
+    for (i = 0; i < 9; i++) {
 	b[i] = (a >> i) & 1;
+	if (b[i])
+	    use_sgr = 1;
     }
-    tc_putp(TPARM_9(set_attributes, b[1], b[2], b[3], b[4], b[5],
-		    b[6], b[7], b[8], b[9]));
+    if (use_sgr) {
+	tc_putp(TPARM_9(set_attributes,
+			b[1], b[2], b[3], b[4], b[5],
+			b[6], b[7], b[8], b[9]));
+    }
 }
 
 /*
@@ -289,7 +268,7 @@ charset_sgr(
 	       int *state,
 	       int *ch)
 {
-    int i, j;
+    int i;
 
     if (!set_attributes) {
 	ptext("(sgr) Set-graphics-rendition is not defined.  ");
@@ -300,20 +279,31 @@ charset_sgr(
 	ptextln("(sgr0) Set-graphics-rendition-zero is not defined.");
 	/* go ahead and test anyway */
     }
-    ptext("Test video attributes (sgr)");
+    ptext("Test video attributes");
 
     for (i = 0; i < (int) (sizeof(alt_modes) / sizeof(struct mode_list));
 	 i++) {
 	put_crlf();
-	sprintf(temp, "%d %-20s", i, alt_modes[i].name);
+	sprintf(temp, "%2d %-20s", i, alt_modes[i].name);
 	put_str(temp);
 	set_attr(alt_modes[i].number);
 	sprintf(temp, "%s", alt_modes[i].name);
 	put_str(temp);
 	set_attr(0);
     }
+    put_crlf();
+    generic_done_message(t, state, ch);
+}
 
-    putln("\n\nDouble mode test");
+static void
+charset_sgr2(
+		TestList * t,
+		int *state,
+		int *ch)
+{
+    int i, j;
+
+    putln("Double mode test");
     for (i = 0; i <= 9; i++) {
 	sprintf(temp, " %2d ", mode_map[i]);
 	put_str(temp);
@@ -339,6 +329,49 @@ charset_sgr(
 	ptext(temp);
     }
 #endif
+    generic_done_message(t, state, ch);
+}
+
+static void
+charset_italics(
+		   TestList * t,
+		   int *state,
+		   int *ch)
+{
+    putln("Testing italics");
+    if (enter_italics_mode && exit_italics_mode) {
+	put_mode(enter_italics_mode);
+	ptext(" This should be in ITALICS");
+	put_mode(exit_italics_mode);
+	put_crlf();
+    } else {
+	putln("your terminal description does not tell how to show italics");
+    }
+    generic_done_message(t, state, ch);
+}
+
+/*
+ * rmxx/smxx describes the ECMA-48 strikeout/crossed-out attributes, as an
+ * experimental feature of tmux.
+ */
+static void
+charset_crossed(
+		   TestList * t,
+		   int *state,
+		   int *ch)
+{
+    const char *smxx = safe_tgets("smxx");
+    const char *rmxx = safe_tgets("rmxx");
+    putln("Testing cross-out/strike-out (ncurses/tmux extension)");
+    if (VALID_STRING(smxx) && VALID_STRING(rmxx)) {
+	put_mode(smxx);
+	ptext(" This should be CROSSED-OUT");
+	put_mode(rmxx);
+	put_crlf();
+    } else {
+	putln("your terminal description does not tell how to cross-out text");
+    }
+    ptext("(smxx) (rmxx) ");
     generic_done_message(t, state, ch);
 }
 
@@ -396,6 +429,7 @@ charset_attributes(
 		      int *state,
 		      int *ch)
 {
+    put_clear();
     putln("Test video attributes");
     test_one_attr(1, enter_standout_mode, exit_standout_mode);
     test_one_attr(2, enter_underline_mode, exit_underline_mode);
@@ -467,9 +501,9 @@ test_acs(
 	acs_table[i] = (char) i;
     }
     if (acs_chars) {
-	sprintf(temp, "Alternate character set map: %s",
-		expand(acs_chars));
-	putln(temp);
+	putln("Alternate character set map:");
+	putln(expand(acs_chars));
+	put_crlf();
 	for (i = 0; acs_chars[i]; i += 2) {
 	    int j;
 
@@ -758,3 +792,27 @@ charset_can_test(void)
 	can_test(alt_modes[i].end_mode, FLAG_CAN_TEST);
     }
 }
+/* *INDENT-OFF* */
+
+TestList acs_test_list[] =
+{
+    MY_EDIT_MENU
+    {MENU_NEXT, 3, "bel",   0, "b) bel/flash", charset_bel, 0},
+    {MENU_NEXT, 3, "flash", 0, 0, charset_flash, 0},
+    {MENU_NEXT, 3, "civis", 0, "c) cursor appearance", charset_civis, 0},
+    {MENU_NEXT, 3, "cvvis", 0, 0, charset_cvvis, 0},
+    {MENU_NEXT, 3, "cnorm", 0, 0, charset_cnorm, 0},
+    {MENU_NEXT, 3, "hs",    0, "t) title/statusline", charset_hs, 0},
+    {MENU_NEXT, 3, "tsl) (fsl) (wsl", "hs", 0, charset_status, 0},
+    {MENU_NEXT, 3, "eslok", "hs", 0, charset_eslok, 0},
+    {MENU_NEXT, 3, "dsl", "hs", 0, charset_dsl, 0},
+    {MENU_NEXT, 0, "acsc) (enacs) (smacs) (rmacs", 0, "a) alternate character set", charset_enacs, 0},
+    {MENU_NEXT, 12, "smacs) (rmacs", 0, 0, charset_smacs, 0},
+    {MENU_NEXT, 12, "sgr) (sgr0", 0, 0, charset_attributes, 0},
+    {MENU_NEXT, 12, "sgr) (sgr0", "ma", 0, charset_sgr, 0},
+    {MENU_NEXT, 12, "sgr) (sgr0", "ma", 0, charset_sgr2, 0},
+    {MENU_NEXT, 3, "sitm) (ritm", 0, 0, charset_italics, 0},
+    {MENU_NEXT, 3, 0, 0, 0, charset_crossed, 0},
+    {MENU_LAST, 0, 0, 0, 0, 0, 0}
+};
+/* *INDENT-ON* */

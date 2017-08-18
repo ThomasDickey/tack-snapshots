@@ -21,153 +21,15 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: pad.c,v 1.14 2017/07/28 23:46:14 tom Exp $")
+MODULE_ID("$Id: pad.c,v 1.15 2017/08/17 09:20:51 tom Exp $")
 
 /* test the pad counts on the terminal */
-
-static void pad_standard(TestList *, int *, int *);
-static void init_xon_xoff(TestList *, int *, int *);
-static void init_cup(TestList *, int *, int *);
-static void pad_rmxon(TestList *, int *, int *);
-static void pad_home1(TestList *, int *, int *);
-static void pad_home2(TestList *, int *, int *);
-static void pad_clear(TestList *, int *, int *);
-static void pad_ech(TestList *, int *, int *);
-static void pad_el1(TestList *, int *, int *);
-static void pad_el(TestList *, int *, int *);
-static void pad_smdc(TestList *, int *, int *);
-static void pad_dch(TestList *, int *, int *);
-static void pad_dch1(TestList *, int *, int *);
-static void pad_smir(TestList *, int *, int *);
-static void pad_ich(TestList *, int *, int *);
-static void pad_ich1(TestList *, int *, int *);
-static void pad_xch1(TestList *, int *, int *);
-static void pad_rep(TestList *, int *, int *);
-static void pad_cup(TestList *, int *, int *);
-static void pad_hd(TestList *, int *, int *);
-static void pad_hu(TestList *, int *, int *);
-static void pad_rin(TestList *, int *, int *);
-static void pad_il(TestList *, int *, int *);
-static void pad_indn(TestList *, int *, int *);
-static void pad_dl(TestList *, int *, int *);
-static void pad_xl(TestList *, int *, int *);
-static void pad_scrc(TestList *, int *, int *);
-static void pad_csrind(TestList *, int *, int *);
-static void pad_sccsrrc(TestList *, int *, int *);
-static void pad_csr_nel(TestList *, int *, int *);
-static void pad_csr_cup(TestList *, int *, int *);
-static void pad_ht(TestList *, int *, int *);
-static void pad_smso(TestList *, int *, int *);
-static void pad_smacs(TestList *, int *, int *);
-static void pad_crash(TestList *, int *, int *);
 
 /*
    Any command found in this list, executed from a "Done" prompt
    will force the default action to repeat rather than next.
 */
-const char *pad_repeat_test =
-{"ep-+<>"};
-/* *INDENT-OFF* */
-TestList pad_test_list[] = {
-    MY_EDIT_MENU
-    MY_PADS_MENU
-    {0, 0, 0, 0, "@) display statistics about the last test", dump_test_stats, 0},
-    {0, 0, 0, 0, "c) clear screen", menu_clear_screen, 0},
-    {0, 0, 0, 0, "i) send reset and init", menu_reset_init, 0},
-    {0, 0, 0, 0, txt_longer_test_time, longer_test_time, 0},
-    {0, 0, 0, 0, txt_shorter_test_time, shorter_test_time, 0},
-    {0, 0, 0, 0, txt_longer_augment, longer_augment, 0},
-    {0, 0, 0, 0, txt_shorter_augment, shorter_augment, 0},
-    /***
-       Phase 1: Test initialization and reset strings.
-
-       (rs1) (rs2) (rs3) (is1) (is2) (is3) are very difficult to test.
-       They have no defined output.  To make matters worse, the cap
-       builder could partition (rs1) (rs2) (rs3) by length, leaving the
-       terminal in some unknown state between (rs1) and (rs2) or between
-       (r2) and (rs3).  Some reset strings clear the screen when done.
-
-       We have no control over this.  The only thing we can do for
-       certain is to test the pad times by checking for overruns.
-    ***/
-    {MENU_NEXT, 3, "rs1", 0, 0, pad_standard, 0},
-    {MENU_NEXT, 3, "rs2", 0, 0, pad_standard, 0},
-    {MENU_NEXT, 3, "rs3", 0, 0, pad_standard, 0},
-    {MENU_NEXT | MENU_INIT, 0, 0, 0, 0, init_xon_xoff, 0},
-    {MENU_NEXT, 3, "is1", 0, 0, pad_standard, 0},
-    {MENU_NEXT, 3, "is2", 0, 0, pad_standard, 0},
-    {MENU_NEXT, 3, "is3", 0, 0, pad_standard, 0},
-    {MENU_NEXT, 3, "rmxon", "smxon", 0, pad_rmxon, 0},
-    {MENU_NEXT | MENU_INIT, 0, 0, 0, 0, init_cup, 0},
-    /*
-       Phase 2: Test home, screen clears and erases.
-    */
-    {MENU_NEXT, 0, "home", 0, 0, pad_home1, 0},
-    {MENU_NEXT, 0, "home) (nel", 0, 0, pad_home2, 0},
-    {MENU_NEXT | 1, 0, "clear", 0, 0, pad_clear, 0},
-    {MENU_NEXT | MENU_LM1, 0, "ed", 0, 0, pad_clear, 0},
-    {MENU_NEXT | MENU_80c, 0, "ech", 0, 0, pad_ech, 0},
-    {MENU_NEXT | MENU_80c, 0, "el1", "cub1 nel", 0, pad_el1, 0},
-    {MENU_NEXT | MENU_10c, 0, "el", "nel", 0, pad_el, 0},
-    /*
-       Phase 3: Character deletions and insertions
-    */
-    {MENU_NEXT, 0, "smdc) (rmdc", 0, 0, pad_smdc, 0},
-    {MENU_NEXT | MENU_80c, 0, "dch", "smdc rmdc", 0, pad_dch, 0},
-    {MENU_NEXT | MENU_80c, 0, "dch1", "smdc rmdc", 0, pad_dch1, 0},
-    {MENU_NEXT, 0, "smir) (rmir", 0, 0, pad_smir, 0},
-    {MENU_NEXT | MENU_90c, 0, "ich) (ip", "smir rmir", 0, pad_ich, 0},
-    {MENU_NEXT | MENU_90c, 0, "ich1) (ip", "smir rmir", 0, pad_ich1, 0},
-    {MENU_NEXT, 4, "ich1) (dch1", "smir rmir", 0, pad_xch1, 0},
-    {MENU_NEXT | MENU_90c, 0, "rep", 0, 0, pad_rep, 0},
-    /*
-       Phase 4: Test cursor addressing pads.
-    */
-    {MENU_NEXT, 0, "cup", 0, 0, pad_cup, 0},
-    /*
-       Phase 5: Test scrolling and cursor save/restore.
-    */
-    {MENU_NEXT, 0, "hd", 0, 0, pad_hd, 0},
-    {MENU_NEXT, 0, "hu", 0, 0, pad_hu, 0},
-    {MENU_NEXT | MENU_LM1 | 1, 0, "rin", 0, 0, pad_rin, 0},
-    {MENU_NEXT, 0, "ri", 0, 0, pad_rin, 0},
-    {MENU_NEXT | MENU_LM1 | 1, 0, "il", 0, 0, pad_il, 0},
-    {MENU_NEXT, 0, "il1", 0, 0, pad_il, 0},
-    {MENU_NEXT | MENU_LM1 | 1, 0, "indn", 0, 0, pad_indn, 0},
-    {MENU_NEXT, 0, "ind", 0, 0, pad_indn, 0},
-    {MENU_NEXT | MENU_LM1 | 1, 0, "dl", 0, 0, pad_dl, 0},
-    {MENU_NEXT, 0, "dl1", 0, 0, pad_dl, 0},
-    {MENU_NEXT, 0, "il1) (dl1", 0, 0, pad_xl, 0},
-    {MENU_NEXT, 0, "sc) (rc", 0, 0, pad_scrc, 0},
-    {MENU_NEXT | MENU_50l, 0, "csr) (ind", 0, 0, pad_csrind, 0},
-    {MENU_NEXT, 0, "sc) (csr) (rc", 0, 0, pad_sccsrrc, 0},
-    {MENU_NEXT, 0, "csr) (nel", "sc rc", 0, pad_csr_nel, 0},
-    {MENU_NEXT, 0, "csr) (cup", 0, 0, pad_csr_cup, 0},
-    /*
-       Phase 6: Test tabs.
-    */
-    {MENU_NEXT, 0, "ht", 0, 0, pad_ht, 0},
-    /*
-       Phase 7: Test character-set-switch pads.
-    */
-    {MENU_NEXT, 0, "smso) (rmso", 0, 0, pad_smso, 0},
-    {MENU_NEXT, 0, "smacs) (rmacs", 0, 0, pad_smacs, 0},
-    /*
-       Phase 8: Tests for miscellaneous mode-switch pads.
-    */
-    {MENU_NEXT, 3, "flash", 0, 0, pad_standard, 0},
-    {MENU_NEXT, 3, "smkx", 0, 0, pad_standard, 0},
-    {MENU_NEXT, 3, "rmkx", 0, 0, pad_standard, 0},
-    {MENU_NEXT, 3, "smm", 0, 0, pad_standard, 0},
-    {MENU_NEXT, 3, "rmm", 0, 0, pad_standard, 0},
-    /*
-       Phase 9: Test crash-and-burn properties of unpadded (clear).
-    */
-    {0, 0, "clear", "xon", "k) run clear test with no padding", pad_crash, 0},
-    {MENU_LAST, 0, 0, 0, 0, 0, 0}
-};
-/* *INDENT-ON* */
-
+const char *pad_repeat_test = "ep-+<>";
 /* globals */
 static int hzcc;		/* horizontal character count */
 char letter;			/* current character being displayed */
@@ -1982,3 +1844,104 @@ pad_crash(
     pad_test_shutdown(t, 1);
     pad_done_message(t, state, ch);
 }
+/* *INDENT-OFF* */
+
+TestList pad_test_list[] = {
+    MY_EDIT_MENU
+    MY_PADS_MENU
+    {0, 0, 0, 0, "@) display statistics about the last test", dump_test_stats, 0},
+    {0, 0, 0, 0, "c) clear screen", menu_clear_screen, 0},
+    {0, 0, 0, 0, "i) send reset and init", menu_reset_init, 0},
+    {0, 0, 0, 0, txt_longer_test_time, longer_test_time, 0},
+    {0, 0, 0, 0, txt_shorter_test_time, shorter_test_time, 0},
+    {0, 0, 0, 0, txt_longer_augment, longer_augment, 0},
+    {0, 0, 0, 0, txt_shorter_augment, shorter_augment, 0},
+    /***
+       Phase 1: Test initialization and reset strings.
+
+       (rs1) (rs2) (rs3) (is1) (is2) (is3) are very difficult to test.
+       They have no defined output.  To make matters worse, the cap
+       builder could partition (rs1) (rs2) (rs3) by length, leaving the
+       terminal in some unknown state between (rs1) and (rs2) or between
+       (r2) and (rs3).  Some reset strings clear the screen when done.
+
+       We have no control over this.  The only thing we can do for
+       certain is to test the pad times by checking for overruns.
+    ***/
+    {MENU_NEXT, 3, "rs1", 0, 0, pad_standard, 0},
+    {MENU_NEXT, 3, "rs2", 0, 0, pad_standard, 0},
+    {MENU_NEXT, 3, "rs3", 0, 0, pad_standard, 0},
+    {MENU_NEXT | MENU_INIT, 0, 0, 0, 0, init_xon_xoff, 0},
+    {MENU_NEXT, 3, "is1", 0, 0, pad_standard, 0},
+    {MENU_NEXT, 3, "is2", 0, 0, pad_standard, 0},
+    {MENU_NEXT, 3, "is3", 0, 0, pad_standard, 0},
+    {MENU_NEXT, 3, "rmxon", "smxon", 0, pad_rmxon, 0},
+    {MENU_NEXT | MENU_INIT, 0, 0, 0, 0, init_cup, 0},
+    /*
+       Phase 2: Test home, screen clears and erases.
+    */
+    {MENU_NEXT, 0, "home", 0, 0, pad_home1, 0},
+    {MENU_NEXT, 0, "home) (nel", 0, 0, pad_home2, 0},
+    {MENU_NEXT | 1, 0, "clear", 0, 0, pad_clear, 0},
+    {MENU_NEXT | MENU_LM1, 0, "ed", 0, 0, pad_clear, 0},
+    {MENU_NEXT | MENU_80c, 0, "ech", 0, 0, pad_ech, 0},
+    {MENU_NEXT | MENU_80c, 0, "el1", "cub1 nel", 0, pad_el1, 0},
+    {MENU_NEXT | MENU_10c, 0, "el", "nel", 0, pad_el, 0},
+    /*
+       Phase 3: Character deletions and insertions
+    */
+    {MENU_NEXT, 0, "smdc) (rmdc", 0, 0, pad_smdc, 0},
+    {MENU_NEXT | MENU_80c, 0, "dch", "smdc rmdc", 0, pad_dch, 0},
+    {MENU_NEXT | MENU_80c, 0, "dch1", "smdc rmdc", 0, pad_dch1, 0},
+    {MENU_NEXT, 0, "smir) (rmir", 0, 0, pad_smir, 0},
+    {MENU_NEXT | MENU_90c, 0, "ich) (ip", "smir rmir", 0, pad_ich, 0},
+    {MENU_NEXT | MENU_90c, 0, "ich1) (ip", "smir rmir", 0, pad_ich1, 0},
+    {MENU_NEXT, 4, "ich1) (dch1", "smir rmir", 0, pad_xch1, 0},
+    {MENU_NEXT | MENU_90c, 0, "rep", 0, 0, pad_rep, 0},
+    /*
+       Phase 4: Test cursor addressing pads.
+    */
+    {MENU_NEXT, 0, "cup", 0, 0, pad_cup, 0},
+    /*
+       Phase 5: Test scrolling and cursor save/restore.
+    */
+    {MENU_NEXT, 0, "hd", 0, 0, pad_hd, 0},
+    {MENU_NEXT, 0, "hu", 0, 0, pad_hu, 0},
+    {MENU_NEXT | MENU_LM1 | 1, 0, "rin", 0, 0, pad_rin, 0},
+    {MENU_NEXT, 0, "ri", 0, 0, pad_rin, 0},
+    {MENU_NEXT | MENU_LM1 | 1, 0, "il", 0, 0, pad_il, 0},
+    {MENU_NEXT, 0, "il1", 0, 0, pad_il, 0},
+    {MENU_NEXT | MENU_LM1 | 1, 0, "indn", 0, 0, pad_indn, 0},
+    {MENU_NEXT, 0, "ind", 0, 0, pad_indn, 0},
+    {MENU_NEXT | MENU_LM1 | 1, 0, "dl", 0, 0, pad_dl, 0},
+    {MENU_NEXT, 0, "dl1", 0, 0, pad_dl, 0},
+    {MENU_NEXT, 0, "il1) (dl1", 0, 0, pad_xl, 0},
+    {MENU_NEXT, 0, "sc) (rc", 0, 0, pad_scrc, 0},
+    {MENU_NEXT | MENU_50l, 0, "csr) (ind", 0, 0, pad_csrind, 0},
+    {MENU_NEXT, 0, "sc) (csr) (rc", 0, 0, pad_sccsrrc, 0},
+    {MENU_NEXT, 0, "csr) (nel", "sc rc", 0, pad_csr_nel, 0},
+    {MENU_NEXT, 0, "csr) (cup", 0, 0, pad_csr_cup, 0},
+    /*
+       Phase 6: Test tabs.
+    */
+    {MENU_NEXT, 0, "ht", 0, 0, pad_ht, 0},
+    /*
+       Phase 7: Test character-set-switch pads.
+    */
+    {MENU_NEXT, 0, "smso) (rmso", 0, 0, pad_smso, 0},
+    {MENU_NEXT, 0, "smacs) (rmacs", 0, 0, pad_smacs, 0},
+    /*
+       Phase 8: Tests for miscellaneous mode-switch pads.
+    */
+    {MENU_NEXT, 3, "flash", 0, 0, pad_standard, 0},
+    {MENU_NEXT, 3, "smkx", 0, 0, pad_standard, 0},
+    {MENU_NEXT, 3, "rmkx", 0, 0, pad_standard, 0},
+    {MENU_NEXT, 3, "smm", 0, 0, pad_standard, 0},
+    {MENU_NEXT, 3, "rmm", 0, 0, pad_standard, 0},
+    /*
+       Phase 9: Test crash-and-burn properties of unpadded (clear).
+    */
+    {0, 0, "clear", "xon", "k) run clear test with no padding", pad_crash, 0},
+    {MENU_LAST, 0, 0, 0, 0, 0, 0}
+};
+/* *INDENT-ON* */

@@ -24,15 +24,11 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: edit.c,v 1.40 2017/07/29 00:07:07 tom Exp $")
+MODULE_ID("$Id: edit.c,v 1.42 2017/08/18 16:15:44 tom Exp $")
 
 /*
  * These are adapted from tic.h
  */
-#define ABSENT_STRING		(char *)0
-#define CANCELLED_STRING	(char *)(-1)
-#define VALID_STRING(s)  ((s) != CANCELLED_STRING && (s) != ABSENT_STRING)
-
 typedef struct {
     const char *nt_name;
     NAME_TYPE nt_type;
@@ -44,7 +40,7 @@ typedef struct {
 /*
  * Terminfo edit features
  */
-#ifdef NCURSES_VERSION
+#if TACK_CAN_EDIT
 
 #define SHOW_VALUE	1
 #define SHOW_EDIT	2
@@ -66,7 +62,7 @@ static int *label_strings;
 static int xon_index;		/* Subscript for (xon) */
 static int xon_shadow;
 
-#ifdef NCURSES_VERSION
+#if TACK_CAN_EDIT
 static int start_display;	/* the display has just started */
 static int display_lines;	/* number of lines displayed */
 #endif
@@ -167,7 +163,7 @@ find_capability(const char *name)
     return lookup ? lookup : 0;
 }
 
-#ifndef NCURSES_VERSION
+#if !TACK_CAN_EDIT
 /*
  * This is used to relate array-index to capability name/type.
  */
@@ -198,7 +194,7 @@ find_string_cap_by_name(const char *name)
     return result;
 }
 
-#ifdef NCURSES_VERSION
+#if TACK_CAN_EDIT
 
 #define set_saved_boolean(num, value) original_term.Booleans[num] = (char)value
 #define set_saved_number(num, value)  original_term.Numbers[num]  = (short)value
@@ -317,7 +313,7 @@ get_string_cap_byvalue(
 **
 **	Return TRUE if the user has modified the terminfo
 */
-#ifdef NCURSES_VERSION
+#if TACK_CAN_EDIT
 int
 user_modified(void)
 {
@@ -563,6 +559,7 @@ show_report(
 }
 
 #ifdef NCURSES_VERSION
+#if TACK_CAN_EDIT
 static size_t
 safe_length(const char *value)
 {
@@ -651,6 +648,7 @@ copy_termtype(TERMTYPE *target, TERMTYPE *source)
     }
 #endif /* NCURSES_XNAMES */
 }
+#endif /* TACK_CAN_EDIT */
 
 #if NO_LEAKS
 static void
@@ -683,7 +681,7 @@ edit_init(void)
 
     alloc_arrays();
 
-#ifdef NCURSES_VERSION
+#if TACK_CAN_EDIT
     copy_termtype(&original_term, CUR_TP);
     for (i = 0; i < MAX_BOOLEAN; i++) {
 	set_saved_boolean(i, get_newer_boolean(i));
@@ -735,7 +733,7 @@ edit_init(void)
     FreeIfNeeded(label_strings);
 }
 
-#ifdef NCURSES_VERSION
+#if TACK_CAN_EDIT
 
 /*
 **	save_info_string(str, fp)
@@ -1571,7 +1569,7 @@ TestMenu change_pad_menu =
 };
 
 #else
-#endif /* NCURSES_VERSION */
+#endif /* TACK_CAN_EDIT */
 
 #if NO_LEAKS
 void
