@@ -1,3 +1,48 @@
+2019-07-21  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* tack.c, edit.c, tack.h: gcc-8.x-warnings
+
+	* init.c, edit.c: gcc 4.x warning
+
+	* charset.c: update copyright
+
+2019-07-21  Brad.Town
+
+	* charset.c: rewrite of set_attr resulted in off-by-one loop limit
+
+2019-07-21  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* configure: regen
+
+	* aclocal.m4:
+	add CF_CURSES_TERM_H to get proper ifdef's for the boolnames arrays
+
+	* configure.in: add CF_CURSES_TERM_H
+
+	* aclocal.m4: add CF_TERMIOS_TYPES, from xterm
+
+	* sysdep.c: use termios types such as tcflag_t
+
+	* configure.in: use CF_TERMIOS_TYPES
+
+	* configure: regen
+
+	* tack.h: update copyright
+
+	* configure: regen
+
+	* aclocal.m4: resync with my-autoconf
+
+	* package/debian/changelog, package/tack.spec, tack.h: bump
+
+2019-06-30  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.sub: 2019-06-30
+
+2019-06-10  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.guess: 2019-06-10
+
 2017-08-18  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* package/debian/changelog, package/tack.spec, tack.h: bump

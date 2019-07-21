@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997-2012,2017 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2017,2019 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -44,7 +44,7 @@
 #endif
 #endif
 
-MODULE_ID("$Id: sysdep.c,v 1.27 2017/07/28 23:37:53 tom Exp $")
+MODULE_ID("$Id: sysdep.c,v 1.28 2019/07/21 12:57:58 tom Exp $")
 
 #ifdef TERMIOS
 #define PUT_TTY(fd, buf) tcsetattr(fd, TCSAFLUSH, buf)
@@ -108,17 +108,17 @@ tty_raw(int minch GCC_UNUSED, int mask)
 #endif
     new_modes.c_cc[VTIME] = 2;
     new_modes.c_lflag &=
-	(unsigned) ~(ISIG | ICANON | XCASE | ECHO | ECHOE | ECHOK | ECHONL);
+	(tcflag_t) ~(ISIG | ICANON | XCASE | ECHO | ECHOE | ECHOK | ECHONL);
 #ifdef LOBLK
-    new_modes.c_lflag &= (unsigned) ~LOBLK;
+    new_modes.c_lflag &= (tcflag_t) ~LOBLK;
 #endif
-    new_modes.c_oflag &= (unsigned) ~(OPOST | OLCUC | TABDLY);
+    new_modes.c_oflag &= (tcflag_t) ~(OPOST | OLCUC | TABDLY);
     if (mask == ALLOW_PARITY) {
-	new_modes.c_cflag &= (unsigned) ~(CSIZE | PARENB | HUPCL);
+	new_modes.c_cflag &= (tcflag_t) ~(CSIZE | PARENB | HUPCL);
 	new_modes.c_cflag |= CS8;
     }
     new_modes.c_iflag &=
-	(unsigned) ~(IGNBRK
+	(tcflag_t) ~(IGNBRK
 		     | BRKINT
 		     | IGNPAR
 		     | PARMRK
@@ -146,17 +146,17 @@ tty_set(void)
 #ifdef TERMIOS
     new_modes.c_cc[VMIN] = 1;
     new_modes.c_cc[VTIME] = 1;
-    new_modes.c_lflag &= (unsigned) ~(ISIG | ICANON | ECHO | ECHOE | ECHOK | ECHONL);
+    new_modes.c_lflag &= (tcflag_t) ~(ISIG | ICANON | ECHO | ECHOE | ECHOK | ECHONL);
 #if defined(ONLCR) && defined(OCRNL) && defined(ONLRET) && defined(OFILL)
-    new_modes.c_oflag &= (unsigned) ~(ONLCR | OCRNL | ONLRET | OFILL);
+    new_modes.c_oflag &= (tcflag_t) ~(ONLCR | OCRNL | ONLRET | OFILL);
 #else
-    new_modes.c_oflag &= (unsigned) ~(OPOST);
+    new_modes.c_oflag &= (tcflag_t) ~(OPOST);
 #endif
     if (char_mask == ALLOW_PARITY)
-	new_modes.c_iflag &= (unsigned) ~ISTRIP;
+	new_modes.c_iflag &= (tcflag_t) ~ISTRIP;
     switch (select_xon_xoff) {
     case 0:
-	new_modes.c_iflag &= (unsigned) ~(IXON | IXOFF);
+	new_modes.c_iflag &= (tcflag_t) ~(IXON | IXOFF);
 	break;
     case 1:
 #if defined(sequent) && sequent
@@ -171,21 +171,21 @@ tty_set(void)
     case 0:
 #ifdef NLDLY
 	new_modes.c_oflag &=
-	    (unsigned) ~(NLDLY | CRDLY | TABDLY | BSDLY | VTDLY | FFDLY);
+	    (tcflag_t) ~(NLDLY | CRDLY | TABDLY | BSDLY | VTDLY | FFDLY);
 #endif /* NLDLY */
 	break;
     case 1:
 #ifdef NLDLY
 	new_modes.c_oflag &=
-	    (unsigned) ~(NLDLY | CRDLY | TABDLY | BSDLY | VTDLY | FFDLY);
+	    (tcflag_t) ~(NLDLY | CRDLY | TABDLY | BSDLY | VTDLY | FFDLY);
 #endif /* NLDLY */
 #ifdef NL1
 	new_modes.c_oflag |= NL1 | CR2;
 #endif /* NL1 */
 	break;
     }
-    if ((new_modes.c_oflag & (unsigned long) ~OPOST) == 0)
-	new_modes.c_oflag &= (unsigned long) ~OPOST;
+    if ((new_modes.c_oflag & (tcflag_t) ~OPOST) == 0)
+	new_modes.c_oflag &= (tcflag_t) ~OPOST;
 #else
     new_modes.sg_flags |= RAW;
     if (not_a_tty)
@@ -228,7 +228,7 @@ tty_init(void)
     new_modes = old_modes;
 #ifdef TERMIOS
 #ifdef TABDLY
-    new_modes.c_oflag &= (unsigned) ~TABDLY;
+    new_modes.c_oflag &= (tcflag_t) ~TABDLY;
 #endif /* TABDLY */
 #endif
     if (PUT_TTY(fileno(stdin), &new_modes) == -1) {
