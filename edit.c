@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1997-2012,2017 Free Software Foundation, Inc.
+** Copyright (C) 1997-2017,2019 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -24,7 +24,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: edit.c,v 1.42 2017/08/18 16:15:44 tom Exp $")
+MODULE_ID("$Id: edit.c,v 1.44 2019/07/21 19:08:38 tom Exp $")
 
 /*
  * These are adapted from tic.h
@@ -381,13 +381,13 @@ mark_cap(
 					   | flag));
 	    break;
 	default:
-	    sprintf(temp, "unknown cap type (%s)", name);
+	    sprintf(temp, "unknown cap type (%.*s)", NAME_SIZE, name);
 	    ptextln(temp);
 	    break;
 	}
     } else {
 #ifdef HAVE_CURSES_DATA_BOOLNAMES
-	sprintf(temp, "Cap not found: %s", name);
+	sprintf(temp, "Cap not found: %.*s", NAME_SIZE, name);
 	ptextln(temp);
 	(void) wait_here();
 #endif
@@ -408,7 +408,7 @@ can_test(
 {
     if (s) {
 	int ch, j;
-	char name[32];
+	char name[NAME_SIZE];
 
 	for (j = 0; (ch = name[j] = *s); s++) {
 	    if (ch == ' ' || ch == ')' || ch == '(') {
@@ -441,7 +441,7 @@ cap_index(
 {
     if (s) {
 	int j;
-	char name[32];
+	char name[NAME_SIZE];
 
 	for (j = 0;; s++) {
 	    int ch = name[j] = *s;
@@ -591,8 +591,8 @@ copy_termtype(TERMTYPE *target, TERMTYPE *source)
     memset(target, 0, sizeof(*target));
 
 #define copy_array(member,count) \
-    target->member = calloc(count, sizeof(target->member[0])); \
-    memcpy(target->member, source->member, count * sizeof(target->member[0]))
+    target->member = calloc((size_t)(count), sizeof(target->member[0])); \
+    memcpy(target->member, source->member, (size_t)(count) * sizeof(target->member[0]))
 
     copy_array(Booleans, MAX_BOOLEAN);
     copy_array(Numbers, MAX_NUMBERS);
@@ -893,7 +893,7 @@ save_info(
     int i;
     FILE *fp;
     time_t now;
-    char buf[1024];
+    char buf[TEMP_SIZE];
 
     if ((fp = fopen(tty_basename, "w")) == (FILE *) NULL) {
 	(void) sprintf(temp, "can't open: %s", tty_basename);
@@ -994,7 +994,7 @@ show_info(
 	     int *ch)
 {
     int i;
-    char buf[1024];
+    char buf[TEMP_SIZE];
 
     display_lines = 1;
     start_display = 1;
@@ -1182,8 +1182,8 @@ show_value(
     NAME_TABLE const *nt;
     char *s;
     int n, op, b;
-    char buf[1024];
-    char tmp[1024];
+    char buf[TEMP_SIZE];
+    char tmp[TEMP_SIZE];
 
     ptext("enter name: ");
     read_string(buf, (size_t) 80);
@@ -1209,7 +1209,7 @@ show_value(
 	    b = ((nt->nt_index == xon_index)
 		 ? xon_shadow
 		 : get_newer_boolean(nt->nt_index));
-	    sprintf(temp, "boolean  %s %s", buf,
+	    sprintf(temp, "boolean  %.*s %s", (TEMP_SIZE - 30), buf,
 		    b ? "True" : "False");
 	    break;
 	case STRING:
@@ -1218,10 +1218,10 @@ show_value(
 		return;
 	    }
 	    if (get_newer_string(nt->nt_index)) {
-		sprintf(temp, "string  %s %s", buf,
+		sprintf(temp, "string  %.*s %s", NAME_SIZE, buf,
 			expand(get_newer_string(nt->nt_index)));
 	    } else {
-		sprintf(temp, "undefined string %s", buf);
+		sprintf(temp, "undefined string %.*s", NAME_SIZE, buf);
 	    }
 	    break;
 	case NUMBER:
@@ -1229,7 +1229,7 @@ show_value(
 		set_newer_number(nt->nt_index, -1);
 		return;
 	    }
-	    sprintf(temp, "numeric  %s %d", buf,
+	    sprintf(temp, "numeric  %.*s %d", NAME_SIZE, buf,
 		    get_newer_number(nt->nt_index));
 	    break;
 	default:
@@ -1238,7 +1238,7 @@ show_value(
 	}
 	ptextln(temp);
     } else {
-	sprintf(temp, "Cap not found: %s", buf);
+	sprintf(temp, "Cap not found: %.*s", NAME_SIZE, buf);
 	ptextln(temp);
 	return;
     }
@@ -1275,7 +1275,7 @@ show_value(
 		    nt->nt_name, n);
 	    ptextln(temp);
 	} else {
-	    sprintf(temp, "Illegal number: %s", buf);
+	    sprintf(temp, "Illegal number: %.*s", (TEMP_SIZE - 20), buf);
 	    ptextln(temp);
 	}
 	break;
@@ -1338,7 +1338,7 @@ show_changed(
     const char *a;
     const char *b;
     static char title[] = "                     old value   cap  new value";
-    char abuf[1024];
+    char abuf[TEMP_SIZE];
 
     for (i = 0; i < MAX_BOOLEAN; i++) {
 	v = (i == xon_index) ? xon_shadow : get_newer_boolean(i);
@@ -1375,7 +1375,8 @@ show_changed(
 		header = 0;
 	    }
 	    strcpy(abuf, form_terminfo(a));
-	    sprintf(temp, "%30s %6s %s", abuf, STR_NAME(i), form_terminfo(b));
+	    sprintf(temp, "%.30s %6s %.30s",
+		    abuf, STR_NAME(i), form_terminfo(b));
 	    putln(temp);
 	}
     }
@@ -1402,14 +1403,14 @@ change_one_entry(
     const char *s;
     char *t, *p;
     const char *current_string;
-    char buf[1024];
-    char pad[1024];
+    char buf[TEMP_SIZE];
+    char pad[TEMP_SIZE];
 
     i = test->flags & 255;
     if (i == 255) {
 	/* read the cap name from the user */
 	ptext("enter name: ");
-	read_string(pad, (size_t) 32);
+	read_string(pad, (size_t) NAME_SIZE);
 	if (pad[0] == '\0' || pad[1] == '\0') {
 	    *chp = pad[0];
 	    return;
@@ -1418,7 +1419,7 @@ change_one_entry(
 	    x = nt->nt_index;
 	    current_string = get_newer_string(x);
 	} else {
-	    sprintf(temp, "%s is not a string capability", pad);
+	    sprintf(temp, "%.*s is not a string capability", NAME_SIZE, pad);
 	    ptext(temp);
 	    generic_done_message(test, state, chp);
 	    return;
@@ -1440,12 +1441,12 @@ change_one_entry(
 	ptextln(expand(t));
 	return;
     }
-    sprintf(buf, "Current value: (%s) %s",
-	    pad,
+    sprintf(buf, "Current value: (%.*s) %s",
+	    NAME_SIZE, pad,
 	    form_terminfo(current_string));
     putln(buf);
     ptextln("Enter new pad.  0 for no pad.  CR for no change.");
-    read_string(buf, (size_t) 32);
+    read_string(buf, (size_t) NAME_SIZE);
     if (buf[0] == '\0' || (buf[1] == '\0' && isalpha(UChar(buf[0])))) {
 	*chp = buf[0];
 	return;
@@ -1496,7 +1497,7 @@ change_one_entry(
 	v = ch;
     }
     if (pad[0]) {
-	sprintf(t, "$<%s>", pad);
+	sprintf(t, "$<%.*s>", 20, pad);
     }
     if ((t = (char *) malloc(strlen(buf) + 1))) {
 	strcpy(t, buf);

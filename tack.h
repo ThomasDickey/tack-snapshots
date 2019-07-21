@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997-2015,2017 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2017,2019 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.71 2017/08/18 16:43:54 tom Exp $ */
+/* $Id: tack.h,v 1.74 2019/07/21 19:08:15 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -28,7 +28,7 @@
 
 #define MAJOR_VERSION 1
 #define MINOR_VERSION 8
-#define PATCH_VERSION 20170818
+#define PATCH_VERSION 20190721
 
 #ifdef HAVE_CONFIG_H
 #include <ncurses_cfg.h>
@@ -218,6 +218,7 @@ typedef enum {
 
 #define UChar(c)    ((unsigned char)(c))
 
+#define NAME_SIZE 32
 #define TEMP_SIZE 1024
 
 extern FILE *log_fp;
@@ -443,7 +444,7 @@ extern TestMenu edit_menu;
 #endif
 #ifdef DEBUG
 #define TACKMSG(p) p
-extern void TackMsg(const char *,...) GCC_PRINTFLIKE(1,2);
+extern void TackMsg(const char *, ...) GCC_PRINTFLIKE(1,2);
 #else
 #define TACKMSG(p)		/* nothing */
 #endif

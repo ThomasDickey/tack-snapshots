@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997-2012,2017 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2017,2019 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: charset.c,v 1.24 2017/08/18 16:18:53 tom Exp $")
+MODULE_ID("$Id: charset.c,v 1.26 2019/07/21 18:14:30 tom Exp $")
 
 /*
 	Menu definitions for alternate character set and SGR tests.
@@ -245,7 +245,7 @@ set_attr(int a)
 	return;
     }
     memset(b, 0, sizeof(b));
-    for (i = 0; i < 9; i++) {
+    for (i = 0; i < 10; i++) {
 	b[i] = (a >> i) & 1;
 	if (b[i])
 	    use_sgr = 1;

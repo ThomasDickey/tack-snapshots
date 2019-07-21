@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997-2013,2017 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2017,2019 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -26,7 +26,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: init.c,v 1.36 2017/08/18 15:27:05 tom Exp $")
+MODULE_ID("$Id: init.c,v 1.37 2019/07/21 18:31:54 tom Exp $")
 
 FILE *debug_fp;
 char temp[TEMP_SIZE];
@@ -210,7 +210,7 @@ ask_infocmp(void)
 	    char buffer[BUFSIZ];
 	    char *s, *t;
 
-	    if (fgets(buffer, sizeof(buffer) - 1, pp) != 0
+	    if (fgets(buffer, (int) (sizeof(buffer) - 1), pp) != 0
 		&& *buffer == '#'
 		&& ((t = strstr(buffer, " file: "))
 		    || (t = strstr(buffer, " file "))

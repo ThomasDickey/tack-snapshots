@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 1991, 1997-2012,2017 Free Software Foundation, Inc.
+** Copyright (C) 1991, 1997-2017,2019 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
@@ -22,7 +22,7 @@
 #include <tack.h>
 #include <stdarg.h>
 
-MODULE_ID("$Id: tack.c,v 1.27 2017/08/18 16:16:20 tom Exp $")
+MODULE_ID("$Id: tack.c,v 1.28 2019/07/21 19:09:13 tom Exp $")
 
 /*
    This program is designed to test terminfo, not curses.  Therefore
@@ -574,7 +574,7 @@ print_version(void)
 
 #ifdef DEBUG
 void
-TackMsg(const char *fmt,...)
+TackMsg(const char *fmt, ...)
 {
     static FILE *my_fp;
     static const char *my_filename = "TackMsg.out";

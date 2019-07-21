@@ -1,5 +1,5 @@
 dnl***************************************************************************
-dnl Copyright (c) 2007-2015,2017 Free Software Foundation, Inc.              *
+dnl Copyright (c) 2007-2017,2019 Free Software Foundation, Inc.              *
 dnl                                                                          *
 dnl Permission is hereby granted, free of charge, to any person obtaining a  *
 dnl copy of this software and associated documentation files (the            *
@@ -28,7 +28,7 @@ dnl***************************************************************************
 dnl
 dnl Author: Thomas E. Dickey	2007-on
 dnl
-dnl $Id: configure.in,v 1.39 2017/07/28 19:56:15 tom Exp $
+dnl $Id: configure.in,v 1.41 2019/07/21 17:33:30 tom Exp $
 dnl This is a simple configuration-script for tack which makes it simpler to
 dnl build outside the ncurses tree (provided that ncurses was configured using
 dnl the --with-ticlib option).
@@ -118,6 +118,7 @@ dnl ---------------------------------------------------------------------------
 CF_PKG_CONFIG
 CF_WITH_NCURSES_ETC
 
+CF_CURSES_TERM_H
 CF_CURSES_CHECK_DATA(boolnames boolfnames)
 CF_CURSES_CHECK_DATA(acs_map _acs_map __acs_map acs32map, break)
 
@@ -164,6 +165,7 @@ select \
 )
 
 CF_SIG_ATOMIC_T
+CF_TERMIOS_TYPES
 
 CF_WITH_MAN2HTML
 
