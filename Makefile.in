@@ -1,6 +1,7 @@
-# $Id: Makefile.in,v 1.59 2017/07/26 08:50:34 tom Exp $
+# $Id: Makefile.in,v 1.60 2020/02/02 14:47:18 tom Exp $
 ##############################################################################
-# Copyright (c) 1998-2015,2017 Free Software Foundation, Inc.                #
+# Copyright 2020 Thomas E. Dickey                                            #
+# Copyright 1997-2015,2017 Free Software Foundation, Inc.                    #
 #                                                                            #
 # Permission is hereby granted, free of charge, to any person obtaining a    #
 # copy of this software and associated documentation files (the "Software"), #

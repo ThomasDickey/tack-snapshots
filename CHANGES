@@ -1,3 +1,39 @@
+2020-02-02  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* tack.c: update copyright in version-message
+
+	* package/tack.spec, tack.h, package/debian/changelog, HISTORY:
+	bump to 1.09
+
+	* fun.c, init.c, output.c, tack.h:
+	reduce some of the const/assignment and similar warnings seen in Unix builds
+
+	* edit.c, scan.c, tack.h, output.c: cppcheck-warnings
+
+	* package/debian/compat, package/debian/rules: fix build-warnings
+
+	* package/debian/copyright: update copyright
+
+	* Makefile.in, aclocal.m4, ansi.c, charset.c, color.c, configure.in, control.c, crum.c, edit.c, fun.c, init.c, menu.c, modes.c, modules, ncurses_tst.hin, output.c, pad.c, scan.c, sync.c, sysdep.c, tack.1, tack.c, tack.h, tackgen.c:
+	update copyright notices using script which inspects commit-timestamps
+
+	* ansi.c, charset.c, color.c, control.c, crum.c, edit.c, fun.c, init.c, menu.c, modes.c, output.c, pad.c, scan.c, sync.c, sysdep.c, tack.c, tack.h, tackgen.c:
+	rescind permission implied or otherwise to relicense my work as GPL3
+
+	* aclocal.m4: resync with my-autoconf
+
+	* configure: regen
+
+	* package/debian/changelog, package/tack.spec, tack.h: bump
+
+2019-12-20  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.guess: 2019-12-21
+
+2019-09-11  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.sub: 2019-09-11
+
 2019-07-21  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* tack.c, edit.c, tack.h: gcc-8.x-warnings

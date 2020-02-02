@@ -1,5 +1,6 @@
 dnl***************************************************************************
-dnl Copyright (c) 2007-2017,2019 Free Software Foundation, Inc.              *
+dnl Copyright 2017-2019,2020 Thomas E. Dickey                                *
+dnl Copyright 2007-2015,2017 Free Software Foundation, Inc.                  *
 dnl                                                                          *
 dnl Permission is hereby granted, free of charge, to any person obtaining a  *
 dnl copy of this software and associated documentation files (the            *
@@ -26,7 +27,7 @@ dnl sale, use or other dealings in this Software without prior written       *
 dnl authorization.                                                           *
 dnl***************************************************************************
 dnl
-dnl $Id: aclocal.m4,v 1.33 2019/07/21 17:33:41 tom Exp $
+dnl $Id: aclocal.m4,v 1.35 2020/02/02 14:47:18 tom Exp $
 dnl
 dnl Author: Thomas E. Dickey
 dnl
@@ -257,7 +258,7 @@ if test -n "$1" ; then
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_ADD_LIBS version: 2 updated: 2014/07/13 14:33:27
+dnl CF_ADD_LIBS version: 3 updated: 2019/11/02 16:47:33
 dnl -----------
 dnl Add one or more libraries, used to enforce consistency.  Libraries are
 dnl prepended to an existing list, since their dependencies are assumed to
@@ -266,19 +267,19 @@ dnl
 dnl $1 = libraries to add, with the "-l", etc.
 dnl $2 = variable to update (default $LIBS)
 AC_DEFUN([CF_ADD_LIBS],[
-cf_add_libs="$1"
-# Filter out duplicates - this happens with badly-designed ".pc" files...
-for cf_add_1lib in [$]ifelse($2,,LIBS,[$2])
-do
-	for cf_add_2lib in $cf_add_libs
-	do
-		if test "x$cf_add_1lib" = "x$cf_add_2lib"
-		then
+cf_add_libs="[$]ifelse($2,,LIBS,[$2])"
+# reverse order
+cf_add_0lib=
+for cf_add_1lib in $1; do cf_add_0lib="$cf_add_1lib $cf_add_0lib"; done
+# filter duplicates
+for cf_add_1lib in $cf_add_0lib; do
+	for cf_add_2lib in $cf_add_libs; do
+		if test "x$cf_add_1lib" = "x$cf_add_2lib"; then
 			cf_add_1lib=
 			break
 		fi
 	done
-	test -n "$cf_add_1lib" && cf_add_libs="$cf_add_libs $cf_add_1lib"
+	test -n "$cf_add_1lib" && cf_add_libs="$cf_add_1lib $cf_add_libs"
 done
 ifelse($2,,LIBS,[$2])="$cf_add_libs"
 ])dnl
@@ -611,7 +612,7 @@ cf_save_CFLAGS="$cf_save_CFLAGS -Qunused-arguments"
 fi
 ])
 dnl ---------------------------------------------------------------------------
-dnl CF_CONST_X_STRING version: 1 updated: 2019/04/08 17:50:29
+dnl CF_CONST_X_STRING version: 3 updated: 2020/01/11 18:39:22
 dnl -----------------
 dnl The X11R4-X11R6 Xt specification uses an ambiguous String type for most
 dnl character-strings.
@@ -632,6 +633,10 @@ dnl when compiling the library and compiling using the library, to tell the
 dnl compiler that String is const.
 AC_DEFUN([CF_CONST_X_STRING],
 [
+AC_REQUIRE([AC_PATH_XTRA])
+
+CF_SAVE_XTRA_FLAGS([CF_CONST_X_STRING])
+
 AC_TRY_COMPILE(
 [
 #include <stdlib.h>
@@ -652,6 +657,8 @@ AC_CACHE_CHECK(for X11/Xt const-feature,cf_cv_const_x_string,[
 			cf_cv_const_x_string=yes
 		])
 ])
+
+CF_RESTORE_XTRA_FLAGS([CF_CONST_X_STRING])
 
 case $cf_cv_const_x_string in
 (no)
@@ -794,76 +801,6 @@ fi
 AC_CHECK_HEADERS($cf_cv_ncurses_header)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_CURSES_TERM_H version: 11 updated: 2015/04/15 19:08:48
-dnl ----------------
-dnl SVr4 curses should have term.h as well (where it puts the definitions of
-dnl the low-level interface).  This may not be true in old/broken implementations,
-dnl as well as in misconfigured systems (e.g., gcc configured for Solaris 2.4
-dnl running with Solaris 2.5.1).
-AC_DEFUN([CF_CURSES_TERM_H],
-[
-AC_REQUIRE([CF_CURSES_CPPFLAGS])dnl
-
-AC_CACHE_CHECK(for term.h, cf_cv_term_header,[
-
-# If we found <ncurses/curses.h>, look for <ncurses/term.h>, but always look
-# for <term.h> if we do not find the variant.
-
-cf_header_list="term.h ncurses/term.h ncursesw/term.h"
-
-case ${cf_cv_ncurses_header:-curses.h} in
-(*/*)
-	cf_header_item=`echo ${cf_cv_ncurses_header:-curses.h} | sed -e 's%\..*%%' -e 's%/.*%/%'`term.h
-	cf_header_list="$cf_header_item $cf_header_list"
-	;;
-esac
-
-for cf_header in $cf_header_list
-do
-	AC_TRY_COMPILE([
-#include <${cf_cv_ncurses_header:-curses.h}>
-#include <${cf_header}>],
-	[WINDOW *x],
-	[cf_cv_term_header=$cf_header
-	 break],
-	[cf_cv_term_header=no])
-done
-
-case $cf_cv_term_header in
-(no)
-	# If curses is ncurses, some packagers still mess it up by trying to make
-	# us use GNU termcap.  This handles the most common case.
-	for cf_header in ncurses/term.h ncursesw/term.h
-	do
-		AC_TRY_COMPILE([
-#include <${cf_cv_ncurses_header:-curses.h}>
-#ifdef NCURSES_VERSION
-#include <${cf_header}>
-#else
-make an error
-#endif],
-			[WINDOW *x],
-			[cf_cv_term_header=$cf_header
-			 break],
-			[cf_cv_term_header=no])
-	done
-	;;
-esac
-])
-
-case $cf_cv_term_header in
-(term.h)
-	AC_DEFINE(HAVE_TERM_H,1,[Define to 1 if we have term.h])
-	;;
-(ncurses/term.h)
-	AC_DEFINE(HAVE_NCURSES_TERM_H,1,[Define to 1 if we have ncurses/term.h])
-	;;
-(ncursesw/term.h)
-	AC_DEFINE(HAVE_NCURSESW_TERM_H,1,[Define to 1 if we have ncursesw/term.h])
-	;;
-esac
-])dnl
-dnl ---------------------------------------------------------------------------
 dnl CF_CURSES_LIBS version: 42 updated: 2018/06/20 20:23:13
 dnl --------------
 dnl Look for the curses libraries.  Older curses implementations may require
@@ -992,6 +929,76 @@ if test ".$ac_cv_func_initscr" != .yes ; then
 fi
 fi
 
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_CURSES_TERM_H version: 11 updated: 2015/04/15 19:08:48
+dnl ----------------
+dnl SVr4 curses should have term.h as well (where it puts the definitions of
+dnl the low-level interface).  This may not be true in old/broken implementations,
+dnl as well as in misconfigured systems (e.g., gcc configured for Solaris 2.4
+dnl running with Solaris 2.5.1).
+AC_DEFUN([CF_CURSES_TERM_H],
+[
+AC_REQUIRE([CF_CURSES_CPPFLAGS])dnl
+
+AC_CACHE_CHECK(for term.h, cf_cv_term_header,[
+
+# If we found <ncurses/curses.h>, look for <ncurses/term.h>, but always look
+# for <term.h> if we do not find the variant.
+
+cf_header_list="term.h ncurses/term.h ncursesw/term.h"
+
+case ${cf_cv_ncurses_header:-curses.h} in
+(*/*)
+	cf_header_item=`echo ${cf_cv_ncurses_header:-curses.h} | sed -e 's%\..*%%' -e 's%/.*%/%'`term.h
+	cf_header_list="$cf_header_item $cf_header_list"
+	;;
+esac
+
+for cf_header in $cf_header_list
+do
+	AC_TRY_COMPILE([
+#include <${cf_cv_ncurses_header:-curses.h}>
+#include <${cf_header}>],
+	[WINDOW *x],
+	[cf_cv_term_header=$cf_header
+	 break],
+	[cf_cv_term_header=no])
+done
+
+case $cf_cv_term_header in
+(no)
+	# If curses is ncurses, some packagers still mess it up by trying to make
+	# us use GNU termcap.  This handles the most common case.
+	for cf_header in ncurses/term.h ncursesw/term.h
+	do
+		AC_TRY_COMPILE([
+#include <${cf_cv_ncurses_header:-curses.h}>
+#ifdef NCURSES_VERSION
+#include <${cf_header}>
+#else
+make an error
+#endif],
+			[WINDOW *x],
+			[cf_cv_term_header=$cf_header
+			 break],
+			[cf_cv_term_header=no])
+	done
+	;;
+esac
+])
+
+case $cf_cv_term_header in
+(term.h)
+	AC_DEFINE(HAVE_TERM_H,1,[Define to 1 if we have term.h])
+	;;
+(ncurses/term.h)
+	AC_DEFINE(HAVE_NCURSES_TERM_H,1,[Define to 1 if we have ncurses/term.h])
+	;;
+(ncursesw/term.h)
+	AC_DEFINE(HAVE_NCURSESW_TERM_H,1,[Define to 1 if we have ncursesw/term.h])
+	;;
+esac
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_DIRNAME version: 4 updated: 2002/12/21 19:25:52
@@ -1389,9 +1396,10 @@ rm -rf conftest*
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_GCC_VERSION version: 7 updated: 2012/10/18 06:46:33
+dnl CF_GCC_VERSION version: 8 updated: 2019/09/07 13:38:36
 dnl --------------
-dnl Find version of gcc
+dnl Find version of gcc, and (because icc/clang pretend to be gcc without being
+dnl compatible), attempt to determine if icc/clang is actually used.
 AC_DEFUN([CF_GCC_VERSION],[
 AC_REQUIRE([AC_PROG_CC])
 GCC_VERSION=none
@@ -1401,14 +1409,17 @@ if test "$GCC" = yes ; then
 	test -z "$GCC_VERSION" && GCC_VERSION=unknown
 	AC_MSG_RESULT($GCC_VERSION)
 fi
+CF_INTEL_COMPILER(GCC,INTEL_COMPILER,CFLAGS)
+CF_CLANG_COMPILER(GCC,CLANG_COMPILER,CFLAGS)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_GCC_WARNINGS version: 35 updated: 2019/06/16 09:45:01
+dnl CF_GCC_WARNINGS version: 37 updated: 2020/01/05 20:04:12
 dnl ---------------
 dnl Check if the compiler supports useful warning options.  There's a few that
 dnl we don't use, simply because they're too noisy:
 dnl
 dnl	-Wconversion (useful in older versions of gcc, but not in gcc 2.7.x)
+dnl	-Winline (usually not worthwhile)
 dnl	-Wredundant-decls (system headers make this too noisy)
 dnl	-Wtraditional (combines too many unrelated messages, only a few useful)
 dnl	-Wwrite-strings (too noisy, but should review occasionally).  This
@@ -1425,8 +1436,6 @@ dnl
 AC_DEFUN([CF_GCC_WARNINGS],
 [
 AC_REQUIRE([CF_GCC_VERSION])
-CF_INTEL_COMPILER(GCC,INTEL_COMPILER,CFLAGS)
-CF_CLANG_COMPILER(GCC,CLANG_COMPILER,CFLAGS)
 if test "x$have_x" = xyes; then CF_CONST_X_STRING fi
 cat > conftest.$ac_ext <<EOF
 #line __oline__ "${as_me:-configure}"
@@ -1466,7 +1475,7 @@ then
 		fi
 	done
 	CFLAGS="$cf_save_CFLAGS"
-elif test "$GCC" = yes
+elif test "$GCC" = yes && test "$GCC_VERSION" != "unknown"
 then
 	AC_CHECKING([for $CC warning options])
 	cf_save_CFLAGS="$CFLAGS"
@@ -1488,7 +1497,7 @@ then
 		Wpointer-arith \
 		Wshadow \
 		Wstrict-prototypes \
-		Wundef $cf_gcc_warnings $cf_warn_CONST $1
+		Wundef Wno-inline $cf_gcc_warnings $cf_warn_CONST $1
 	do
 		CFLAGS="$cf_save_CFLAGS $EXTRA_CFLAGS -$cf_opt"
 		if AC_TRY_EVAL(ac_compile); then
@@ -2716,11 +2725,16 @@ case $INSTALL in
 esac
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_PROG_LINT version: 3 updated: 2016/05/22 15:25:54
+dnl CF_PROG_LINT version: 4 updated: 2019/11/20 18:55:37
 dnl ------------
 AC_DEFUN([CF_PROG_LINT],
 [
 AC_CHECK_PROGS(LINT, lint cppcheck splint)
+case "x$LINT" in
+(xcppcheck|x*/cppcheck)
+	test -z "$LINT_OPTS" && LINT_OPTS="--enable=all"
+	;;
+esac
 AC_SUBST(LINT_OPTS)
 ])dnl
 dnl ---------------------------------------------------------------------------
@@ -2739,6 +2753,17 @@ define([CF_REMOVE_DEFINE],
 $1=`echo "$2" | \
 	sed	-e 's/-[[UD]]'"$3"'\(=[[^ 	]]*\)\?[[ 	]]/ /g' \
 		-e 's/-[[UD]]'"$3"'\(=[[^ 	]]*\)\?[$]//g'`
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_RESTORE_XTRA_FLAGS version: 1 updated: 2020/01/11 16:47:45
+dnl ---------------------
+dnl Restore flags saved in CF_SAVE_XTRA_FLAGS
+dnl $1 = name of current macro
+define([CF_RESTORE_XTRA_FLAGS],
+[
+LIBS="$cf_save_LIBS_$1"
+CFLAGS="$cf_save_CFLAGS_$1"
+CPPFLAGS="$cf_save_CPPFLAGS_$1"
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_RPATH_HACK version: 11 updated: 2013/09/01 13:02:00
@@ -2858,9 +2883,34 @@ CF_VERBOSE(...checked $1 [$]$1)
 AC_SUBST(EXTRA_LDFLAGS)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_SIG_ATOMIC_T version: 3 updated: 2012/10/04 20:12:20
+dnl CF_SAVE_XTRA_FLAGS version: 1 updated: 2020/01/11 16:46:44
+dnl ------------------
+dnl Use this macro to save CFLAGS/CPPFLAGS/LIBS before checks against X headers
+dnl and libraries which do not update those variables.
+dnl
+dnl $1 = name of current macro
+define([CF_SAVE_XTRA_FLAGS],
+[
+cf_save_LIBS_$1="$LIBS"
+cf_save_CFLAGS_$1="$CFLAGS"
+cf_save_CPPFLAGS_$1="$CPPFLAGS"
+LIBS="$LIBS ${X_PRE_LIBS} ${X_LIBS} ${X_EXTRA_LIBS}"
+for cf_X_CFLAGS in $X_CFLAGS
+do
+	case "x$cf_X_CFLAGS" in
+	x-[[IUD]]*)
+		CPPFLAGS="$CPPFLAGS $cf_X_CFLAGS"
+		;;
+	*)
+		CFLAGS="$CFLAGS $cf_X_CFLAGS"
+		;;
+	esac
+done
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_SIG_ATOMIC_T version: 4 updated: 2020/01/18 12:30:44
 dnl ---------------
-dnl signal handler, but there are some gcc depedencies in that recommendation.
+dnl signal handler, but there are some gcc dependencies in that recommendation.
 dnl Try anyway.
 AC_DEFUN([CF_SIG_ATOMIC_T],
 [

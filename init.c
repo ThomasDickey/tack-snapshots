@@ -1,12 +1,12 @@
 /*
-** Copyright (C) 1991, 1997-2017,2019 Free Software Foundation, Inc.
+** Copyright 2017-2019,2020 Thomas E. Dickey
+** Copyright 1997-2013,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
 ** TACK is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
-** the Free Software Foundation; either version 2, or (at your option)
-** any later version.
+** the Free Software Foundation, version 2.
 **
 ** TACK is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -26,7 +26,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: init.c,v 1.37 2019/07/21 18:31:54 tom Exp $")
+MODULE_ID("$Id: init.c,v 1.40 2020/02/02 16:31:05 tom Exp $")
 
 FILE *debug_fp;
 char temp[TEMP_SIZE];
@@ -293,7 +293,7 @@ init_acs(void)
      */
 #if (defined(HAVE_CURSES_DATA_ACS_MAP) || defined(NEED_ACS_MAP)) && ! (defined(NUM_ACS) || defined(NCURSES_VERSION))
     if (acs_map == 0) {
-	acs_map = calloc(256, sizeof(acs_map[0]));
+	acs_map = calloc((size_t) 256, sizeof(acs_map[0]));
     }
 #endif
     if (value != 0) {
@@ -502,7 +502,7 @@ bye_kids(int n)
 const char *
 safe_tgets(NCURSES_CONST char *name)
 {
-    char *value = tigetstr(name);
+    char *value = (char *) tigetstr(name);
     if (!VALID_STRING(value))
 	value = 0;
     return value;

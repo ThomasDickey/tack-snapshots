@@ -1,12 +1,12 @@
 /*
-** Copyright (C) 1991, 1997-2017,2019 Free Software Foundation, Inc.
+** Copyright 2017-2019,2020 Thomas E. Dickey
+** Copyright 1997-2015,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
 ** TACK is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
-** the Free Software Foundation; either version 2, or (at your option)
-** any later version.
+** the Free Software Foundation, version 2.
 **
 ** TACK is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.74 2019/07/21 19:08:15 tom Exp $ */
+/* $Id: tack.h,v 1.80 2020/02/02 16:34:56 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -27,8 +27,8 @@
 /* terminfo action checker include file */
 
 #define MAJOR_VERSION 1
-#define MINOR_VERSION 8
-#define PATCH_VERSION 20190721
+#define MINOR_VERSION 9
+#define PATCH_VERSION 20200202
 
 #ifdef HAVE_CONFIG_H
 #include <ncurses_cfg.h>
@@ -55,7 +55,11 @@
 #endif
 
 #ifndef NCURSES_CONST
+#ifdef NCURSES_VERSION
 #define NCURSES_CONST const
+#else
+#define NCURSES_CONST		/*nothing */
+#endif
 #endif
 
 #ifndef NO_LEAKS
@@ -201,10 +205,11 @@ typedef enum {
 } NAME_TYPE;
 
 /* see ncurses' nc_tparm.h */
+#define TPARM_FMT NCURSES_CONST char *
 #define TPARM_ARG long
 #define TPARM_N(n) (TPARM_ARG)(n)
 
-#define TPARM_9(a,b,c,d,e,f,g,h,i,j) tparm(a,TPARM_N(b),TPARM_N(c),TPARM_N(d),TPARM_N(e),TPARM_N(f),TPARM_N(g),TPARM_N(h),TPARM_N(i),TPARM_N(j))
+#define TPARM_9(a,b,c,d,e,f,g,h,i,j) tparm((TPARM_FMT)a,TPARM_N(b),TPARM_N(c),TPARM_N(d),TPARM_N(e),TPARM_N(f),TPARM_N(g),TPARM_N(h),TPARM_N(i),TPARM_N(j))
 #define TPARM_8(a,b,c,d,e,f,g,h,i) TPARM_9(a,b,c,d,e,f,g,h,i,0)
 #define TPARM_7(a,b,c,d,e,f,g,h) TPARM_8(a,b,c,d,e,f,g,h,0)
 #define TPARM_6(a,b,c,d,e,f,g) TPARM_7(a,b,c,d,e,f,g,0)
@@ -212,7 +217,6 @@ typedef enum {
 #define TPARM_4(a,b,c,d,e) TPARM_5(a,b,c,d,e,0)
 #define TPARM_3(a,b,c,d) TPARM_4(a,b,c,d,0)
 #define TPARM_2(a,b,c) TPARM_3(a,b,c,0)
-#define TPARM_1(a,b) TPARM_2(a,b,0)
 #define TPARM_1(a,b) TPARM_2(a,b,0)
 #define TPARM_0(a) TPARM_1(a,0)
 
@@ -470,7 +474,6 @@ extern void put_clear(void);
 extern void put_columns(const char *, int, int);
 extern void put_cr(void);
 extern void put_crlf(void);
-extern void put_dec(char *, int);
 extern void put_ind(void);
 extern void put_lf(void);
 extern void put_newlines(int);
@@ -479,7 +482,6 @@ extern void put_this(int);
 extern void putchp(int);
 extern void putln(const char *);
 extern void read_string(char *, size_t);
-extern void three_digit(char *, int);
 extern void tt_putp(const char *);
 extern void tt_putparm(NCURSES_CONST char *, int, int, int);
 extern void tt_tputs(const char *, int);

@@ -1,12 +1,12 @@
 /*
-** Copyright (C) 2017 Free Software Foundation, Inc.
+** Copyright 2017,2020 Thomas E. Dickey
+** Copyright 2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
 ** TACK is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
-** the Free Software Foundation; either version 2, or (at your option)
-** any later version.
+** the Free Software Foundation, version 2.
 **
 ** TACK is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -27,7 +27,7 @@
 #include <curses.h>
 #include <term.h>
 
-/* $Id: tackgen.c,v 1.10 2017/07/28 23:28:52 tom Exp $ */
+/* $Id: tackgen.c,v 1.12 2020/02/02 14:47:18 tom Exp $ */
 
 #define DATA_FMT "DATA(\t%3d,\t\"%s\",%s%s%s),\t/* %s */\n"
 

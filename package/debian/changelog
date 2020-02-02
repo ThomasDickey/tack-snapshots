@@ -1,3 +1,9 @@
+tack (1.09+20200202) unstable; urgency=low
+
+  * update copyright and license
+
+ -- Thomas E. Dickey <dickey@invisible-island.net>  Sun, 02 Feb 2020 08:51:23 -0500
+
 tack (1.08+20190721) unstable; urgency=low
 
   * maintenance updates

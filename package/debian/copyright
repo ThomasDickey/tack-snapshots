@@ -2,12 +2,12 @@ Author: Thomas Dickey <dickey@invisible-island.net>
 Upstream source http://invisible-island.net/ncurses/ncurses.html
 
 Files: *
-Copyright: (C) 1991-2017 Free Software Foundation, Inc.
-License: GPL-2+
+Copyright: 2017-2019,2020 Thomas E. Dickey
+Copyright: 1991-2017 Free Software Foundation, Inc.
+License: GPL-2
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU General Public License
- as published by the Free Software Foundation; either version 2
- of the License, or (at your option) any later version.
+ as published by the Free Software Foundation, version 2.
  .
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -20,7 +20,8 @@ License: GPL-2+
 
 Files: aclocal.m4
 Licence: other-BSD
-Copyright:  2007-2009,2010 by Free Software Foundation, Inc.
+Copyright: 2017-2019,2020 Thomas E. Dickey
+Copyright: 2007-2015,2017 Free Software Foundation, Inc.
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the
     "Software"), to deal in the Software without restriction, including
@@ -45,11 +46,7 @@ Copyright:  2007-2009,2010 by Free Software Foundation, Inc.
     sale, use or other dealings in this Software without prior written
     authorization.
 
-    These macros are maintained separately from NCURSES. The copyright on
-    this file applies to the aggregation of macros and does not affect use of
-    these macros in other applications.
-
-    See http://invisible-island.net/autoconf/ for additional information.
+    See https://invisible-island.net/autoconf/ for additional information.
 
 Files: install-sh
 Copyright:  1994 X Consortium
@@ -87,7 +84,7 @@ Licence: other-BSD
     shared with many OS's install programs.
 
 Files: debian/*
-Copyright:  2010 Thomas E. Dickey
+Copyright:  2010-2019,2020 Thomas E. Dickey
 Licence: other-BSD
     Permission to use, copy, modify, and distribute this software and its
     documentation for any purpose and without fee is hereby granted,

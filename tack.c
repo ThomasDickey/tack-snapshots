@@ -1,12 +1,12 @@
 /*
-** Copyright (C) 1991, 1997-2017,2019 Free Software Foundation, Inc.
+** Copyright 2017-2019,2020 Thomas E. Dickey
+** Copyright 1997-2012,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
 ** TACK is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
-** the Free Software Foundation; either version 2, or (at your option)
-** any later version.
+** the Free Software Foundation, version 2.
 **
 ** TACK is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -22,7 +22,7 @@
 #include <tack.h>
 #include <stdarg.h>
 
-MODULE_ID("$Id: tack.c,v 1.28 2019/07/21 19:09:13 tom Exp $")
+MODULE_ID("$Id: tack.c,v 1.31 2020/02/02 17:00:47 tom Exp $")
 
 /*
    This program is designed to test terminfo, not curses.  Therefore
@@ -565,7 +565,8 @@ print_version(void)
 	   MAJOR_VERSION,
 	   MINOR_VERSION,
 	   PATCH_VERSION);
-    printf("Copyright (C) 1997-2017 Free Software Foundation, Inc.\n");
+    printf("Copyright 2017-2020 Thomas E. Dickey\n");
+    printf("Copyright 1997-2017 Free Software Foundation, Inc.\n");
     printf("Tack comes with NO WARRANTY, to the extent permitted by law.\n");
     printf("You may redistribute copies of Tack under the terms of the\n");
     printf("GNU General Public License.  For more information about\n");

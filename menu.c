@@ -1,12 +1,12 @@
 /*
-** Copyright (C) 1991, 1997-2010,2017 Free Software Foundation, Inc.
+** Copyright 2017,2020 Thomas E. Dickey
+** Copyright 1997-2010,2017 Free Software Foundation, Inc.
 ** 
 ** This file is part of TACK.
 ** 
 ** TACK is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
-** the Free Software Foundation; either version 2, or (at your option)
-** any later version.
+** the Free Software Foundation, version 2.
 ** 
 ** TACK is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: menu.c,v 1.11 2017/07/28 23:56:42 tom Exp $")
+MODULE_ID("$Id: menu.c,v 1.13 2020/02/02 14:47:18 tom Exp $")
 
 /*
    Menu control
