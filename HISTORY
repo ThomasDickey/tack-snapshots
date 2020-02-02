@@ -1,6 +1,7 @@
 
 Current history:
 
+2020/02/02	1.09	Update copyright and license.  Also, portability fixes.
 2017/07/26	1.08	Reduce reliance on ncurses internals.
 2009/12/26	1.07	Fix an allocation-size.
 2007/08/11	1.06	Updates to build with ncurses 5.6 patch 20070811

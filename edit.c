@@ -1,12 +1,12 @@
 /*
-** Copyright (C) 1997-2017,2019 Free Software Foundation, Inc.
+** Copyright 2017-2019,2020 Thomas E. Dickey
+** Copyright 1997-2012,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
 ** TACK is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
-** the Free Software Foundation; either version 2, or (at your option)
-** any later version.
+** the Free Software Foundation, version 2.
 **
 ** TACK is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -24,7 +24,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: edit.c,v 1.44 2019/07/21 19:08:38 tom Exp $")
+MODULE_ID("$Id: edit.c,v 1.47 2020/02/02 15:31:09 tom Exp $")
 
 /*
  * These are adapted from tic.h
@@ -317,11 +317,10 @@ get_string_cap_byvalue(
 int
 user_modified(void)
 {
-    const char *a, *b;
-    int i, v;
+    int i;
 
     for (i = 0; i < MAX_BOOLEAN; i++) {
-	v = (i == xon_index) ? xon_shadow : get_newer_boolean(i);
+	int v = (i == xon_index) ? xon_shadow : get_newer_boolean(i);
 	if (get_saved_boolean(i) != v) {
 	    return TRUE;
 	}
@@ -332,6 +331,7 @@ user_modified(void)
 	}
     }
     for (i = 0; i < (int) MAX_STRINGS; i++) {
+	const char *a, *b;
 	if ((a = get_saved_string(i)) == 0)
 	    a = "";
 	if ((b = get_newer_string(i)) == 0)
@@ -798,7 +798,9 @@ form_terminfo(const char *srcp)
 	return 0;
     }
     if (buffer == 0 || need > length) {
+	char *tofree = buffer;
 	if ((buffer = (char *) realloc(buffer, length = need)) == 0) {
+	    free(tofree);
 	    return 0;
 	}
     }
@@ -824,8 +826,7 @@ form_terminfo(const char *srcp)
 		    && isprint((int) value)) {
 		    ch = (int) value;
 		    buffer[bufp++] = S_QUOTE;
-		    if (ch == '\\'
-			|| ch == S_QUOTE)
+		    if (ch == S_QUOTE)
 			buffer[bufp++] = '\\';
 		    buffer[bufp++] = (char) ch;
 		    buffer[bufp++] = S_QUOTE;
@@ -1181,7 +1182,7 @@ show_value(
 {
     NAME_TABLE const *nt;
     char *s;
-    int n, op, b;
+    int n, op;
     char buf[TEMP_SIZE];
     char tmp[TEMP_SIZE];
 
@@ -1195,7 +1196,10 @@ show_value(
 	put_clear();
     }
     op = t->flags & 255;
+
     if ((nt = find_capability(buf)) != 0) {
+	int b;
+
 	switch (nt->nt_type) {
 	case BOOLEAN:
 	    if (op == SHOW_DELETE) {
@@ -1334,14 +1338,12 @@ show_changed(
 		int *state GCC_UNUSED,
 		int *ch)
 {
-    int i, header = 1, v;
-    const char *a;
-    const char *b;
+    int i, header = 1;
     static char title[] = "                     old value   cap  new value";
     char abuf[TEMP_SIZE];
 
     for (i = 0; i < MAX_BOOLEAN; i++) {
-	v = (i == xon_index) ? xon_shadow : get_newer_boolean(i);
+	int v = (i == xon_index) ? xon_shadow : get_newer_boolean(i);
 	if (get_saved_boolean(i) != v) {
 	    if (header) {
 		ptextln(title);
@@ -1365,6 +1367,8 @@ show_changed(
 	}
     }
     for (i = 0; i < (int) MAX_STRINGS; i++) {
+	const char *a;
+	const char *b;
 	if ((a = get_saved_string(i)) == 0)
 	    a = "";
 	if ((b = get_newer_string(i)) == 0)
@@ -1518,10 +1522,11 @@ static void
 build_change_menu(
 		     TestMenu * m)
 {
-    int i, j, k;
+    int i, j;
     char *s;
 
     for (i = j = 0; i < txp; i++) {
+	int k;
 	if ((k = tx_index[i]) >= 0) {
 	    s = form_terminfo(tx_cap[i]);
 	    s[40] = '\0';

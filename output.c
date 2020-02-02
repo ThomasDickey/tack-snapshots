@@ -1,12 +1,12 @@
 /*
-** Copyright (C) 1991, 1997-2012,2017 Free Software Foundation, Inc.
+** Copyright 2017,2020 Thomas E. Dickey
+** Copyright 1997-2012,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
 ** TACK is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
-** the Free Software Foundation; either version 2, or (at your option)
-** any later version.
+** the Free Software Foundation, version 2.
 **
 ** TACK is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -23,7 +23,7 @@
 #include <tack.h>
 #include <time.h>
 
-MODULE_ID("$Id: output.c,v 1.26 2017/08/18 14:27:00 tom Exp $")
+MODULE_ID("$Id: output.c,v 1.30 2020/02/02 16:31:05 tom Exp $")
 
 /* globals */
 long char_sent;			/* number of characters sent */
@@ -244,7 +244,7 @@ tc_putp(const char *string)
 void
 put_this(int c)
 {				/* output one character (with padding) */
-    tc_putch(c);
+    tc_putch((TC_PUTCH) c);
     if (char_padding && replace_mode)
 	tt_putp(char_padding);
 }
@@ -430,25 +430,6 @@ ptext(const char *s)
 	    putchp(*s++);
 	}
     }
-}
-
-void
-put_dec(char *f, int i)
-{				/* print a line with a decimal number in it */
-    char tm[128];
-
-    sprintf(tm, f, i / 10, i % 10);
-    ptext(tm);
-}
-
-void
-three_digit(char *tx, int i)
-{				/* convert the decimal number to a string of
-				   at least 3 digits */
-    if (i < 1000)
-	sprintf(tx, "%d.%d", i / 10, i % 10);
-    else
-	sprintf(tx, "%d", i / 10);
 }
 
 void

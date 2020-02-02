@@ -1,12 +1,12 @@
 /*
-** Copyright (C) 1991, 1997-2017,2019 Free Software Foundation, Inc.
+** Copyright 2017-2019,2020 Thomas E. Dickey
+** Copyright 1997-2010,2012 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
 **
 ** TACK is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
-** the Free Software Foundation; either version 2, or (at your option)
-** any later version.
+** the Free Software Foundation, version 2.
 **
 ** TACK is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -44,7 +44,7 @@
 #endif
 #endif
 
-MODULE_ID("$Id: sysdep.c,v 1.28 2019/07/21 12:57:58 tom Exp $")
+MODULE_ID("$Id: sysdep.c,v 1.30 2020/02/02 14:47:18 tom Exp $")
 
 #ifdef TERMIOS
 #define PUT_TTY(fd, buf) tcsetattr(fd, TCSAFLUSH, buf)

@@ -1,12 +1,12 @@
-Summary:  tack - terminfo action checker
+Summary:  terminfo action checker
 %define AppProgram tack
-%define AppVersion 1.08
-%define AppRelease 20190721
-# $XTermId: tack.spec,v 1.17 2019/07/21 12:26:44 tom Exp $
+%define AppVersion 1.09
+%define AppRelease 20200202
+# $XTermId: tack.spec,v 1.19 2020/02/02 16:58:47 tom Exp $
 Name: %{AppProgram}
 Version: %{AppVersion}
 Release: %{AppRelease}
-License: GPL2+
+License: GPL2
 Group: Applications/Development
 URL: ftp://invisible-island.net/%{AppProgram}
 Source0: %{AppProgram}-%{AppVersion}-%{AppRelease}.tgz
@@ -39,7 +39,7 @@ make
 %install
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
 
-make install                    DESTDIR=$RPM_BUILD_ROOT
+make install DESTDIR=$RPM_BUILD_ROOT
 
 strip $RPM_BUILD_ROOT%{_bindir}/%{AppProgram}
 

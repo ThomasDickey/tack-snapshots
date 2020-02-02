@@ -1,12 +1,12 @@
 /*
-** Copyright (C) 1991, 1997-2012,2017 Free Software Foundation, Inc.
+** Copyright 2017,2020 Thomas E. Dickey
+** Copyright 1997-2012,2017 Free Software Foundation, Inc.
 ** 
 ** This file is part of TACK.
 ** 
 ** TACK is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
-** the Free Software Foundation; either version 2, or (at your option)
-** any later version.
+** the Free Software Foundation, version 2.
 ** 
 ** TACK is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: ansi.c,v 1.18 2017/07/29 00:22:16 tom Exp $")
+MODULE_ID("$Id: ansi.c,v 1.20 2020/02/02 14:47:18 tom Exp $")
 
 /*
  * Standalone tests for ANSI terminals.  Three entry points:
