@@ -27,7 +27,7 @@ dnl sale, use or other dealings in this Software without prior written       *
 dnl authorization.                                                           *
 dnl***************************************************************************
 dnl
-dnl $Id: aclocal.m4,v 1.35 2020/02/02 14:47:18 tom Exp $
+dnl $Id: aclocal.m4,v 1.38 2020/02/09 02:00:26 tom Exp $
 dnl
 dnl Author: Thomas E. Dickey
 dnl
@@ -672,7 +672,7 @@ esac
 ])
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_CURSES_CHECK_DATA version: 7 updated: 2018/01/03 04:47:33
+dnl CF_CURSES_CHECK_DATA version: 9 updated: 2020/02/08 21:00:26
 dnl --------------------
 dnl Check if curses.h defines the given data/variable.
 dnl Use this after CF_NCURSES_CONFIG or CF_CURSES_CONFIG.
@@ -685,9 +685,9 @@ for cf_data in $1
 do
 AC_MSG_CHECKING(for data $cf_data declaration in ${cf_cv_ncurses_header:-curses.h})
 
-AC_TRY_COMPILE(CF__CURSES_HEAD,[
-void *foo = &($cf_data)
-],[cf_result=yes
+AC_TRY_COMPILE(CF__CURSES_HEAD,
+CF__CURSES_DATA(foo,$cf_data)
+,[cf_result=yes
 ],[cf_result=no])
 AC_MSG_RESULT($cf_result)
 
@@ -703,8 +703,7 @@ else
 extern char $cf_data;
 int main(void)
 {
-	void *foo = &($cf_data);
-	fprintf(stderr, "testing linkage of $cf_data:%p\n", (void *)foo);
+	]CF__CURSES_DATA(foo,$cf_data)[
 	${cf_cv_main_return:-return}(foo == 0);
 }],[cf_result=yes
 ],[cf_result=no],[
@@ -712,8 +711,7 @@ int main(void)
 	AC_TRY_LINK(CF__CURSES_HEAD
 [extern char $cf_data;],[
 	do {
-		void *foo = &($cf_data);
-		fprintf(stderr, "testing linkage of $cf_data:%p\n", (void *)foo);
+		]CF__CURSES_DATA(foo,$cf_data)[
 		${cf_cv_main_return:-return}(foo == 0);
 	} while (0)
 ],[cf_result=yes],[cf_result=no])
@@ -1838,7 +1836,7 @@ ifelse($1,,,[$1=$LIB_PREFIX])
 	AC_SUBST(LIB_PREFIX)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_LINK_DATAONLY version: 12 updated: 2017/07/23 17:46:07
+dnl CF_LINK_DATAONLY version: 13 updated: 2020/02/08 15:59:30
 dnl ----------------
 dnl Some systems have a non-ANSI linker that doesn't pull in modules that have
 dnl only data (i.e., no functions), for example NeXT.  On those systems we'll
@@ -1898,6 +1896,7 @@ if test "$cf_cv_link_dataonly" = no ; then
 	AC_DEFINE(BROKEN_LINKER,1,[if data-only library module does not link])
 	BROKEN_LINKER=1
 fi
+AC_SUBST(BROKEN_LINKER)
 
 ])dnl
 dnl ---------------------------------------------------------------------------
@@ -3581,6 +3580,24 @@ make an error
 fi
 fi # cf_cv_posix_visible
 ])
+dnl ---------------------------------------------------------------------------
+dnl CF__CURSES_DATA version: 2 updated: 2020/02/08 21:00:26
+dnl ---------------
+dnl Attempt to make a copy of a curses data item.  This is needed in the
+dnl check-data configure tests when using ncurses, because the symbol may be
+dnl actually a function return-value.  That could happen if the linker is
+dnl broken (does not resolve data-only references), or if ncurses is configured
+dnl to support re-entrant code.
+dnl $1 = target
+dnl $2 = source
+define([CF__CURSES_DATA],[
+#if defined($2) && ((defined(NCURSES_WRAPPED_VAR) && (NCURSES_VERSION_PATCH < 20200208)) || defined(NCURSES_BROKEN_LINKER) || defined(NCURSES_REENTRANT))
+	const void *$1 = (const void *)($2);
+#else
+	const void *$1 = &($2);
+#endif
+	fprintf(stderr, "testing linkage of $2:%p\n", (const void *)$1);
+])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF__CURSES_HEAD version: 2 updated: 2010/10/23 15:54:49
 dnl ---------------

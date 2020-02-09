@@ -1,3 +1,19 @@
+2020-02-08  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* package/debian/changelog, package/tack.spec, tack.h: bump
+
+	* aclocal.m4: resync with my-autoconf
+
+	* configure: regen
+
+	* aclocal.m4: split-out CF__CURSES_DATA to simplify ifdef's
+
+2020-02-07  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* configure: regen
+
+	* aclocal.m4: workaround for Cygwin broken-linker
+
 2020-02-02  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* tack.c: update copyright in version-message
@@ -619,13 +635,13 @@
 	strict gcc 4.1.2 warnings with CentOS 5.7 64-bit
 
 	* init.c, tack.c:
-	quiet unnecesary warning about ignoring return-value from system()
+	quiet unnecessary warning about ignoring return-value from system()
 
 	* configure:
 	regen with ac252 20120303 to work with Intel 12.0.3 compiler
 
 	* tack.h:
-	quiet unnecesary warning about ignoring return-value from system()
+	quiet unnecessary warning about ignoring return-value from system()
 
 2012-03-02  Thomas E. Dickey  <dickey@invisible-island.net>
 
