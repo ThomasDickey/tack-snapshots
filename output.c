@@ -23,7 +23,7 @@
 #include <tack.h>
 #include <time.h>
 
-MODULE_ID("$Id: output.c,v 1.30 2020/02/02 16:31:05 tom Exp $")
+MODULE_ID("$Id: output.c,v 1.31 2020/02/18 01:55:30 tom Exp $")
 
 /* globals */
 long char_sent;			/* number of characters sent */
@@ -34,7 +34,9 @@ int replace_mode;		/* used to output replace mode padding */
 int can_go_home;		/* TRUE if we can fashion a home command */
 int can_clear_screen;		/* TRUE if we can somehow clear the screen */
 int raw_characters_sent;	/* Total output characters */
-static int log_count;		/* Number of characters on a log line */
+/* local */
+static int log_column;		/* Number of characters on a log line */
+static int in_logging;		/* Filter debug logging for clarity */
 
 /* translate mode default strings */
 #define TM_carriage_return	TM_string[0].value
@@ -81,21 +83,39 @@ getnext(int mask)
     int ch;
     unsigned char buf;
 
+    if (debug_fp) {
+	fprintf(debug_fp, "getnext:\n");
+    }
     tc_putp(req_for_input);
     fflush(stdout);
     if (nodelay_read) {
 	while (1) {
 	    ch = (int) read(fileno(stdin), &buf, sizeof(buf));
-	    if (ch == -1)
+	    if (ch == -1) {
+		if (debug_fp) {
+		    fprintf(debug_fp, "...getnext: EOF (nodelay)\n");
+		}
 		return EOF;
-	    if (ch == 1)
+	    } else if (ch == 1) {
+		if (debug_fp) {
+		    fprintf(debug_fp, "...getnext: 0x%02X (nodelay)\n", ch);
+		}
 		return buf;
+	    }
 	}
     }
     ch = getchar();
-    if (ch == EOF)
-	return EOF;
-    return ch & mask;
+    if (ch != EOF) {
+	ch &= mask;
+	if (debug_fp) {
+	    fprintf(debug_fp, "...getnext: 0x%02X\n", ch);
+	}
+    } else {
+	if (debug_fp) {
+	    fprintf(debug_fp, "...getnext: EOF\n");
+	}
+    }
+    return ch;
 }
 
 int
@@ -107,6 +127,41 @@ getchp(int mask)
 	return scan_key();
     } else
 	return getnext(mask);
+}
+
+int
+log_chr(FILE *fp, int ch, int col)
+{
+    if (ch < 32) {
+	fprintf(fp, "<%s>", c0[ch]);
+	col += 5;
+    } else if (ch < 127) {
+	fprintf(fp, "%c", (char) ch);
+	col += 1;
+    } else {
+	fprintf(fp, "<%02x>", ch);
+	col += 4;
+    }
+    if ((ch == '\n' && col > 0) || col >= 80) {
+	fprintf(fp, "\n");
+	col = 0;
+    }
+    return col;
+}
+
+void
+log_str(FILE *fp, const char *value)
+{
+    if (value == 0) {
+	fputs("<null>", fp);
+    } else if (value == (const char *) -1) {
+	fputs("<cancel>", fp);
+    } else {
+	int ch;
+	while ((ch = UChar(*value++)) != '\0') {
+	    log_chr(fp, ch, -10);
+	}
+    }
 }
 
 /*
@@ -124,22 +179,7 @@ tc_putch(TC_PUTCH c)
 	fflush(stdout);
     }
     if (log_fp) {
-	/* terminal output logging */
-	unsigned ch = UChar(c);
-	if (ch < 32) {
-	    fprintf(log_fp, "<%s>", c0[ch]);
-	    log_count += 5;
-	} else if (ch < 127) {
-	    fprintf(log_fp, "%c", (char) ch);
-	    log_count += 1;
-	} else {
-	    fprintf(log_fp, "<%02x>", ch);
-	    log_count += 4;
-	}
-	if (ch == '\n' || log_count >= 80) {
-	    fprintf(log_fp, "\n");
-	    log_count = 0;
-	}
+	log_column = log_chr(log_fp, UChar(c), log_column);
     }
     return (c);
 }
@@ -153,6 +193,12 @@ tc_putch(TC_PUTCH c)
 void
 tt_tputs(const char *string, int reps)
 {
+    ++in_logging;
+    if (debug_fp && (in_logging == 1)) {
+	fprintf(debug_fp, "tt_tputs: string=");
+	log_str(debug_fp, string);
+	fprintf(debug_fp, ", reps=%d\n", reps);
+    }
     if (string) {
 	int i;
 
@@ -173,6 +219,7 @@ tt_tputs(const char *string, int reps)
 	}
 	(void) tputs(string, reps, tc_putch);
     }
+    --in_logging;
 }
 
 /*
@@ -184,7 +231,14 @@ tt_tputs(const char *string, int reps)
 void
 tt_putp(const char *string)
 {
+    ++in_logging;
+    if (debug_fp && (in_logging == 1)) {
+	fprintf(debug_fp, "tt_putp: string=");
+	log_str(debug_fp, string);
+	fprintf(debug_fp, "\n");
+    }
     tt_tputs(string, 1);
+    --in_logging;
 }
 
 /*
@@ -203,6 +257,12 @@ tt_putparm(
     if (string) {
 	int i;
 
+	++in_logging;
+	if (debug_fp && (in_logging == 1)) {
+	    fprintf(debug_fp, "tc_putparm: string=");
+	    log_str(debug_fp, string);
+	    fprintf(debug_fp, ", reps=%d\n", reps);
+	}
 	for (i = 0; i < TT_MAX; i++) {
 	    if (i >= ttp) {
 		tt_cap[i] = string;
@@ -221,6 +281,7 @@ tt_putparm(
 	(void) tputs(TPARM_2((NCURSES_CONST char *) string, arg1, arg2),
 		     reps,
 		     tc_putch);
+	--in_logging;
     }
 }
 
@@ -236,7 +297,14 @@ tc_putp(const char *string)
 {
     int rc = -1;
     if (VALID_STRING(string)) {
+	++in_logging;
 	rc = tputs(string, 1, tc_putch);
+	if (debug_fp && (in_logging == 1)) {
+	    fprintf(debug_fp, "tc_putp: string=");
+	    log_str(debug_fp, string);
+	    fprintf(debug_fp, ", rc=%d\n", rc);
+	}
+	--in_logging;
     }
     return rc;
 }
@@ -646,6 +714,9 @@ put_clear(void)
 {				/* clear the screen */
     int i;
 
+    if (debug_fp) {
+	fprintf(debug_fp, "put_clear:\n");
+    }
     if (clear_screen)
 	tt_tputs(clear_screen, lines);
     else if (clr_eos && can_go_home) {
@@ -677,10 +748,16 @@ put_clear(void)
 	}
     } else {
 	can_clear_screen = FALSE;
+	if (debug_fp) {
+	    fprintf(debug_fp, "...put_clear: ERR\n");
+	}
 	return;
     }
     char_count = line_count = 0;
     can_clear_screen = TRUE;
+    if (debug_fp) {
+	fprintf(debug_fp, "...put_clear: OK\n");
+    }
 }
 
 /*

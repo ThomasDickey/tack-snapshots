@@ -27,7 +27,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: tack.1,v 1.6 2020/02/02 14:47:18 tom Exp $
+.\" $Id: tack.1,v 1.8 2020/02/18 01:57:20 tom Exp $
 .TH tack 1 ""
 .ie \n(.g .ds `` \(lq
 .el       .ds `` ``
@@ -38,13 +38,19 @@
 .SH NAME
 \fBtack\fR \- \fIterminfo\fR action checker
 .SH SYNOPSIS
-\fBtack\fR [\-itV] [term]
+\fBtack\fR [\-diltV] [term]
 .br
 .SH DESCRIPTION
 The \fBtack\fR program has three purposes:
-(1) to help you build a new terminfo entry describing an unknown terminal,
-(2) to test the correctness of an existing entry, and
-(3) to develop the correct pad timings needed to ensure that screen updates
+.TP 4
+(1)
+to help you build a new terminfo entry describing an unknown terminal,
+.TP 4
+(2)
+to test the correctness of an existing entry, and
+.TP 4
+(3)
+to develop the correct pad timings needed to ensure that screen updates
 do not fall behind the incoming data stream.
 .PP
 \fBTack\fR presents a series of screen-painting and interactive
@@ -54,16 +60,39 @@ terminfo entry and reality visually obvious.
 the terminal operates.
 .SS OPTIONS
 .TP
+.I "\-d"
+Start \fBtack\fP with the debug-file \*(``debug.log\*('' opened.
+.TP
 .I "\-i"
 Usually \fBtack\fR will send the reset and init strings to the terminal
 when the program starts up.  The \fI\-i\fR option will inhibit the
 terminal initialization.
 .TP
+.I "\-l"
+Start \fBtack\fP with the log-file \*(``tack.log\*('' opened.
+This is also a menu item.
+.TP
 .I "\-t"
 Tell \fBtack\fR to override the terminfo settings for basic terminal
 functions.  When this option is set \fBtack\fR will translate
-(cr) to \\r, (cud1) to \\n, (ind) to \\n, (nel) to \\r\\n,
-(cub1) to \\b, (bel) to \\007, (ff) to \\f and (ht) to \\t.
+.RS
+.PP
+(cr) to \\r,
+.br
+(cud1) to \\n,
+.br
+(ind) to \\n,
+.br
+(nel) to \\r\\n,
+.br
+(cub1) to \\b,
+.br
+(bel) to \\007,
+.br
+(ff) to \\f and
+.br
+(ht) to \\t.
+.RE
 .TP
 .I "\-V"
 Display the version information and exit.
@@ -98,7 +127,7 @@ These strings are taken from the user strings (u9) and (u8).
 By now you must be wondering why the terminfo names are enclosed
 in parenthesis.  This has no profound meaning other than it makes
 them stand out.  The \fBtack\fR program uses this convention any time
-it displays a terminfo name.  Remember \fBtack\fR is designed to
+it displays a terminfo name.  Remember that \fBtack\fR is designed to
 rely on as little of the terminfo entry as possible.
 .SH CREATING NEW ENTRIES
 \fBTack\fR has a number of tools that are designed to help gather
@@ -201,14 +230,14 @@ soon enough, it will just drop them.  The dropped characters could be text,
 escape sequences or the escape character itself, causing some really
 strange-looking displays.  This kind of glitch is called an \fIoverrun\fR.
 .PP
-In terminfo entries, you can attach a \fBpad time\fR to each string capability
+In terminfo entries, you can attach a \fIpad time\fR to each string capability
 that is a number of milliseconds to delay after sending it.  This will give
 the terminal time to catch up and avoid overruns.
 .PP
 If you are running a software terminal emulator, or you are on an X pseudo-tty,
 or your terminal is on an RS-232C line which correctly handles RTS/CTS
 hardware flow control, then pads are not strictly necessary.  However, some
-display packages (such as ncurses(3X)) use the pad counts to calculate
+display packages (such as \fBncurses\fP(3X)) use the pad counts to calculate
 the fastest way to implement certain functions.
 For example: scrolling the screen may be faster than deleting the top line.
 .PP
@@ -252,8 +281,13 @@ The terminal will respond with a sequence like:
 acknowledge string.  A VT-100 style terminal could set u9=\\E[c
 and u8=\\E[?1;0c.
 Acknowledge strings fall into two categories. 
-1) Strings with a unique terminating character and,
-2) strings of fixed length.
+.TP 4
+1)
+Strings with a unique terminating character and,
+.TP 4
+2)
+strings of fixed length.
+.PP
 The acknowledge string for the VT-100 is of the first type since
 it always ends with the letter \*(``c\*(''.  Some Tektronics terminals
 have fixed length acknowledge strings.  \fBTack\fR supports both
@@ -334,10 +368,20 @@ manufacturer.
 .SH BUGS
 If the screen size is incorrect, many of the tests will fail.
 .SH AUTHOR
+.na
+.hy 0
+.PP
 Concept, design, and original implementation by
 Daniel Weaver <dan.weaver@znyx.com>.
+.PP
 Portions of the code and
 documentation are by Eric S. Raymond <esr@snark.thyrsus.com>.
+.PP
+Refactored by Thomas E. Dickey to
+eliminate dependency on \fBncurses\fP internal functions,
+and to allow \fBtack\fP
+to work with other implementations
+of curses and terminfo than \fBncurses\fP.
 .\"#
 .\"# The following sets edit modes for GNU EMACS
 .\"# Local Variables:

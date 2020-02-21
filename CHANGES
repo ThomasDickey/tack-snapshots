@@ -1,3 +1,55 @@
+2020-02-20  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* sysdep.c: gcc-warning
+
+	* sysdep.c:
+	two changes to allow most tests to work with mintty in Cygwin and MSYS2
+	(the meta-mode test is one case that does not work):
+		a) change the VTIME value in tty_set() to 0, since interbyte timing
+		   does not work at all.  Without this fix, getchar() returns
+		   immediately without error, whether or not data is available.
+		b) in read_key(), do not exit from the loop as long as read() returns
+		   -1 (error).  Without this fix, read_key() returns ^@'s (nulls)
+		   in the function-key test.
+	These changes do not seem to break existing tests on other platforms,
+	e.g., Unix (AIX, HPUX, Solaris).
+
+	* tack.c: fix gcc warning for non-ncurses configuration
+
+	* package/debian/changelog, package/tack.spec, tack.h: bump
+
+	* init.c: zero-out the debug/log-pointers after closing them
+
+2020-02-17  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* tack.1: add -d option, for debug.log
+
+	* output.c:
+	use debug.log to record putp's and tput's which hint at the testing done
+
+	* sysdep.c: use debug.log to record when the tty is set/reset
+
+	* tack.h: split-out log_chr and log_str
+
+	* tack.c: add -d option, for debug.log
+
+2020-02-16  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* tack.1, tack.c, tack.h: add -l option
+
+	* tack.c:
+	eliminate a confusing comparison for the logging-menu-entry state by using
+	#define'd strings for that and the hex-output menu.
+
+2020-02-14  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* tack.c: use getopt
+
+	* fun.c, crum.c, edit.c:
+	fix coverity warning about copying into fixed-size buffer
+
+	* tack.c: do a sanity-check on $TERM
+
 2020-02-08  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* package/debian/changelog, package/tack.spec, tack.h: bump

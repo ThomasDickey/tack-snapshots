@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: crum.c,v 1.14 2020/02/02 14:47:18 tom Exp $")
+MODULE_ID("$Id: crum.c,v 1.15 2020/02/14 21:20:53 tom Exp $")
 
 /*
  * Test cursor movement.
@@ -33,7 +33,8 @@ static void crum_ll(TestList * t, int *state, int *ch);
 static void crum_move(TestList * t, int *state, int *ch);
 static void crum_os(TestList * t, int *state, int *ch);
 
-static char crum_text[5][80];
+#define CRUM_SIZE 80
+static char crum_text[5][CRUM_SIZE];
 
 TestList crum_test_list[] =
 {
@@ -378,7 +379,7 @@ crum_move(
 	put_str("  Done. ");
     } else {
 	can_test(buf, FLAG_TESTED);
-	strcpy(crum_text[n], &buf[2]);
+	sprintf(crum_text[n], "%.*s", CRUM_SIZE - 1, &buf[2]);
 	crum_text[n][strlen(buf) - 3] = '\0';
 
 	display_it(1 << n, buf);

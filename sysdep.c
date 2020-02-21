@@ -44,7 +44,7 @@
 #endif
 #endif
 
-MODULE_ID("$Id: sysdep.c,v 1.30 2020/02/02 14:47:18 tom Exp $")
+MODULE_ID("$Id: sysdep.c,v 1.33 2020/02/21 01:55:16 tom Exp $")
 
 #ifdef TERMIOS
 #define PUT_TTY(fd, buf) tcsetattr(fd, TCSAFLUSH, buf)
@@ -99,6 +99,9 @@ void catchsig(void);
 void
 tty_raw(int minch GCC_UNUSED, int mask)
 {				/* set tty to raw noecho */
+    if (debug_fp) {
+	fprintf(debug_fp, "tty_raw:\n");
+    }
     new_modes = old_modes;
 #ifdef TERMIOS
 #if HAVE_SELECT
@@ -134,18 +137,28 @@ tty_raw(int minch GCC_UNUSED, int mask)
 #else
     new_modes.sg_flags |= RAW;
 #endif
-    if (not_a_tty)
+    if (not_a_tty) {
+	if (debug_fp) {
+	    fprintf(debug_fp, "...tty_raw: not a tty\n");
+	}
 	return;
+    }
     PUT_TTY(fileno(stdin), &new_modes);
+    if (debug_fp) {
+	fprintf(debug_fp, "...tty_raw: done\n");
+    }
 }
 
 void
 tty_set(void)
 {				/* set tty to special modes */
+    if (debug_fp) {
+	fprintf(debug_fp, "tty_set:\n");
+    }
     new_modes = old_modes;
 #ifdef TERMIOS
     new_modes.c_cc[VMIN] = 1;
-    new_modes.c_cc[VTIME] = 1;
+    new_modes.c_cc[VTIME] = 0;
     new_modes.c_lflag &= (tcflag_t) ~(ISIG | ICANON | ECHO | ECHOE | ECHOK | ECHONL);
 #if defined(ONLCR) && defined(OCRNL) && defined(ONLRET) && defined(OFILL)
     new_modes.c_oflag &= (tcflag_t) ~(ONLCR | OCRNL | ONLRET | OFILL);
@@ -188,19 +201,36 @@ tty_set(void)
 	new_modes.c_oflag &= (tcflag_t) ~OPOST;
 #else
     new_modes.sg_flags |= RAW;
-    if (not_a_tty)
+    if (not_a_tty) {
+	if (debug_fp) {
+	    fprintf(debug_fp, "...tty_set: not a tty\n");
+	}
 	return;
+    }
 #endif
     PUT_TTY(fileno(stdin), &new_modes);
+    if (debug_fp) {
+	fprintf(debug_fp, "...tty_set: done\n");
+    }
 }
 
 void
 tty_reset(void)
 {				/* reset the tty to the original modes */
+    if (debug_fp) {
+	fprintf(debug_fp, "tty_reset:\n");
+    }
     fflush(stdout);
-    if (not_a_tty)
+    if (not_a_tty) {
+	if (debug_fp) {
+	    fprintf(debug_fp, "...tty_reset: not a tty\n");
+	}
 	return;
+    }
     PUT_TTY(fileno(stdin), &old_modes);
+    if (debug_fp) {
+	fprintf(debug_fp, "...tty_reset: done\n");
+    }
 }
 
 void
@@ -389,11 +419,14 @@ read_key(char *buf, size_t max)
     int ask, i, l;
     char *s;
 
+    if (debug_fp) {
+	fprintf(debug_fp, "read_key: max=%lu\n", (unsigned long) max);
+    }
     *buf = '\0';
     s = buf;
     fflush(stdout);
     /* ATT unix may return 0 or 1, Berkeley Unix should be 1 */
-    while (read(fileno(stdin), s, (size_t) 1) == 0) {
+    while ((l = (int) read(fileno(stdin), s, (size_t) 1)) <= 0) {
 	;			/* EMPTY */
     }
     ++s;
@@ -421,6 +454,11 @@ read_key(char *buf, size_t max)
 	    /* strip high order bits (if any) */
 	    *s = (char) (*s & char_mask);
 	}
+    }
+    if (debug_fp) {
+	fprintf(debug_fp, "...read_key: result=");
+	log_str(debug_fp, buf);
+	fprintf(debug_fp, "\n");
     }
 }
 
