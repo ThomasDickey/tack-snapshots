@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.81 2020/02/09 02:00:26 tom Exp $ */
+/* $Id: tack.h,v 1.84 2020/02/21 00:02:10 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -28,7 +28,7 @@
 
 #define MAJOR_VERSION 1
 #define MINOR_VERSION 9
-#define PATCH_VERSION 20200208
+#define PATCH_VERSION 20200220
 
 #ifdef HAVE_CONFIG_H
 #include <ncurses_cfg.h>
@@ -224,6 +224,9 @@ typedef enum {
 
 #define NAME_SIZE 32
 #define TEMP_SIZE 1024
+
+#define LOG_FILENAME "tack.log"
+#define DBG_FILENAME "debug.log"
 
 extern FILE *log_fp;
 extern FILE *debug_fp;
@@ -463,10 +466,12 @@ extern char *hex_expand_to(char *, int);
 extern char *print_expand(char *);
 extern int getchp(int);
 extern int getnext(int);
+extern int log_chr(FILE *, int, int);
 extern int tc_putp(const char *);
 extern int wait_here(void);
 extern void go_home(void);
 extern void home_down(void);
+extern void log_str(FILE *, const char *);
 extern void maybe_wait(int);
 extern void ptext(const char *);
 extern void ptextln(const char *);

@@ -26,7 +26,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: init.c,v 1.40 2020/02/02 16:31:05 tom Exp $")
+MODULE_ID("$Id: init.c,v 1.41 2020/02/20 21:54:47 tom Exp $")
 
 FILE *debug_fp;
 char temp[TEMP_SIZE];
@@ -486,9 +486,11 @@ bye_kids(int n)
     }
     if (debug_fp) {
 	fclose(debug_fp);
+	debug_fp = NULL;
     }
     if (log_fp) {
 	fclose(log_fp);
+	log_fp = NULL;
     }
     tty_reset();
     fclose(stdin);

@@ -24,7 +24,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: edit.c,v 1.47 2020/02/02 15:31:09 tom Exp $")
+MODULE_ID("$Id: edit.c,v 1.48 2020/02/14 21:13:30 tom Exp $")
 
 /*
  * These are adapted from tic.h
@@ -1378,7 +1378,7 @@ show_changed(
 		ptextln(title);
 		header = 0;
 	    }
-	    strcpy(abuf, form_terminfo(a));
+	    sprintf(abuf, "%.*s", (int) sizeof(abuf) - 1, form_terminfo(a));
 	    sprintf(temp, "%.30s %6s %.30s",
 		    abuf, STR_NAME(i), form_terminfo(b));
 	    putln(temp);
@@ -1431,7 +1431,7 @@ change_one_entry(
     } else {
 	x = tx_index[i];
 	current_string = tx_cap[i];
-	strcpy(pad, STR_NAME(x));
+	sprintf(pad, "%.*s", (int) sizeof(pad) - 1, STR_NAME(x));
     }
     if (!current_string) {
 	ptextln("That string is not currently defined.  Please enter a new value, including the padding delay:");

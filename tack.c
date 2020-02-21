@@ -21,8 +21,9 @@
 
 #include <tack.h>
 #include <stdarg.h>
+#include <unistd.h>
 
-MODULE_ID("$Id: tack.c,v 1.31 2020/02/02 17:00:47 tom Exp $")
+MODULE_ID("$Id: tack.c,v 1.37 2020/02/21 01:03:49 tom Exp $")
 
 /*
    This program is designed to test terminfo, not curses.  Therefore
@@ -70,6 +71,8 @@ int ignore_unused;
 static void tools_hex_echo(TestList *, int *, int *);
 static void tools_debug(TestList *, int *, int *);
 
+#define MENU_ENABLE_HEX_OUTPUT  "h) enable hex output on echo tool"
+#define MENU_DISABLE_HEX_OUTPUT "h) disable hex output on echo tool"
 static char hex_echo_menu_entry[80];
 
 static TestList tools_test_list[] =
@@ -219,7 +222,9 @@ static void start_modes(TestList *, int *, int *);
 static void start_basic(TestList *, int *, int *);
 static void start_log(TestList *, int *, int *);
 
-static char logging_menu_entry[80] = "l) start logging";
+#define MENU_START_LOGGING "l) start logging"
+#define MENU_STOP_LOGGING  "l) stop logging"
+static char logging_menu_entry[80] = MENU_START_LOGGING;
 
 static TestList start_test_list[] =
 {
@@ -264,12 +269,10 @@ tools_hex_echo(
 {
     if (hex_out) {
 	hex_out = FALSE;
-	strcpy(hex_echo_menu_entry,
-	       "h) enable hex output on echo tool");
+	strcpy(hex_echo_menu_entry, MENU_ENABLE_HEX_OUTPUT);
     } else {
 	hex_out = TRUE;
-	strcpy(hex_echo_menu_entry,
-	       "h) disable hex output on echo tool");
+	strcpy(hex_echo_menu_entry, MENU_DISABLE_HEX_OUTPUT);
     }
 }
 
@@ -308,11 +311,9 @@ start_tools(
 	       int *ch GCC_UNUSED)
 {
     if (hex_out) {
-	strcpy(hex_echo_menu_entry,
-	       "h) disable hex output on echo tool");
+	strcpy(hex_echo_menu_entry, MENU_DISABLE_HEX_OUTPUT);
     } else {
-	strcpy(hex_echo_menu_entry,
-	       "h) enable hex output on echo tool");
+	strcpy(hex_echo_menu_entry, MENU_ENABLE_HEX_OUTPUT);
     }
     menu_display(&tools_menu, 0);
 }
@@ -523,13 +524,13 @@ start_log(
 	     int *state GCC_UNUSED,
 	     int *ch GCC_UNUSED)
 {
-    if (logging_menu_entry[5] == 'a') {
+    if (!strcmp(logging_menu_entry, MENU_START_LOGGING)) {
 	ptextln("The log file will capture all characters sent to the terminal.");
-	if ((log_fp = fopen("tack.log", "w"))) {
-	    ptextln("Start logging to file: tack.log");
-	    strcpy(logging_menu_entry, "l) stop logging");
+	if ((log_fp = fopen(LOG_FILENAME, "w"))) {
+	    ptextln("Start logging to file: " LOG_FILENAME);
+	    strcpy(logging_menu_entry, MENU_STOP_LOGGING);
 	} else {
-	    ptextln("File open error: tack.log");
+	    ptextln("File open error: " LOG_FILENAME);
 	}
     } else {
 	if (log_fp) {
@@ -537,7 +538,7 @@ start_log(
 	    log_fp = 0;
 	}
 	ptextln("Terminal output logging stopped.");
-	strcpy(logging_menu_entry, "l) start logging");
+	strcpy(logging_menu_entry, MENU_START_LOGGING);
     }
 }
 
@@ -550,7 +551,7 @@ void
 show_usage(
 	      char *name)
 {
-    (void) fprintf(stderr, "usage: %s [-itV] [term]\n", name);
+    (void) fprintf(stderr, "usage: %s [-diltV] [term]\n", name);
 }
 
 /*
@@ -594,6 +595,28 @@ TackMsg(const char *fmt, ...)
 }
 #endif
 
+static char *
+validate_term(char *value)
+{
+    char *result = NULL;
+    if (value != NULL && *value != '\0' && strlen(value) <= 128) {
+	int n;
+	result = value;
+	for (n = 0; value[n] != '\0'; ++n) {
+	    int ch = UChar(value[n]);
+	    if (ch >= 128 || ch == '/' || !isgraph(ch)) {
+		result = NULL;
+		break;
+	    }
+	}
+    }
+    if (result == NULL) {
+	fprintf(stderr, "no useful value found for $TERM\n");
+	ExitProgram(EXIT_FAILURE);
+    }
+    return strdup(result);
+}
+
 /*****************************************************************************
  *
  * Main sequence
@@ -603,39 +626,56 @@ TackMsg(const char *fmt, ...)
 int
 main(int argc, char *argv[])
 {
+#if TACK_CAN_EDIT
     int i, j;
-    char *term_variable;
+#endif
+    int ch;
 
     /* scan the option flags */
     send_reset_init = TRUE;
     translate_mode = FALSE;
-    term_variable = getenv("TERM");
     tty_can_sync = SYNC_NOT_TESTED;
-    for (i = 1; i < argc; i++) {
-	if (argv[i][0] == '-') {
-	    for (j = 1; argv[i][j]; j++) {
-		switch (argv[i][j]) {
-		case 'V':
-		    print_version();
-		    ExitProgram(EXIT_FAILURE);
-		    /* NOTREACHED */
-		case 'i':
-		    send_reset_init = FALSE;
-		    break;
-		case 't':
-		    translate_mode = FALSE;
-		    break;
-		default:
-		    show_usage(argv[0]);
-		    ExitProgram(EXIT_SUCCESS);
-		    /* NOTREACHED */
-		}
+    while ((ch = getopt(argc, argv, "diltV")) != -1) {
+	switch (ch) {
+	case 'V':
+	    print_version();
+	    ExitProgram(EXIT_FAILURE);
+	    /* NOTREACHED */
+	case 'd':
+	    if ((debug_fp = fopen(DBG_FILENAME, "w")) == 0) {
+		perror(DBG_FILENAME);
+		ExitProgram(EXIT_FAILURE);
 	    }
-	} else {
-	    term_variable = argv[i];
+	    break;
+	case 'i':
+	    send_reset_init = FALSE;
+	    break;
+	case 'l':
+	    if ((log_fp = fopen(LOG_FILENAME, "w"))) {
+		strcpy(logging_menu_entry, MENU_STOP_LOGGING);
+	    } else {
+		perror(LOG_FILENAME);
+		ExitProgram(EXIT_FAILURE);
+	    }
+	    break;
+	case 't':
+	    translate_mode = FALSE;
+	    break;
+	default:
+	    show_usage(argv[0]);
+	    ExitProgram(EXIT_SUCCESS);
+	    /* NOTREACHED */
 	}
     }
-    tty_basename = strdup(term_variable ? term_variable : "unknown");
+
+    if (optind >= argc) {
+	tty_basename = validate_term(getenv("TERM"));
+    } else if (optind + 1 >= argc) {
+	tty_basename = validate_term(argv[optind]);
+    } else {
+	show_usage(argv[0]);
+	ExitProgram(EXIT_FAILURE);
+    }
 
     curses_setup(argv[0]);
 

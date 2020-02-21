@@ -21,7 +21,9 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: fun.c,v 1.29 2020/02/02 16:31:05 tom Exp $")
+MODULE_ID("$Id: fun.c,v 1.30 2020/02/14 22:16:53 tom Exp $")
+
+#define COPY_1(target, source) sprintf(target, "%.*s", (int)sizeof(target) - 1, source)
 
 /*
  * Test the function keys on the terminal.  The code for echo tests
@@ -111,7 +113,7 @@ keys_tested(
 	putln("Function key labels:");
 	for (i = 0; i < key_count; ++i) {
 	    if (fk_label[i]) {
-		sprintf(outbuf, "%s %s",
+		sprintf(outbuf, "%.80s %.80s",
 			fk_name[i] ? fk_name[i] : "??", fk_label[i]);
 		put_columns(outbuf, (int) strlen(outbuf), 16);
 	    }
@@ -135,15 +137,15 @@ keys_tested(
 	for (i = 0; scan_down[i]; i++) {
 	    if (!scan_tested[i]) {
 		if (hex_output) {
-		    strcpy(outbuf, hex_expand_to(scan_down[i], 3));
+		    COPY_1(outbuf, hex_expand_to(scan_down[i], 3));
 		} else {
-		    strcpy(outbuf, expand(scan_down[i]));
+		    COPY_1(outbuf, expand(scan_down[i]));
 		}
 		l = expand_chars;
 		if (hex_output) {
-		    strcat(outbuf, hex_expand_to(scan_up[i], 3));
+		    COPY_1(outbuf, hex_expand_to(scan_up[i], 3));
 		} else {
-		    strcat(outbuf, expand(scan_up[i]));
+		    COPY_1(outbuf, expand(scan_up[i]));
 		}
 		expand_chars += l;
 		l = (int) strlen(scan_name[i]);
@@ -163,9 +165,9 @@ keys_tested(
 	for (i = 0; i < key_count; i++) {
 	    if (!fk_tested[i] && fk_name[i] != 0) {
 		if (hex_output) {
-		    strcpy(outbuf, hex_expand_to(fkval[i], 3));
+		    COPY_1(outbuf, hex_expand_to(fkval[i], 3));
 		} else {
-		    strcpy(outbuf, expand(fkval[i]));
+		    COPY_1(outbuf, expand(fkval[i]));
 		}
 		l = (int) strlen(fk_name[i]);
 		if (((char_count + 16) & ~15) +
@@ -355,10 +357,10 @@ found_match(char *s, int hx, int cc)
 		    }
 		    f = 1;
 		}
-		sprintf(outbuf, " (%s)", fk_name[j]);
+		sprintf(outbuf, " (%.80s)", fk_name[j]);
 		put_str(outbuf);
 		if (fk_label[j]) {
-		    sprintf(outbuf, " <%s>", fk_label[j]);
+		    sprintf(outbuf, " <%.80s>", fk_label[j]);
 		    put_str(outbuf);
 		}
 		fk_tested[j] = 1;
@@ -423,7 +425,7 @@ found_exit(char *keybuf, int hx, int cc)
     } else {
 	s = expand_to(keybuf, 10);
     }
-    sprintf(temp, "%s Unknown", s);
+    sprintf(temp, "%.80s Unknown", s);
     put_str(temp);
     for (j = 0; j < MAX_FK_UNK; j++) {
 	if (j == funk) {
@@ -667,7 +669,7 @@ funkey_local(
 	sprintf(temp,
 		"(pfloc) Set function key %d to execute a clear and print \"Done!\"", fk);
 	ptextln(temp);
-	sprintf(temp, "%sDone!", liberated(clear_screen));
+	sprintf(temp, "%.*sDone!", TEMP_SIZE - 10, liberated(clear_screen));
 	tc_putp(TPARM_2(pkey_local, fk, temp));
 	sprintf(temp, "Hit function key %d.  Then hit return.", fk);
 	ptextln(temp);
