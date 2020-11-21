@@ -1,3 +1,23 @@
+2020-11-21  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* tack.1: cleanup using check-manpage
+
+	* configure: regen
+
+	* aclocal.m4: resync with my-autoconf
+
+	* configure.in: suppress checks for X
+
+	* package/debian/changelog, package/tack.spec, tack.h: bump
+
+2020-06-28  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.sub: 2020/06/28
+
+2020-06-14  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.guess: 2020/04/26
+
 2020-02-20  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* sysdep.c: gcc-warning
