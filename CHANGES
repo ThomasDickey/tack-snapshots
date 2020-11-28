@@ -1,3 +1,23 @@
+2020-11-28  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* tack.h, pad.c:
+	improve interaction in padding tests by ensuring a time-delay happens for the
+	cases where the terminal itself has no delays
+
+	* configure: regen
+
+	* tackgen.c: fix a memory-leak
+
+	* tack.c: prefer exit_terminfo to _nc_free_tinfo
+
+	* configure.in: add check for exit_terminfo
+
+	* configure: regen
+
+	* aclocal.m4: resync with my-autoconf
+
+	* package/debian/changelog, package/tack.spec, tack.h: bump
+
 2020-11-21  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* tack.1: cleanup using check-manpage

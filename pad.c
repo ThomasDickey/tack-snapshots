@@ -20,8 +20,9 @@
 */
 
 #include <tack.h>
+#include <time.h>
 
-MODULE_ID("$Id: pad.c,v 1.17 2020/02/02 14:47:18 tom Exp $")
+MODULE_ID("$Id: pad.c,v 1.18 2020/11/28 15:53:32 tom Exp $")
 
 /* test the pad counts on the terminal */
 
@@ -77,6 +78,7 @@ pad_standard(
 	    tt_putp(cap);
 	    putchp(letter);
 	    i++;
+	    ENSURE_DELAY;
 	} while (still_testing());
 	pad_test_shutdown(t, 0);
 	if (l >= lines) {
@@ -196,6 +198,7 @@ pad_home1(
 		SLOW_TERMINAL_EXIT;
 	    }
 	    NEXT_LETTER;
+	    ENSURE_DELAY;
 	} while (still_testing());
 	pad_test_shutdown(t, 0);
 	ptext("All the dots should line up.  ");
@@ -239,6 +242,7 @@ pad_home2(
 		SLOW_TERMINAL_EXIT;
 	    }
 	    NEXT_LETTER;
+	    ENSURE_DELAY;
 	} while (still_testing());
 	pad_test_shutdown(t, 0);
 	ptext("All the dots should line up.  ");
@@ -382,6 +386,7 @@ pad_clear(
 		tt_tputs(clr_eos, repeats);
 	    }
 	    NEXT_LETTER;
+	    ENSURE_DELAY;
 	} while (still_testing());
 	pad_test_shutdown(t, 1);
 	ptext(end_message);
@@ -438,6 +443,7 @@ pad_ech(
 	putchp(letter);
 	put_crlf();
 	NEXT_LETTER;
+	ENSURE_DELAY;
     } while (still_testing());
     pad_test_shutdown(t, 0);
     ptext(all_lines);
@@ -490,6 +496,7 @@ pad_el1(
 	putchp(letter);
 	put_crlf();
 	NEXT_LETTER;
+	ENSURE_DELAY;
     } while (still_testing());
     pad_test_shutdown(t, 0);
     ptext(all_lines);
@@ -540,6 +547,7 @@ pad_el(
 	putchp(letter);
 	put_crlf();
 	NEXT_LETTER;
+	ENSURE_DELAY;
     } while (still_testing());
     pad_test_shutdown(t, 0);
     ptext(all_lines);
@@ -582,6 +590,7 @@ pad_smdc(
 	    tt_putp(exit_delete_mode);
 	    putchp(letter);
 	}
+	ENSURE_DELAY;
     } while (still_testing());
     pad_test_shutdown(t, 0);
     home_down();
@@ -634,6 +643,7 @@ pad_dch(
 	putchp(letter);
 	put_crlf();
 	NEXT_LETTER;
+	ENSURE_DELAY;
     } while (still_testing());
     pad_test_shutdown(t, 0);
     home_down();
@@ -692,6 +702,7 @@ pad_dch1(
 	putchp(letter);
 	put_crlf();
 	NEXT_LETTER;
+	ENSURE_DELAY;
     } while (still_testing());
     pad_test_shutdown(t, 0);
     ptext(all_lines);
@@ -734,6 +745,7 @@ pad_smir(
 	    tt_putp(exit_insert_mode);
 	    putchp(letter);
 	}
+	ENSURE_DELAY;
     } while (still_testing());
     pad_test_shutdown(t, 0);
     home_down();
@@ -789,6 +801,7 @@ pad_ich(
 	putchp(letter);
 	NEXT_LETTER;
 	put_crlf();
+	ENSURE_DELAY;
     } while (still_testing());
     pad_test_shutdown(t, 0);
     ptext(all_lines);
@@ -853,6 +866,7 @@ pad_ich1(
 	putchp(letter);
 	NEXT_LETTER;
 	put_crlf();
+	ENSURE_DELAY;
     } while (still_testing());
     pad_test_shutdown(t, 0);
     ptext(all_lines);
@@ -891,6 +905,7 @@ pad_xch1(
     do {
 	tt_putp(insert_character);
 	tt_putp(delete_character);
+	ENSURE_DELAY;
     } while (still_testing());
     pad_test_shutdown(t, 1);
     ptextln(xch1);
@@ -939,6 +954,7 @@ pad_rep(
 	}
 	put_crlf();
 	NEXT_LETTER;
+	ENSURE_DELAY;
     } while (still_testing());
     pad_test_shutdown(t, 0);
     ptextln(all_lines);
@@ -998,6 +1014,7 @@ pad_cup(
 	    SLOW_TERMINAL_EXIT;
 	}
 	NEXT_LETTER;
+	ENSURE_DELAY;
     } while (still_testing());
     pad_test_shutdown(t, 0);
     tt_putparm(cursor_address, 1, line_count = r, char_count = c);
@@ -1046,6 +1063,7 @@ pad_hd(
 	    SLOW_TERMINAL_EXIT;
 	}
 	NEXT_LETTER;
+	ENSURE_DELAY;
     } while (still_testing());
     pad_test_shutdown(t, 0);
     pad_done_message(t, state, ch);
@@ -1094,6 +1112,7 @@ pad_hu(
 	}
 	go_home();
 	NEXT_LETTER;
+	ENSURE_DELAY;
     } while (still_testing());
     pad_test_shutdown(t, 0);
     pad_done_message(t, state, ch);
@@ -1146,6 +1165,7 @@ pad_rin(
 	} else {
 	    tt_putparm(parm_rindex, repeats, repeats, 0);
 	}
+	ENSURE_DELAY;
     } while (still_testing());
 
     put_str("This line should be on the bottom.\r");
@@ -1214,6 +1234,7 @@ pad_il(
 	} else {
 	    tt_putparm(parm_insert_line, repeats, repeats, 0);
 	}
+	ENSURE_DELAY;
     } while (still_testing());
 
     put_str("This line should be on the bottom.\r");
@@ -1289,6 +1310,7 @@ pad_indn(
 	} else {
 	    tt_putparm(parm_index, repeats, repeats, 0);
 	}
+	ENSURE_DELAY;
     } while (still_testing());
 
     put_str("This line should be on the top.\r");
@@ -1359,6 +1381,7 @@ pad_dl(
 	} else {
 	    tt_putparm(parm_delete_line, repeats, repeats, 0);
 	}
+	ENSURE_DELAY;
     } while (still_testing());
 
     home_down();
@@ -1422,6 +1445,7 @@ pad_xl(
 	tt_putp(insert_line);
 	put_cr();
 	tt_putp(delete_line);
+	ENSURE_DELAY;
     } while (still_testing());
     pad_test_shutdown(t, 0);
     home_down();
@@ -1468,6 +1492,7 @@ pad_scrc(
 	    tt_putp(restore_cursor);
 	    putchp('X');
 	}
+	ENSURE_DELAY;
     } while (still_testing());
     pad_test_shutdown(t, 0);
     home_down();
@@ -1514,6 +1539,7 @@ pad_csrind(
 	sprintf(temp, "%d\r", test_complete);
 	put_str(temp);
 	put_ind();
+	ENSURE_DELAY;
     } while (still_testing());
     ptextln("(csr) is broken.");
     for (i = augment; i > 1; i--) {
@@ -1557,6 +1583,7 @@ pad_sccsrrc(
 	    tt_putp(restore_cursor);
 	    putchp('X');
 	}
+	ENSURE_DELAY;
     } while (still_testing());
     pad_test_shutdown(t, 0);
     home_down();
@@ -1600,6 +1627,7 @@ pad_csr_nel(
 	tt_putp(save_cursor);
 	tt_putparm(change_scroll_region, 1, 0, lines - 1);
 	tt_putp(restore_cursor);
+	ENSURE_DELAY;
     } while (still_testing());
     pad_test_shutdown(t, 0);
     put_str("  ");
@@ -1640,6 +1668,7 @@ pad_csr_cup(
 	}
 	tt_putparm(change_scroll_region, 1, 0, lines - 1);
 	tt_putparm(cursor_address, 1, lines - 1, (int) strlen(every_line));
+	ENSURE_DELAY;
     } while (still_testing());
     pad_test_shutdown(t, 0);
     put_str("  ");
@@ -1707,6 +1736,7 @@ pad_ht(
 	    }
 	    putln("N");
 	}
+	ENSURE_DELAY;
     } while (still_testing());
     pad_test_shutdown(t, 0);
     ptextln("Letters on the screen other than Ns at the right margin indicate failure.");
@@ -1754,6 +1784,7 @@ pad_smso(
 	    put_mode(exit_standout_mode);
 	    putchp('X');
 	}
+	ENSURE_DELAY;
     } while (still_testing());
     pad_test_shutdown(t, 0);
 
@@ -1800,6 +1831,7 @@ pad_smacs(
 	    put_mode(exit_alt_charset_mode);
 	    putchp(letter);
 	}
+	ENSURE_DELAY;
     } while (still_testing());
     pad_test_shutdown(t, 0);
 
@@ -1839,6 +1871,7 @@ pad_crash(
     do {
 	put_str("Erase this!");
 	tt_putp(clear_screen);
+	ENSURE_DELAY;
     } while (still_testing());
     ChangeTermInfo(xon_xoff, save_xon_xoff);
     pad_test_shutdown(t, 1);

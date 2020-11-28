@@ -23,7 +23,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 
-MODULE_ID("$Id: tack.c,v 1.37 2020/02/21 01:03:49 tom Exp $")
+MODULE_ID("$Id: tack.c,v 1.38 2020/11/28 13:47:02 tom Exp $")
 
 /*
    This program is designed to test terminfo, not curses.  Therefore
@@ -706,7 +706,9 @@ ExitProgram(int code)
     del_curterm(cur_term);
     tack_edit_leaks();
     tack_fun_leaks();
-#ifdef HAVE__NC_FREE_TINFO
+#if defined(HAVE_EXIT_TERMINFO)
+    exit_terminfo(code);
+#elif defined(HAVE__NC_FREE_TINFO)
     _nc_free_tinfo(code);
 #else
     exit(code);

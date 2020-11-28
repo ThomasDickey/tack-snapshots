@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.85 2020/11/21 18:53:51 tom Exp $ */
+/* $Id: tack.h,v 1.87 2020/11/28 16:04:56 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -28,7 +28,7 @@
 
 #define MAJOR_VERSION 1
 #define MINOR_VERSION 9
-#define PATCH_VERSION 20201121
+#define PATCH_VERSION 20201128
 
 #ifdef HAVE_CONFIG_H
 #include <ncurses_cfg.h>
@@ -260,6 +260,7 @@ extern int raw_characters_sent;	/* Total output characters */
 
 /* definitions for pad.c */
 
+#define ENSURE_DELAY  if (!tt_delay_used) napms(10)
 #define EXIT_CONDITION (no_alarm_event && (tt_delay_used < tt_delay_max))
 #define SLOW_TERMINAL_EXIT if (!test_complete && !EXIT_CONDITION) { break; }
 #define CAP_NOT_FOUND if (auto_pad_mode) return

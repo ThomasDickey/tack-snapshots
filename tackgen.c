@@ -27,7 +27,7 @@
 #include <curses.h>
 #include <term.h>
 
-/* $Id: tackgen.c,v 1.12 2020/02/02 14:47:18 tom Exp $ */
+/* $Id: tackgen.c,v 1.13 2020/11/28 13:52:54 tom Exp $ */
 
 #define DATA_FMT "DATA(\t%3d,\t\"%s\",%s%s%s),\t/* %s */\n"
 
@@ -146,6 +146,8 @@ main(void)
     }
 
     printf("#endif /* NAME_ENTRY_DATA */\n");
+
+    free(values);
 
     return EXIT_SUCCESS;
 }
