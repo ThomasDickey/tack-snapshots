@@ -1,5 +1,5 @@
 /*
-** Copyright 2017-2019,2020 Thomas E. Dickey
+** Copyright 2017-2020,2021 Thomas E. Dickey
 ** Copyright 1997-2015,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.87 2020/11/28 16:04:56 tom Exp $ */
+/* $Id: tack.h,v 1.89 2021/03/24 20:41:32 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -28,7 +28,7 @@
 
 #define MAJOR_VERSION 1
 #define MINOR_VERSION 9
-#define PATCH_VERSION 20201128
+#define PATCH_VERSION 20210324
 
 #ifdef HAVE_CONFIG_H
 #include <ncurses_cfg.h>
@@ -131,10 +131,10 @@
 extern void tack_edit_leaks(void);
 extern void tack_fun_leaks(void);
 #ifdef HAVE__NC_FREE_TINFO
-extern void _nc_free_tinfo(int) GCC_NORETURN;
+extern GCC_NORETURN void _nc_free_tinfo(int);
 #endif
 #ifndef ExitProgram
-extern void ExitProgram(int) GCC_NORETURN;
+extern GCC_NORETURN void ExitProgram(int);
 #endif
 #else
 #define ExitProgram(code) exit(code)
