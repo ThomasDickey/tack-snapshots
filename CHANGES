@@ -1,3 +1,19 @@
+2021-03-24  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* configure: regen
+
+	* configure.in: minor fixes, per shellcheck
+
+	* package/debian/changelog, package/tack.spec, tack.h: bump
+
+	* tack.h: updates to work with _Noreturn changes in ncurses
+
+2021-03-22  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* configure: regen
+
+	* aclocal.m4: resync with my-autoconf
+
 2020-11-28  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* tack.h, pad.c:
