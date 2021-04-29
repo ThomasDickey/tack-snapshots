@@ -1,5 +1,5 @@
 /*
-** Copyright 2017,2020 Thomas E. Dickey
+** Copyright 2017-2020,2021 Thomas E. Dickey
 ** Copyright 1997-2013,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: fun.c,v 1.30 2020/02/14 22:16:53 tom Exp $")
+MODULE_ID("$Id: fun.c,v 1.31 2021/04/29 23:57:37 tom Exp $")
 
 #define COPY_1(target, source) sprintf(target, "%.*s", (int)sizeof(target) - 1, source)
 
@@ -502,6 +502,18 @@ tty_meta_prep(void)
     return 1;
 }
 
+static int
+put_reply(int col, int limit, const char *reply)
+{
+    int step = (int) strlen(reply);
+    if ((col += step) >= limit) {
+	put_crlf();
+	col = step;
+    }
+    put_str(reply);
+    return col;
+}
+
 /*
 **	funkey_meta(test_list, status, ch)
 **
@@ -514,7 +526,8 @@ funkey_meta(
 	       int *ch)
 {
     if (has_meta_key) {
-	int i, j, k, len;
+	int i, j, k, len, pass;
+	const char *s;
 	char outbuf[256];
 
 	put_crlf();
@@ -525,31 +538,45 @@ funkey_meta(
 		put_crlf();
 	    }
 	}
-	ptext("Begin meta key test. (km) (smm) (rmm)  Hit any key");
-	ptext(" with the meta key.  The character will be");
-	ptext(" displayed in hex.  If the meta key is working");
-	ptext(" then the most significant bit will be set.  Type");
-	ptextln(" 'end' to exit.");
-	tty_raw(1, ALLOW_PARITY);
-	tc_putp(meta_on);
+	for (pass = 0; pass < 2; ++pass) {
+	    if (pass) {
+		ptext("Continue meta key test.");
+	    } else {
+		ptext("Begin meta key test. (km) (smm) (rmm)");
+	    }
+	    ptext("  Hit any key while pressing the meta key.");
+	    ptext("  The character will be displayed in hex.");
+	    if (pass) {
+		ptext("  Meta mode is off;");
+		ptext(" the meta key should have no effect.");
+	    } else {
+		ptext("  If the meta key is working,");
+		ptext(" then the most significant bit will be set.");
+	    }
+	    put_crlf();
+	    ptextln("Type 'end' to exit.");
+	    tty_raw(1, ALLOW_PARITY);
+	    tc_putp(meta_on);
 
-	for (i = j = k = len = 0; i != 'e' || j != 'n' || k != 'd';) {
-	    i = j;
-	    j = k;
-	    k = getchp(ALLOW_PARITY);
-	    if (k == EOF) {
-		break;
+	    for (i = j = k = len = 0; i != 'e' || j != 'n' || k != 'd';) {
+		i = j;
+		j = k;
+		k = getchp(ALLOW_PARITY);
+		if (k == EOF) {
+		    break;
+		}
+		sprintf(outbuf, "%02X ", k);
+		len = put_reply(len, columns, outbuf);
+		if ((s = unctrl(k)) != NULL) {
+		    sprintf(outbuf, "(%s) ", s);
+		    len = put_reply(len, columns, outbuf);
+		}
+		k &= STRIP_PARITY;
 	    }
-	    if ((len += 3) >= columns) {
-		put_crlf();
-		len = 3;
-	    }
-	    sprintf(outbuf, "%02X ", k);
-	    put_str(outbuf);
-	    k &= STRIP_PARITY;
+	    if (!pass)
+		tc_putp(meta_off);
+	    put_crlf();
 	}
-	tc_putp(meta_off);
-	put_crlf();
 	tty_set();
 	put_crlf();
     } else {
