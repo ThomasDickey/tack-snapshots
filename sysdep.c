@@ -1,5 +1,5 @@
 /*
-** Copyright 2017-2019,2020 Thomas E. Dickey
+** Copyright 2017-2020,2021 Thomas E. Dickey
 ** Copyright 1997-2010,2012 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
@@ -44,7 +44,7 @@
 #endif
 #endif
 
-MODULE_ID("$Id: sysdep.c,v 1.33 2020/02/21 01:55:16 tom Exp $")
+MODULE_ID("$Id: sysdep.c,v 1.34 2021/06/19 22:55:44 tom Exp $")
 
 #ifdef TERMIOS
 #define PUT_TTY(fd, buf) tcsetattr(fd, TCSAFLUSH, buf)
@@ -426,7 +426,7 @@ read_key(char *buf, size_t max)
     s = buf;
     fflush(stdout);
     /* ATT unix may return 0 or 1, Berkeley Unix should be 1 */
-    while ((l = (int) read(fileno(stdin), s, (size_t) 1)) <= 0) {
+    while (read(fileno(stdin), s, (size_t) 1) <= 0) {
 	;			/* EMPTY */
     }
     ++s;
