@@ -1,3 +1,81 @@
+2021-06-19  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* Makefile.in: update copyright
+
+	* sysdep.c: scan-build warning about unused assignment
+
+	* Makefile.in: adjust rules to work with --program-suffix
+
+	* configure: regen
+
+	* configure.in: add AC_ARG_PROGRAM to get --program-suffix, etc.
+
+	* configure: regen
+
+	* aclocal.m4: resync with my-autoconf
+
+	* package/debian/changelog, package/tack.spec, tack.h: bump
+
+2021-05-24  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.guess: 2021-05-24 (repaired)
+	    From: Dmitry V. Levin <ldv@altlinux.org>
+	    config.guess: fix shellcheck warning SC2154
+
+	    While, according to Plan 9 documentation, the environment variable
+	    $cputype is set to the name of the kernel's CPU's architecture,
+	    shellcheck warns that cputype is referenced but not assigned.
+	    Be on the safe side and do not use cputype if it is not defined
+	    or empty.
+
+	    * config.guess (*:Plan9:*:*): Fix shellcheck warning SC2154.
+
+	* config.guess: 2021-05-24 (repaired)
+	    From: Dmitry V. Levin <ldv@altlinux.org>
+	    config.guess: remove redundant quotes in case commands
+
+	    According to the GNU Autoconf Portable Shell Programming manual,
+	    the Bourne shell does not systematically split variables and back-quoted
+	    expressions, in particular on the right-hand side of assignments and in
+	    the argument of 'case'.
+
+	    The change is made automatically using the following command:
+	    $ sed -E -i 's/(\<case )"(\$[^"]+)"( in\>)/\1\2\3/' config.guess
+
+	    * config.guess: Simplify case commands by removing quotes around the
+	    argument.
+
+	    Suggested-by: Jacob Bachmeyer <jcb@gnu.org>
+
+	* config.guess: 2021-05-24 (repaired)
+	    From: Dmitry V. Levin <ldv@altlinux.org>
+	    config.guess: simplify exit status workaround on alphaev67-dec-osf5.1
+
+	    Commit 29865ea8a5622cdd80b7a69a0afa78004b4cd311 introduced an exit trap
+	    reset before exiting to avoid a spurious non-zero exit status on
+	    alphaev67-dec-osf5.1.  Simplify that code a bit by moving the exit trap
+	    reset around.
+
+	    * config.guess (alpha:OSF1:*:*): Reset exit trap earlier.
+	    * doc/config.guess.1: Regenerate.
+
+2021-04-30  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.sub: 2021-04-30 (repaired)
+	    From: Maciej W. Rozycki <macro@orcam.me.uk>
+	    config.sub: Handle MIPS R3 and R5 ISA levels with CPU names
+
+	    Complement binutils commit ae52f4830604 ("Add MIPS r3 and r5 support.")
+	    and recognize MIPS CPU patterns for the R3 and R5 ISA levels, used by
+	    GAS to set defaults.
+
+	    * config.sub (mipsisa32r3, mipsisa32r3el, mipsisa32r5, mipsisa32r5el,
+	    mipsisa64r3, mipsisa64r3el, mipsisa64r5, mipsisa64r5el): Recognize.
+	    * doc/config.sub.1: Regenerate.
+	    * testsuite/config-sub.data: Add test cases.
+
+	    Signed-off-by: Dmitry V. Levin <ldv@altlinux.org>
+
 2021-04-29  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* fun.c:
@@ -6,6 +84,54 @@
 	meta-mode turned off.
 
 	* package/debian/changelog, package/tack.spec, tack.h: bump
+
+2021-04-21  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.guess, config.sub: 2021-04-21 (repaired)
+	    From: Vineet Gupta <Vineet.Gupta1@synopsys.com>
+	    Recognize arc64
+
+	    This paves way for setting up arc64 software ecosystem.
+
+	    $ make check
+	    cd testsuite && bash config-guess.sh && rm uname
+	    PASS: config.guess checks (136 tests)
+	    cd testsuite && bash config-sub.sh
+	    PASS: config.sub checks (853 tests)
+	    PASS: config.sub idempotency checks (790 tests)
+	    PASS: config.sub canonicalise each config.guess testcase (136 tests)
+
+	    * config.guess (arc64:Linux:*:*): Recognize.
+	    * config.sub (arc64): Likewise.
+	    * doc/config.guess.1: Regenerate.
+	    * doc/config.sub.1: Likewise.
+	    * testsuite/config-guess.data: Add a test case for arc64.
+	    * testsuite/config-sub.data (arc64, arc*-elf): Add test cases.
+
+	    Signed-off-by: Vineet Gupta <vgupta@synopsys.com>
+	    Signed-off-by: Dmitry V. Levin <ldv@altlinux.org>
+
+2021-04-16  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.guess: 2021-04-16 (repaired)
+	    From: Purple Rain <purplerain@secbsd.org>
+	    config.guess: add SecBSD support
+
+	    * config.guess (*:SecBSD:*:*): Recognize.
+	    * doc/config.guess.1: Regenerate.
+	    * testsuite/config-guess.data: Add a test case.
+
+	    Signed-off-by: Dmitry V. Levin <ldv@altlinux.org>
+
+	* config.sub: 2021-04-16 (repaired)
+	    From: Purple Rain <purplerain@secbsd.org>
+	    config.sub: add SecBSD support
+
+	    * config.sub (secbsd*): Recognize.
+	    * doc/config.sub.1: Regenerate.
+	    * testsuite/config-sub.data: Add x86_64-secbsd.
+
+	    Signed-off-by: Dmitry V. Levin <ldv@altlinux.org>
 
 2021-04-03  Thomas E. Dickey  <dickey@invisible-island.net>
 
