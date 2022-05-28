@@ -1,5 +1,5 @@
 /*
-** Copyright 2017-2020,2021 Thomas E. Dickey
+** Copyright 2017-2021,2022 Thomas E. Dickey
 ** Copyright 1997-2013,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: fun.c,v 1.31 2021/04/29 23:57:37 tom Exp $")
+MODULE_ID("$Id: fun.c,v 1.32 2022/05/28 13:46:42 tom Exp $")
 
 #define COPY_1(target, source) sprintf(target, "%.*s", (int)sizeof(target) - 1, source)
 
@@ -567,7 +567,7 @@ funkey_meta(
 		}
 		sprintf(outbuf, "%02X ", k);
 		len = put_reply(len, columns, outbuf);
-		if ((s = unctrl(k)) != NULL) {
+		if ((s = unctrl((chtype) k)) != NULL) {
 		    sprintf(outbuf, "(%s) ", s);
 		    len = put_reply(len, columns, outbuf);
 		}
