@@ -1,3 +1,23 @@
+2022-12-29  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* package/tack.spec: rpmlint fixes
+
+	* package/tack.spec, package/debian/watch: update url
+
+	* package/debian/compat, package/debian/control,
+	  package/debian/changelog, package/tack.spec, tack.h:
+	bump
+
+2022-12-02  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* configure: regen
+
+	* aclocal.m4: resync with my-autoconf
+
+2022-08-01  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.guess, config.sub: update to 2022-08-01
+
 2022-05-28  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* fun.c: gcc warning
@@ -818,6 +838,10 @@
 	    Reported-by: Karl Berry <karl@freefriends.org>
 	    Link: https://lists.gnu.org/archive/html/config-patches/2020-12/msg00001.html
 
+2020-11-30  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* install-sh: update to 2020-11-14
+
 2020-11-28  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* tack.h, pad.c:
@@ -1064,12 +1088,12 @@
 	* Makefile.in, aclocal.m4, ansi.c, charset.c, color.c, configure.in,
 	  control.c, crum.c, edit.c, fun.c, init.c, menu.c, modes.c, modules,
 	  ncurses_tst.hin, output.c, pad.c, scan.c, sync.c, sysdep.c, tack.1,
-	  tackgen.c:
+	  tack.c, tack.h, tackgen.c:
 	update copyright notices using script which inspects commit-timestamps
 
 	* ansi.c, charset.c, color.c, control.c, crum.c, edit.c, fun.c, init.c,
 	  menu.c, modes.c, output.c, pad.c, scan.c, sync.c, sysdep.c, tack.c,
-	  tackgen.c:
+	  tack.h, tackgen.c:
 	rescind permission implied or otherwise to relicense my work as GPL3
 
 	* aclocal.m4: resync with my-autoconf
@@ -1168,7 +1192,7 @@
 	cppcheck reported an sprintf using output buffer as an input - fix
 
 	* scan.c, ansi.c, charset.c, color.c, control.c, crum.c, edit.c, fun.c,
-	  sysdep.c:
+	  init.c, menu.c, modes.c, output.c, pad.c, sync.c, sysdep.c:
 	cppcheck:style-warnings
 
 	* fun.c: quiet a bogus warning from clang --analyze
@@ -1336,7 +1360,7 @@
 	* tack.h, pad.c: const-tweaks
 
 	* control.c, tack.h, ansi.c, charset.c, color.c, crum.c, edit.c, fun.c,
-	  tack.c:
+	  menu.c, modes.c, pad.c, sync.c, tack.c:
 	improve readability using typedefs
 
 	* tack.h: typo
@@ -2092,7 +2116,7 @@
 
 	* tack.c, Makefile.in, tack.h, control.c, color.c, charset.c, ansi.c,
 	  sysdep.c, sync.c, scan.c, pad.c, output.c, modes.c, menu.c, init.c,
-	  COPYING:
+	  fun.c, edit.c, crum.c, HISTORY, COPYING:
 	tack-1.00
 
 1998-01-03  Thomas E. Dickey  <dickey@clark.net>
@@ -2123,7 +2147,7 @@
 1997-12-27  Thomas E. Dickey  <dickey@clark.net>
 
 	* ansi.c, charset.c, control.c, crum.c, edit.c, fun.c, init.c, menu.c,
-	  tack.c:
+	  modes.c, output.c, scan.c, sync.c, sysdep.c, tack.c:
 	integration with ncurses: restructured includes, fix gcc warnings
 
 	* pad.c:
@@ -2192,7 +2216,7 @@
 1997-10-19  Daniel.Weaver
 
 	* tack.c, sysdep.c, scan.c, output.c, modes.c, menu.c, init.c, crum.c,
-	  HISTORY:
+	  color.c, charset.c, ansi.c, HISTORY:
 	ncurses-4.1-971101
 
 1997-10-06  Daniel.Weaver

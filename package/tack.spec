@@ -1,15 +1,16 @@
 Summary:  terminfo action checker
-%define AppProgram tack
-%define AppVersion 1.09
-%define AppRelease 20220528
-# $XTermId: tack.spec,v 1.27 2022/05/28 13:19:00 tom Exp $
+%global AppProgram tack
+%global AppVersion 1.09
+%global AppRelease 20221229
+%global MySite https://invisible-island.net
+# $XTermId: tack.spec,v 1.30 2022/12/29 14:04:45 tom Exp $
 Name: %{AppProgram}
 Version: %{AppVersion}
 Release: %{AppRelease}
 License: GPL2
 Group: Applications/Development
-URL: ftp://invisible-island.net/%{AppProgram}
-Source0: %{AppProgram}-%{AppVersion}-%{AppRelease}.tgz
+URL: %{MySite}/ncurses/tack
+Source0: %{MySite}/archives/ncurses/current/%{AppProgram}-%{AppVersion}-%{AppRelease}.tgz
 Packager: Thomas Dickey <dickey@invisible-island.net>
 
 %description
