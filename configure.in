@@ -1,5 +1,5 @@
 dnl***************************************************************************
-dnl Copyright 2017-2020,2021 Thomas E. Dickey                                *
+dnl Copyright 2017-2021,2023 Thomas E. Dickey                                *
 dnl Copyright 2007-2015,2017 Free Software Foundation, Inc.                  *
 dnl                                                                          *
 dnl Permission is hereby granted, free of charge, to any person obtaining a  *
@@ -29,14 +29,14 @@ dnl***************************************************************************
 dnl
 dnl Author: Thomas E. Dickey	2007-on
 dnl
-dnl $Id: configure.in,v 1.46 2021/06/19 21:50:59 tom Exp $
+dnl $Id: configure.in,v 1.47 2023/02/02 00:50:59 tom Exp $
 dnl This is a simple configuration-script for tack which makes it simpler to
 dnl build outside the ncurses tree (provided that ncurses was configured using
 dnl the --with-ticlib option).
 dnl
 dnl See http://invisible-island.net/autoconf/ for additional information.
 dnl ---------------------------------------------------------------------------
-AC_PREREQ(2.52)
+AC_PREREQ(2.52.20230114)
 AC_INIT(tack.c)
 AC_CONFIG_HEADER(ncurses_cfg.h:ncurses_tst.hin)
 
@@ -113,7 +113,9 @@ AC_SUBST(ECHO_LINK)
 
 CF_ENABLE_WARNINGS
 CF_GCC_ATTRIBUTES
+
 CF_XOPEN_SOURCE
+AC_CHECK_DECL(exit)
 
 ###	Checks for external-data
 CF_LINK_DATAONLY
@@ -201,7 +203,7 @@ do
 TEST_EOF
 done
 ],[],
-[set |fgrep _CC= |sed -e s%=%=\'% -e s%\$%\'% -e s%\'\'%\'%g -e s%=\'\$%=\'\'% >>$CONFIG_STATUS
+[set |${FGREP-fgrep} _CC= |sed -e s%=%=\'% -e s%\$%\'% -e s%\'\'%\'%g -e s%=\'\$%=\'\'% >>$CONFIG_STATUS
 cat])
 # vi:ts=4 sw=4
 CF_MAKE_DOCS(tack,1)

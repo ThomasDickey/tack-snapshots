@@ -1,3 +1,14 @@
+2023-02-01  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* configure: regen
+
+	* configure.in: initialize $ac_includes_default
+	s/fgrep/$FGREP/
+
+	* aclocal.m4: resync with my-autoconf
+
+	* package/debian/changelog, package/tack.spec, tack.h: bump
+
 2022-12-29  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* package/tack.spec: rpmlint fixes

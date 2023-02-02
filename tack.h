@@ -1,5 +1,5 @@
 /*
-** Copyright 2017-2021,2022 Thomas E. Dickey
+** Copyright 2017-2022,2023 Thomas E. Dickey
 ** Copyright 1997-2015,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.94 2022/12/29 12:46:18 tom Exp $ */
+/* $Id: tack.h,v 1.95 2023/02/02 00:33:41 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -28,7 +28,7 @@
 
 #define MAJOR_VERSION 1
 #define MINOR_VERSION 9
-#define PATCH_VERSION 20221229
+#define PATCH_VERSION 20230201
 
 #ifdef HAVE_CONFIG_H
 #include <ncurses_cfg.h>
