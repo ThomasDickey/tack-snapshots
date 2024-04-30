@@ -1,5 +1,5 @@
 /*
-** Copyright 2017,2020 Thomas E. Dickey
+** Copyright 2017,2020,2024 Thomas E. Dickey
 ** Copyright 1997-2010,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
@@ -22,7 +22,7 @@
 #include <tack.h>
 #include <time.h>
 
-MODULE_ID("$Id: pad.c,v 1.18 2020/11/28 15:53:32 tom Exp $")
+MODULE_ID("$Id: pad.c,v 1.19 2024/04/30 19:56:36 tom Exp $")
 
 /* test the pad counts on the terminal */
 
@@ -885,7 +885,7 @@ pad_xch1(
 	    int *state,
 	    int *ch)
 {
-    static char xch1[] =
+    static const char xch1[] =
     "This line should not be garbled. It should be left justified.";
 
     if (enter_insert_mode || exit_insert_mode ||

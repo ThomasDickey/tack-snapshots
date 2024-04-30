@@ -1,5 +1,5 @@
 /*
-** Copyright 2017-2019,2020 Thomas E. Dickey
+** Copyright 2017-2020,2024 Thomas E. Dickey
 ** Copyright 1997-2012,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
@@ -23,7 +23,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 
-MODULE_ID("$Id: tack.c,v 1.38 2020/11/28 13:47:02 tom Exp $")
+MODULE_ID("$Id: tack.c,v 1.39 2024/04/30 19:56:21 tom Exp $")
 
 /*
    This program is designed to test terminfo, not curses.  Therefore
@@ -549,7 +549,7 @@ start_log(
 */
 void
 show_usage(
-	      char *name)
+	      const char *name)
 {
     (void) fprintf(stderr, "usage: %s [-diltV] [term]\n", name);
 }
@@ -566,7 +566,7 @@ print_version(void)
 	   MAJOR_VERSION,
 	   MINOR_VERSION,
 	   PATCH_VERSION);
-    printf("Copyright 2017-2020 Thomas E. Dickey\n");
+    printf("Copyright 2017-2024 Thomas E. Dickey\n");
     printf("Copyright 1997-2017 Free Software Foundation, Inc.\n");
     printf("Tack comes with NO WARRANTY, to the extent permitted by law.\n");
     printf("You may redistribute copies of Tack under the terms of the\n");

@@ -1,5 +1,5 @@
 /*
-** Copyright 2017,2020 Thomas E. Dickey
+** Copyright 2017,2020,2024 Thomas E. Dickey
 ** Copyright 1997-2011,2017 Free Software Foundation, Inc.
 ** 
 ** This file is part of TACK.
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: crum.c,v 1.15 2020/02/14 21:20:53 tom Exp $")
+MODULE_ID("$Id: crum.c,v 1.16 2024/04/30 19:57:08 tom Exp $")
 
 /*
  * Test cursor movement.
@@ -188,7 +188,7 @@ move_to(
 static void
 display_it(
 	      int sel,
-	      char *txt)
+	      const char *txt)
 {
     int i, done_line;
 

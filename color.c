@@ -1,5 +1,5 @@
 /*
-** Copyright 2017,2020 Thomas E. Dickey
+** Copyright 2017-2020,2024 Thomas E. Dickey
 ** Copyright 1997-2012,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: color.c,v 1.17 2020/02/02 14:47:18 tom Exp $")
+MODULE_ID("$Id: color.c,v 1.19 2024/04/30 23:27:09 tom Exp $")
 
 /*
  * Color terminal tests.  Has only one entry point: test_color().
@@ -46,6 +46,10 @@ TestList color_test_list[] = {
 };
 /* *INDENT-ON* */
 
+/*
+ * curses.h defines these names, but with different values.  These values
+ * correspond to a pre-ANSI implementation.
+ */
 #ifndef COLOR_BLACK
 #define COLOR_BLACK     0
 #define COLOR_BLUE      1
@@ -278,6 +282,7 @@ send_pair(int p, int fr, int fg, int fb, int br, int bg, int bb)
 static void
 init_palette(void)
 {
+    /* this table uses the old, pre-ANSI color order */
     static const int dft_fg_color[] =
     {
 	COLOR_BLACK,
@@ -301,7 +306,10 @@ init_palette(void)
     colors_per_line = 0;
 
     for (n = 0; n < MAX_PAIR; ++n) {
-	fg_color[n] = (n < 8) ? dft_fg_color[n] : COLOR_BLACK;
+	/* with ANSI colors, the index is the same as the color number */
+	fg_color[n] = ((n < 8)
+		       ? (set_a_foreground ? n : dft_fg_color[n])
+		       : COLOR_BLACK);
 	bg_color[n] = COLOR_BLACK;
     }
 }
@@ -489,7 +497,7 @@ static void
 dump_colors(void)
 {				/* display the colors in some esthetic
 				   pattern */
-    static int xmap[8] =
+    static const int xmap[8] =
     {0, 3, 4, 7, 1, 2, 5, 6};
     int xi, xj, width, p, cs;
     int found_one;
@@ -787,15 +795,17 @@ color_ccc(
     /* redisplay the above test with reinitialized colors */
     /* If these colors don't look right to you... */
     for (i = 0; i < j; i++) {
-	sprintf(temp, " %s ", def_colors[i ^ 7].name);
+	int i7 = i ^ 7;
 
-	new_color(i ^ 7, COLOR_BLACK, TRUE);
+	sprintf(temp, " %s ", def_colors[i7].name);
+
+	new_color(def_colors[i7].index, COLOR_BLACK, TRUE);
 	put_str(temp);
 
 	new_color(COLOR_BLACK, COLOR_BLACK, TRUE);
 	put_str("  ");
 
-	new_color(COLOR_BLACK, i ^ 7, TRUE);
+	new_color(COLOR_BLACK, def_colors[i7].index, TRUE);
 	put_str(temp);
 
 	new_color(COLOR_WHITE, COLOR_BLACK, FALSE);

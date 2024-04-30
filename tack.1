@@ -1,5 +1,5 @@
 .\"***************************************************************************
-.\" Copyright 2020 Thomas E. Dickey                                          *
+.\" Copyright 2020,2024 Thomas E. Dickey                                     *
 .\" Copyright 1997-2011,2017 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
@@ -27,18 +27,46 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: tack.1,v 1.9 2020/11/21 19:17:42 tom Exp $
-.TH tack 1 ""
-.ie \n(.g .ds `` \(lq
-.el       .ds `` ``
-.ie \n(.g .ds '' \(rq
-.el       .ds '' ''
+.\" $Id: tack.1,v 1.11 2024/04/30 23:51:37 tom Exp $
+.TH tack 1 2024-04-30 "terminfo action checker" "User commands"
 .ds n 5
+.
+.ie \n(.g \{\
+.ds `` \(lq
+.ds '' \(rq
+.ds '  \(aq
+.\}
+.el \{\
+.ie t .ds `` ``
+.el   .ds `` ""
+.ie t .ds '' ''
+.el   .ds '' ""
+.ie t .ds '  \(aq
+.el   .ds '  '
+.\}
+.
+.ie n .ds CW R
+.el   \{
+.ie \n(.g .ds CW CR
+.el       .ds CW CW
+.\}
+.
+.de Ex
+.RS +7
+.PP
+.nf
+.ft \*(CW
+..
+.de Ee
+.fi
+.ft R
+.RE
+..
 .SH NAME
-\fBtack\fR \- \fIterminfo\fR action checker
+\fBtack\fR \-
+\fIterminfo\fR action checker
 .SH SYNOPSIS
 \fBtack\fR [\-diltV] [term]
-.br
 .SH DESCRIPTION
 The \fBtack\fR program has three purposes:
 .TP 4
@@ -101,7 +129,7 @@ Terminfo terminal name to be tested.
 If not present, then the $TERM environment variable will be used.
 .SH OVERVIEW
 Since \fBtack\fR is designed to test terminfo entries it is not possible
-to rely on the correctness of the terminfo data base.
+to rely on the correctness of the terminfo database.
 Because of this, the menuing system used with \fBtack\fR is very primitive.
 When a menu is printed, it will scroll the entire screen.
 To compensate for this verbose menu system,
@@ -140,7 +168,8 @@ rely on as little of the terminfo entry as possible.
 information about the terminal.
 Although these functions are not
 dependent on terminal type, you may wish to execute \fBtack\fR
-with options \fI\-it\fR.  This will turn off initialization
+with options \fI\-it\fR.
+This will turn off initialization
 and default the standard entries.
 .PP
 These tools may be reached from the main menu by selecting
@@ -168,16 +197,20 @@ control characters that are sent from the terminal more than one character
 after a carriage return will be expanded to the up arrow format.
 For example
 on a standard ANSI terminal you may type:
-
-		CR ESC [ c
-
+.PP
+.Ex
+\fICR ESC\fP [ c
+.Ee
+.PP
 and the response will be echoed as something like:
-
-		^[ [ ? 6 c
+.PP
+.Ex
+^[ [ ? 6 c
+.Ee
 .PP
 \fBANSI sgr display\fR:  This test assumes you have an ANSI terminal.
-It
-goes through attribute numbers 0 to 79, displaying each in turn and using that
+It goes through attribute numbers 0 to 119,
+displaying each in turn and using that
 SGR number to write the text.
 This shows you which of the SGR
 modes are actually implemented by the terminal.
@@ -193,9 +226,10 @@ The results of this test may help
 determine what options are supported by your terminal.
 .PP
 \fBANSI character sets\fR:  This test displays the character sets
-available on a ANSI/VT-100 style terminal.
+available on an ANSI/VT-100 style terminal.
 Character sets on a real VT-100 terminal are usually defined
-with smacs=\\E(0 and rmacs=\\E(B.  The first character after the
+with smacs=\\E(0 and rmacs=\\E(B.
+The first character after the
 escape defines the font bank.
 The second character defines the
 character set.
@@ -204,7 +238,6 @@ combinations.
 Private use character sets are defined by the digits.
 Standard character sets are located in the alphabetic range.
 .SH VERIFYING AN EXISTING ENTRY
-.PP
 You can verify the correctness of an entry with the \*(``begin testing\*(''
 function.
 This entry is the default action and will be chosen
@@ -234,12 +267,10 @@ If you have made any modifications to the
 terminfo \fBtack\fR will ask you if you want to save the file
 to disc before it exits.
 The filename will be the same as the terminal name.
-After the program exits you can run the tic(1M) compiler on the
-new terminfo to install it in the terminfo data base.
-.PP
+After the program exits you can run the \fBtic\fR(1M) compiler on the
+new terminfo to install it in the terminfo database.
 .SH CORRECTING PAD TIMINGS
-.SS Theory of Overruns and Padding
-.PP
+.SS "Theory of Overruns and Padding"
 Some terminals require significant amounts of time (that is, more than one
 transmitted-character interval) to do screen updates that change large
 portions of the screen, such as screen clears, line insertions,
@@ -298,9 +329,7 @@ will make the problem much worse.
 (RTS/CTS handshaking does not have this problem because the UARTs are
 signal-connected and the "stop flow" is done at the lowest level, without
 software intervention).
-.PP
-.SS Timing your terminal
-.PP
+.SS "Timing your terminal"
 In order to get accurate timings from your terminal \fBtack\fR
 needs to know when the terminal has finished processing all the
 characters that were sent.
@@ -312,13 +341,15 @@ Many terminals will respond with an ACK when they receive an ENQ.
 This is the preferred method since the sequence is short.
 ANSI/VT-100 style terminals can mimic this handshake with the
 escape sequence that requests \*(``primary device attributes\*(''.
-
-   ESC [ c
-
+.Ex
+\fIESC\fP [ c
+.Ee
+.PP
 The terminal will respond with a sequence like:
-
-   ESC [ ? 1 ; 0 c
-
+.Ex
+\fIESC\fP [ ? 1 ; 0 c
+.Ee
+.PP
 \fBTack\fR assumes that (u9) is the enquire sequence and that (u8) is the
 acknowledge string.
 A VT-100 style terminal could set u9=\\E[c
@@ -344,15 +375,14 @@ returned when (u9) is sent.
 \fBTack\fR will test this sequence before running any of the pad
 tests or the function key tests.
 \fBTack\fR will ask you the following:
-
-    Hit lower case g to start testing...
-
+.Ex
+Hit lower case g to start testing...
+.Ee
+.PP
 After it sends this message it will send the enquire string.
 It will then read characters from the terminal until it sees the
 letter g.
-.PP
-.SS Testing and Repairing Pad Timings
-.PP
+.SS "Testing and Repairing Pad Timings"
 The pad timings in distributed terminfo entries are often incorrect.
 One
 major motivation for this program is to make it relatively easy to tune these
@@ -399,14 +429,6 @@ to get more accurate results.
 System load will also effect the
 results (a heavily loaded system will not stress the
 terminal as much, possibly leading to pad timings that are too short).
-.PP
-.SH NOTE
-The tests done at the beginning of the program are assumed to be correct later
-in the code.
-In particular, \fBtack\fR displays the number of lines and
-columns indicated in the terminfo entry as part of its initial output.
-If these values are wrong a large number of tests will fail or give incorrect
-results.
 .SH FILES
 .TP 12
 tack.log
@@ -421,16 +443,18 @@ If you make changes to the terminfo entry \fBtack\fR will save
 the new terminfo to a file.
 The file will have the same name
 as the terminal name.
-.SH SEE ALSO
-\fBterminfo\fR(\*n), \fBncurses\fR(3X), \fBtic\fR(1M), \fBinfocmp\fR(1M).
-You should also have the documentation supplied by the terminal
-manufacturer.
+.SH NOTES
+The tests done at the beginning of the program are assumed to be correct later
+in the code.
+In particular, \fBtack\fR displays the number of lines and
+columns indicated in the terminfo entry as part of its initial output.
+If these values are wrong a large number of tests will fail or give incorrect
+results.
 .SH BUGS
 If the screen size is incorrect, many of the tests will fail.
-.SH AUTHOR
+.SH AUTHORS
 .na
 .hy 0
-.PP
 Concept, design, and original implementation by
 Daniel Weaver <dan.weaver@znyx.com>.
 .PP
@@ -442,9 +466,10 @@ eliminate dependency on \fBncurses\fP internal functions,
 and to allow \fBtack\fP
 to work with other implementations
 of curses and terminfo than \fBncurses\fP.
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:
+.SH SEE ALSO
+\fBinfocmp\fR(1M),
+\fBtic\fR(1M),
+\fBncurses\fR(3X),
+\fBterminfo\fR(\*n).
+You should also have the documentation supplied by the terminal
+manufacturer.

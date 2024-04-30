@@ -1,5 +1,5 @@
 /*
-** Copyright 2017,2020 Thomas E. Dickey
+** Copyright 2017-2020,2024 Thomas E. Dickey
 ** Copyright 1997-2012,2017 Free Software Foundation, Inc.
 ** 
 ** This file is part of TACK.
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: ansi.c,v 1.20 2020/02/02 14:47:18 tom Exp $")
+MODULE_ID("$Id: ansi.c,v 1.22 2024/04/30 23:49:43 tom Exp $")
 
 /*
  * Standalone tests for ANSI terminals.  Three entry points:
@@ -630,6 +630,10 @@ tools_status(
     }
 }
 
+#define MAX_SGR 120
+#define LEN_SGR 10
+#define FMT_SGR "Mode %3d "
+
 /*
 **	display_sgr()
 **
@@ -643,15 +647,15 @@ display_sgr(int puc)
 
     temp[0] = (char) puc;
     temp[1] = '\0';
-    for (k = 0; k < 80; k++) {
-	if (char_count + 8 > 80)
+    for (k = 0; k < MAX_SGR; k++) {
+	if (char_count + LEN_SGR > 80)
 	    put_crlf();
-	else if (char_count + 8 > columns)
+	else if (char_count + LEN_SGR > columns)
 	    put_crlf();
 	else if (k > 0)
 	    printf(" ");
-	printf("\033[%s%dmMode %2d\033[0m", temp, k, k);
-	char_count += 8;
+	printf("\033[%s%dm" FMT_SGR "\033[0m", temp, k, k);
+	char_count += LEN_SGR;
 	if (puc == '\0') {
 	    if (k == 19)
 		printf("\033[10m");
@@ -752,7 +756,7 @@ tools_sgr(
 **	select a graphics character set for ANSI terminals
 */
 static void
-select_bank(char *bank)
+select_bank(const char *bank)
 {
     tc_putp(bank);
     switch (bank[1] & 3) {

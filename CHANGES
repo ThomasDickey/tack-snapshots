@@ -1,3 +1,37 @@
+2024-04-30  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* tack.1: change limit for SGR tool to allow for aixterm's colors
+
+	* ansi.c: change the SGR tool to show up to 120 (past aixterm's 108)
+
+	* color.c:
+	when reloading the colors 0-7, use the index for the named color rather than
+	just the array-index (fixing an interchanged red/blue for instance).
+	Also, initialize the palette using the ANSI codes if the terminal supports
+	setaf/setab.
+
+	* color.c, charset.c, ansi.c, edit.c, crum.c, pad.c, tack.c, tack.h:
+	use "const" in a few places reported by cppcheck
+
+	* tack.1: improve formatting/style
+
+	* package/debian/changelog, package/tack.spec: bump
+
+2024-01-07  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* configure: regen
+
+	* aclocal.m4:
+	resync with my-autoconf, fixing compiler-warnings inside configure script
+
+2023-12-27  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.sub: 2023-12-27
+
+2023-12-02  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.guess: 2023-12-02
+
 2023-02-01  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* configure: regen

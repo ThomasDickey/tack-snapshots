@@ -1,5 +1,5 @@
 /*
-** Copyright 2017-2019,2020 Thomas E. Dickey
+** Copyright 2017-2020,2024 Thomas E. Dickey
 ** Copyright 1997-2012,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
@@ -24,7 +24,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: edit.c,v 1.48 2020/02/14 21:13:30 tom Exp $")
+MODULE_ID("$Id: edit.c,v 1.49 2024/04/30 19:57:19 tom Exp $")
 
 /*
  * These are adapted from tic.h
@@ -357,7 +357,7 @@ user_modified(void)
 */
 static void
 mark_cap(
-	    char *name,
+	    const char *name,
 	    int flag)
 {
     NAME_TABLE const *nt;

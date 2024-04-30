@@ -1,5 +1,5 @@
 /*
-** Copyright 2017-2022,2023 Thomas E. Dickey
+** Copyright 2017-2023,2024 Thomas E. Dickey
 ** Copyright 1997-2015,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.95 2023/02/02 00:33:41 tom Exp $ */
+/* $Id: tack.h,v 1.96 2024/04/30 19:55:33 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -28,7 +28,7 @@
 
 #define MAJOR_VERSION 1
 #define MINOR_VERSION 9
-#define PATCH_VERSION 20230201
+#define PATCH_VERSION 20240430
 
 #ifdef HAVE_CONFIG_H
 #include <ncurses_cfg.h>
@@ -456,7 +456,7 @@ extern void TackMsg(const char *, ...) GCC_PRINTFLIKE(1,2);
 #else
 #define TACKMSG(p)		/* nothing */
 #endif
-extern void show_usage(char *);
+extern void show_usage(const char *);
 extern void print_version(void);
 
 /* output.c */
