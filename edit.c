@@ -24,7 +24,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: edit.c,v 1.49 2024/04/30 19:57:19 tom Exp $")
+MODULE_ID("$Id: edit.c,v 1.51 2024/05/01 20:42:06 tom Exp $")
 
 /*
  * These are adapted from tic.h
@@ -250,7 +250,7 @@ get_newer_string(int num)
     char *result = 0;
     const NAME_TABLE *p = find_cap_by_index(num, STRING);
     if (p != 0)
-	result = tigetstr((char *) p->nt_name);
+	result = tigetstr((NCURSES_CONST char *) p->nt_name);
     return result;
 }
 
@@ -1469,7 +1469,10 @@ change_one_entry(
 	} else if (ch == '.') {
 	    dot = 1;
 	} else {
-	    sprintf(temp, "Illegal character: %c", ch);
+	    if (REALPRINT(buf + j))
+		sprintf(temp, "Illegal character: %c", ch);
+	    else
+		sprintf(temp, "Illegal character: %#x", ch);
 	    ptextln(temp);
 	    ptext("General format:  99.9*/  ");
 	    generic_done_message(test, state, chp);

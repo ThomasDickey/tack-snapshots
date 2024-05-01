@@ -27,7 +27,7 @@ dnl sale, use or other dealings in this Software without prior written       *
 dnl authorization.                                                           *
 dnl***************************************************************************
 dnl
-dnl $Id: aclocal.m4,v 1.48 2024/01/07 11:34:16 tom Exp $
+dnl $Id: aclocal.m4,v 1.49 2024/05/01 19:01:06 tom Exp $
 dnl
 dnl Author: Thomas E. Dickey
 dnl
@@ -307,7 +307,7 @@ ifelse([$5],NONE,,[{ test -z "$5" || test "x$5" = xNONE || test "x$4" != "x$5"; 
 }
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_ANSI_CC_CHECK version: 14 updated: 2024/01/07 06:34:16
+dnl CF_ANSI_CC_CHECK version: 15 updated: 2024/05/01 15:00:19
 dnl ----------------
 dnl This was originally adapted from the macros 'fp_PROG_CC_STDC' and
 dnl 'fp_C_PROTOTYPES' in the sharutils 4.2 distribution.
@@ -334,6 +334,8 @@ for cf_arg in "-DCC_HAS_PROTOS" \
 	"-Aa -D_HPUX_SOURCE" \
 	-Xc
 do
+	CFLAGS="$cf_save_CFLAGS"
+	CPPFLAGS="$cf_save_CPPFLAGS"
 	CF_ADD_CFLAGS($cf_arg)
 	AC_TRY_COMPILE(
 [

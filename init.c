@@ -1,5 +1,5 @@
 /*
-** Copyright 2017-2019,2020 Thomas E. Dickey
+** Copyright 2017-2020,2024 Thomas E. Dickey
 ** Copyright 1997-2013,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
@@ -26,7 +26,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: init.c,v 1.41 2020/02/20 21:54:47 tom Exp $")
+MODULE_ID("$Id: init.c,v 1.43 2024/05/01 21:42:01 tom Exp $")
 
 FILE *debug_fp;
 char temp[TEMP_SIZE];
@@ -226,9 +226,9 @@ ask_infocmp(void)
 		int max_b = 200;
 		int max_n = 200;
 		int max_s = 200;
-		boolnames = calloc(max_b, sizeof(*boolnames));
-		numnames = calloc(max_n, sizeof(*numnames));
-		strnames = calloc(max_s, sizeof(*strnames));
+		boolnames = calloc((size_t) max_b, sizeof(*boolnames));
+		numnames = calloc((size_t) max_n, sizeof(*numnames));
+		strnames = calloc((size_t) max_s, sizeof(*strnames));
 		while (fgets(buffer, sizeof(buffer) - 1, pp) != 0) {
 		    int mytype = BOOLEAN;
 		    if (*buffer != '\t')

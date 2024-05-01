@@ -23,7 +23,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 
-MODULE_ID("$Id: tack.c,v 1.39 2024/04/30 19:56:21 tom Exp $")
+MODULE_ID("$Id: tack.c,v 1.40 2024/05/01 19:16:08 tom Exp $")
 
 /*
    This program is designed to test terminfo, not curses.  Therefore
@@ -627,7 +627,7 @@ int
 main(int argc, char *argv[])
 {
 #if TACK_CAN_EDIT
-    int i, j;
+    int i = 0, j = 0;
 #endif
     int ch;
 

@@ -1,5 +1,5 @@
 dnl***************************************************************************
-dnl Copyright 2017-2021,2023 Thomas E. Dickey                                *
+dnl Copyright 2017-2023,2024 Thomas E. Dickey                                *
 dnl Copyright 2007-2015,2017 Free Software Foundation, Inc.                  *
 dnl                                                                          *
 dnl Permission is hereby granted, free of charge, to any person obtaining a  *
@@ -29,7 +29,7 @@ dnl***************************************************************************
 dnl
 dnl Author: Thomas E. Dickey	2007-on
 dnl
-dnl $Id: configure.in,v 1.47 2023/02/02 00:50:59 tom Exp $
+dnl $Id: configure.in,v 1.49 2024/05/01 21:41:32 tom Exp $
 dnl This is a simple configuration-script for tack which makes it simpler to
 dnl build outside the ncurses tree (provided that ncurses was configured using
 dnl the --with-ticlib option).
@@ -170,6 +170,26 @@ _nc_free_tinfo \
 gettimeofday \
 select \
 )
+
+# check if the terminfo functions use const, as done by ncurses and NetBSD
+AC_MSG_CHECKING(if terminfo string parameters are const)
+AC_TRY_COMPILE([
+$ac_includes_default
+#if defined(HAVE_TERM_H)
+#include <term.h>
+#elif defined(HAVE_NCURSES_TERM_H)
+#include <ncurses/term.h>
+#elif defined(HAVE_NCURSESW_TERM_H)
+#include <ncursesw/term.h>
+#else
+#error no term.h found
+#endif
+extern char *tigetstr(const char *);
+],[char *foo = tigetstr("cup"); (void) foo],[
+cf_terminfo_const=yes],[
+cf_terminfo_const=no])
+AC_MSG_RESULT($cf_terminfo_const)
+test $cf_terminfo_const = yes && AC_DEFINE(NCURSES_CONST,const,[define to const if terminfo needs it])
 
 CF_SIG_ATOMIC_T
 CF_TERMIOS_TYPES

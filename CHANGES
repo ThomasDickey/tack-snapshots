@@ -1,3 +1,30 @@
+2024-05-01  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* init.c, configure.in: bump
+
+	* configure: regen
+
+	* configure.in:
+	add a configure-check if terminfo functions use "const" strings, to fix
+	compiler warnings with NetBSD
+
+	* init.c, edit.c: gcc warning (NetBSD)
+
+	* package/tack.spec, package/debian/changelog, tack.h, HISTORY:
+	bump to 1.10
+
+	* package/debian/changelog, package/tack.spec, tack.h: bump
+
+	* edit.c:
+	check to avoid printing a non-printable character, per Coverity
+
+	* tack.c: initialize variables, per Coverity
+
+	* configure: regen
+
+	* aclocal.m4:
+	correction for CF_ANSI_CC_CHECK, works around MacOS "c89" confusion of "-O"
+
 2024-04-30  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* tack.1: change limit for SGR tool to allow for aixterm's colors
