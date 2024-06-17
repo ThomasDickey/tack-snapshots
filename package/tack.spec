@@ -1,9 +1,9 @@
 Summary:  terminfo action checker
 %global AppProgram tack
 %global AppVersion 1.10
-%global AppPatched 20240501
+%global AppPatched 20240617
 %global MySite https://invisible-island.net
-# $XTermId: tack.spec,v 1.34 2024/05/01 20:34:01 tom Exp $
+# $XTermId: tack.spec,v 1.35 2024/06/17 07:22:30 tom Exp $
 Name: %{AppProgram}
 Version: %{AppVersion}
 Release: %{AppPatched}

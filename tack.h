@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.98 2024/05/01 20:33:12 tom Exp $ */
+/* $Id: tack.h,v 1.99 2024/06/17 07:22:30 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -28,7 +28,7 @@
 
 #define MAJOR_VERSION 1
 #define MINOR_VERSION 10
-#define PATCH_VERSION 20240501
+#define PATCH_VERSION 20240617
 
 #ifdef HAVE_CONFIG_H
 #include <ncurses_cfg.h>

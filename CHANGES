@@ -1,3 +1,11 @@
+2024-06-17  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* package/debian/copyright: bump
+
+	* package/debian/rules: change name of ncurses test-package
+
+	* package/debian/changelog, package/tack.spec, tack.h: bump
+
 2024-05-01  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* init.c, configure.in: bump

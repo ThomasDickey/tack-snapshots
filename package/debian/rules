@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# $Id: rules,v 1.4 2020/02/02 15:11:06 tom Exp $
+# $Id: rules,v 1.5 2024/06/17 07:22:54 tom Exp $
 
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
@@ -36,7 +36,7 @@ configure-stamp:
 		--prefix=/usr \
 		--mandir=\$${prefix}/share/man \
 		--sysconfdir=/etc \
-		--with-screen=ncursesw6
+		--with-screen=ncursesw6td
 
 	touch configure-stamp
 

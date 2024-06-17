@@ -2,7 +2,7 @@ Author: Thomas Dickey <dickey@invisible-island.net>
 Upstream source http://invisible-island.net/ncurses/ncurses.html
 
 Files: *
-Copyright: 2017-2019,2020 Thomas E. Dickey
+Copyright: 2017-2020,2024 Thomas E. Dickey
 Copyright: 1991-2017 Free Software Foundation, Inc.
 License: GPL-2
  This program is free software; you can redistribute it and/or
