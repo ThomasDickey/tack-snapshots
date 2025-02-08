@@ -1,5 +1,5 @@
 dnl***************************************************************************
-dnl Copyright 2017-2023,2024 Thomas E. Dickey                                *
+dnl Copyright 2017-2024,2025 Thomas E. Dickey                                *
 dnl Copyright 2007-2015,2017 Free Software Foundation, Inc.                  *
 dnl                                                                          *
 dnl Permission is hereby granted, free of charge, to any person obtaining a  *
@@ -29,7 +29,7 @@ dnl***************************************************************************
 dnl
 dnl Author: Thomas E. Dickey	2007-on
 dnl
-dnl $Id: configure.in,v 1.49 2024/05/01 21:41:32 tom Exp $
+dnl $Id: configure.in,v 1.50 2025/02/08 00:06:30 tom Exp $
 dnl This is a simple configuration-script for tack which makes it simpler to
 dnl build outside the ncurses tree (provided that ncurses was configured using
 dnl the --with-ticlib option).
@@ -47,6 +47,7 @@ AC_MSG_ERROR(tack cannot be built with PDCurses)
 CF_INHERIT_SCRIPT(config.guess)
 CF_INHERIT_SCRIPT(config.sub)
 CF_CHECK_CACHE
+CF_WITH_SYSTYPE
 
 AC_ARG_PROGRAM
 AC_PROG_MAKE_SET
