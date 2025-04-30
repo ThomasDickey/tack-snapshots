@@ -1,18 +1,18 @@
 /*
-** Copyright 2017,2020 Thomas E. Dickey
+** Copyright 2017-2020,2025 Thomas E. Dickey
 ** Copyright 1997-2010,2017 Free Software Foundation, Inc.
-** 
+**
 ** This file is part of TACK.
-** 
+**
 ** TACK is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation, version 2.
-** 
+**
 ** TACK is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
 ** along with TACK; see the file COPYING.  If not, write to
 ** the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: menu.c,v 1.13 2020/02/02 14:47:18 tom Exp $")
+MODULE_ID("$Id: menu.c,v 1.14 2025/04/26 23:31:56 tom Exp $")
 
 /*
    Menu control
@@ -121,7 +121,7 @@ menu_display(
     int test_state = 0, run_standard_tests;
     int hot_topic, ch = 0, nch = 0;
     TestList *mt;
-    TestList *repeat_tests = 0;
+    TestList *repeat_tests = NULL;
     int repeat_state = 0;
     int prompt_length;
 

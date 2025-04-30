@@ -1,5 +1,5 @@
 /*
-** Copyright 2017-2020,2024 Thomas E. Dickey
+** Copyright 2017-2024,2025 Thomas E. Dickey
 ** Copyright 1997-2012,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
@@ -24,7 +24,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: edit.c,v 1.51 2024/05/01 20:42:06 tom Exp $")
+MODULE_ID("$Id: edit.c,v 1.53 2025/04/27 20:45:33 tom Exp $")
 
 /*
  * These are adapted from tic.h
@@ -49,7 +49,7 @@ typedef struct {
 static char change_pad_text[MAX_CHANGES][80];
 static TestList change_pad_list[MAX_CHANGES] =
 {
-    {MENU_LAST, 0, 0, 0, 0, 0, 0}
+    {MENU_LAST, 0, NULL, NULL, NULL, NULL, NULL}
 };
 
 static TERMTYPE original_term;	/* terminal type description */
@@ -70,13 +70,13 @@ static int display_lines;	/* number of lines displayed */
 static void
 alloc_arrays(void)
 {
-    if (flag_boolean == 0) {
+    if (flag_boolean == NULL) {
 	flag_boolean = (char *) calloc((size_t) MAX_BOOLEAN, sizeof(char));
     }
-    if (flag_numbers == 0) {
+    if (flag_numbers == NULL) {
 	flag_numbers = (char *) calloc((size_t) MAX_NUMBERS, sizeof(char));
     }
-    if (flag_strings == 0) {
+    if (flag_strings == NULL) {
 	label_strings = (int *) calloc((size_t) MAX_STRINGS, sizeof(int));
 	flag_strings = (char *) calloc((size_t) MAX_STRINGS, sizeof(char));
     }
@@ -90,7 +90,7 @@ compare_capability(const void *a, const void *b)
     return strcmp(p->nt_name, q->nt_name);
 }
 
-#if (defined(HAVE_CURSES_DATA_BOOLNAMES) || defined(DECL_CURSES_DATA_BOOLNAMES))
+#if USE_CURSES_ARRAYS
 
 #define DATA(index,name,type) { name,type,index }
 static NAME_TABLE name_table[] =
@@ -118,7 +118,7 @@ compare_data(const void *a, const void *b)
 static void
 alloc_name_table(void)
 {
-    if (name_table == 0) {
+    if (name_table == NULL) {
 	size_t s;
 	size_t d = 0;
 	sizeof_name_table = (size_t) (max_booleans + max_numbers + max_strings);
@@ -160,7 +160,7 @@ find_capability(const char *name)
 		     SIZEOF_NAME_TABLE,
 		     sizeof(name_table[0]),
 		     compare_capability);
-    return lookup ? lookup : 0;
+    return lookup ? lookup : NULL;
 }
 
 #if !TACK_CAN_EDIT
@@ -189,8 +189,8 @@ static NAME_TABLE const *
 find_string_cap_by_name(const char *name)
 {
     NAME_TABLE const *result = find_capability(name);
-    if (result != 0 && result->nt_type != STRING)
-	result = 0;
+    if (result != NULL && result->nt_type != STRING)
+	result = NULL;
     return result;
 }
 
@@ -269,7 +269,7 @@ get_string_cap_byname(
 {
     NAME_TABLE const *nt;
 
-    if ((nt = find_string_cap_by_name(name)) != 0) {
+    if ((nt = find_string_cap_by_name(name)) != NULL) {
 #ifdef HAVE_CURSES_DATA_BOOLFNAMES
 	*long_name = strfnames[nt->nt_index];
 #endif
@@ -332,9 +332,9 @@ user_modified(void)
     }
     for (i = 0; i < (int) MAX_STRINGS; i++) {
 	const char *a, *b;
-	if ((a = get_saved_string(i)) == 0)
+	if ((a = get_saved_string(i)) == NULL)
 	    a = "";
-	if ((b = get_newer_string(i)) == 0)
+	if ((b = get_newer_string(i)) == NULL)
 	    b = "";
 	if (strcmp(a, b)) {
 	    return TRUE;
@@ -363,7 +363,7 @@ mark_cap(
     NAME_TABLE const *nt;
 
     alloc_arrays();
-    if ((nt = find_capability(name)) != 0) {
+    if ((nt = find_capability(name)) != NULL) {
 	switch (nt->nt_type) {
 	case BOOLEAN:
 	    flag_boolean[nt->nt_index] = ((char)
@@ -449,7 +449,7 @@ cap_index(
 		if (j) {
 		    NAME_TABLE const *nt;
 		    name[j] = '\0';
-		    if ((nt = find_string_cap_by_name(name)) != 0) {
+		    if ((nt = find_string_cap_by_name(name)) != NULL) {
 			*inx++ = nt->nt_index;
 		    }
 		}
@@ -511,7 +511,7 @@ show_report(
     int i, j, nc, flag;
     const char *s;
     size_t count = (size_t) (MAX_BOOLEAN + MAX_NUMBERS + MAX_STRINGS);
-    const char **nx = (const char **) calloc(sizeof(const char *), count);
+    const char **nx = (const char **) calloc(count, sizeof(const char *));
 
     alloc_arrays();
     flag = t->flags & 255;
@@ -718,7 +718,7 @@ edit_init(void)
     }
     /* Lookup the translated strings */
     for (i = 0; i < TM_last; i++) {
-	if ((nt = find_string_cap_by_name(TM_string[i].name)) != 0) {
+	if ((nt = find_string_cap_by_name(TM_string[i].name)) != NULL) {
 	    TM_string[i].index = nt->nt_index;
 	} else {
 	    sprintf(temp, "TM_string lookup failed for: %s",
@@ -726,7 +726,7 @@ edit_init(void)
 	    ptextln(temp);
 	}
     }
-    if ((nt = find_capability("xon")) != 0) {
+    if ((nt = find_capability("xon")) != NULL) {
 	xon_index = nt->nt_index;
     }
     xon_shadow = xon_xoff;
@@ -787,7 +787,7 @@ form_terminfo(const char *srcp)
     size_t need = (2 + strlen(str)) * 4;
     int ch;
 
-    if (srcp == 0) {
+    if (srcp == NULL) {
 #if NO_LEAKS
 	if (buffer != 0) {
 	    free(buffer);
@@ -795,13 +795,13 @@ form_terminfo(const char *srcp)
 	    length = 0;
 	}
 #endif
-	return 0;
+	return NULL;
     }
-    if (buffer == 0 || need > length) {
+    if (buffer == NULL || need > length) {
 	char *tofree = buffer;
-	if ((buffer = (char *) realloc(buffer, length = need)) == 0) {
+	if ((buffer = (char *) realloc(buffer, length = need)) == NULL) {
 	    free(tofree);
-	    return 0;
+	    return NULL;
 	}
     }
 
@@ -817,9 +817,9 @@ form_terminfo(const char *srcp)
 	     */
 	    if (str[0] == L_BRACE
 		&& isdigit(UChar(str[1]))) {
-		char *dst = 0;
+		char *dst = NULL;
 		long value = strtol(str + 1, &dst, 0);
-		if (dst != 0
+		if (dst != NULL
 		    && *dst == R_BRACE
 		    && value < 127
 		    && value != '\\'
@@ -1142,7 +1142,7 @@ scan_terminfo(const char *source, char *target, char *last)
 		    break;
 
 		default:
-		    if (strchr("^,|:\\", c) != 0)
+		    if (strchr("^,|:\\", c) != NULL)
 			break;
 		    fprintf(stderr,
 			    "Illegal character '%s' in \\ sequence\n",
@@ -1197,7 +1197,7 @@ show_value(
     }
     op = t->flags & 255;
 
-    if ((nt = find_capability(buf)) != 0) {
+    if ((nt = find_capability(buf)) != NULL) {
 	int b;
 
 	switch (nt->nt_type) {
@@ -1218,7 +1218,7 @@ show_value(
 	    break;
 	case STRING:
 	    if (op == SHOW_DELETE) {
-		set_newer_string(nt->nt_index, 0);
+		set_newer_string(nt->nt_index, NULL);
 		return;
 	    }
 	    if (get_newer_string(nt->nt_index)) {
@@ -1369,9 +1369,9 @@ show_changed(
     for (i = 0; i < (int) MAX_STRINGS; i++) {
 	const char *a;
 	const char *b;
-	if ((a = get_saved_string(i)) == 0)
+	if ((a = get_saved_string(i)) == NULL)
 	    a = "";
-	if ((b = get_newer_string(i)) == 0)
+	if ((b = get_newer_string(i)) == NULL)
 	    b = "";
 	if (strcmp(a, b)) {
 	    if (header) {
@@ -1419,7 +1419,7 @@ change_one_entry(
 	    *chp = pad[0];
 	    return;
 	}
-	if ((nt = find_string_cap_by_name(pad)) != 0) {
+	if ((nt = find_string_cap_by_name(pad)) != NULL) {
 	    x = nt->nt_index;
 	    current_string = get_newer_string(x);
 	} else {
@@ -1556,25 +1556,25 @@ build_change_menu(
 }
 /* *INDENT-OFF* */
 TestList edit_test_list[] = {
-    {MENU_CLEAR, 0, 0, 0, "i) display current terminfo", show_info, 0},
-    {0, 0, 0, 0, "w) write the current terminfo to a file", save_info, 0},
-    {SHOW_VALUE, 3, 0, 0, "v) show value of a selected cap", show_value, 0},
-    {SHOW_EDIT, 4, 0, 0, "e) edit value of a selected cap", show_value, 0},
-    {SHOW_DELETE, 3, 0, 0, "d) delete string", show_value, 0},
-    {0, 3, 0, 0, "m) show caps that have been modified", show_changed, 0},
-    {MENU_CLEAR + FLAG_CAN_TEST, 0, 0, 0, "c) show caps that can be tested", show_report, 0},
-    {MENU_CLEAR + FLAG_TESTED, 0, 0, 0, "t) show caps that have been tested", show_report, 0},
-    {MENU_CLEAR + FLAG_FUNCTION_KEY, 0, 0, 0, "f) show a list of function keys", show_report, 0},
-    {MENU_CLEAR, 0, 0, 0, "u) show caps defined that can not be tested", show_untested, 0},
-    {MENU_LAST, 0, 0, 0, 0, 0, 0}
+    {MENU_CLEAR, 0, NULL, NULL, "i) display current terminfo", show_info, NULL},
+    {0, 0, NULL, NULL, "w) write the current terminfo to a file", save_info, NULL},
+    {SHOW_VALUE, 3, NULL, NULL, "v) show value of a selected cap", show_value, NULL},
+    {SHOW_EDIT, 4, NULL, NULL, "e) edit value of a selected cap", show_value, NULL},
+    {SHOW_DELETE, 3, NULL, NULL, "d) delete string", show_value, NULL},
+    {0, 3, NULL, NULL, "m) show caps that have been modified", show_changed, NULL},
+    {MENU_CLEAR + FLAG_CAN_TEST, 0, NULL, NULL, "c) show caps that can be tested", show_report, NULL},
+    {MENU_CLEAR + FLAG_TESTED, 0, NULL, NULL, "t) show caps that have been tested", show_report, NULL},
+    {MENU_CLEAR + FLAG_FUNCTION_KEY, 0, NULL, NULL, "f) show a list of function keys", show_report, NULL},
+    {MENU_CLEAR, 0, NULL, NULL, "u) show caps defined that can not be tested", show_untested, NULL},
+    {MENU_LAST, 0, NULL, NULL, NULL, NULL, NULL}
 };
 /* *INDENT-ON* */
 
 TestMenu change_pad_menu =
 {
-    0, 'q', 0,
-    "Select cap name", "change", 0,
-    build_change_menu, change_pad_list, 0, 0, 0
+    0, 'q', NULL,
+    "Select cap name", "change", NULL,
+    build_change_menu, change_pad_list, NULL, 0, 0
 };
 
 #else

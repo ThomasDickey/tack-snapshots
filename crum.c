@@ -1,18 +1,18 @@
 /*
-** Copyright 2017,2020,2024 Thomas E. Dickey
+** Copyright 2020,2024,2025 Thomas E. Dickey
 ** Copyright 1997-2011,2017 Free Software Foundation, Inc.
-** 
+**
 ** This file is part of TACK.
-** 
+**
 ** TACK is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation, version 2.
-** 
+**
 ** TACK is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
 ** along with TACK; see the file COPYING.  If not, write to
 ** the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: crum.c,v 1.16 2024/04/30 19:57:08 tom Exp $")
+MODULE_ID("$Id: crum.c,v 1.17 2025/04/26 23:31:56 tom Exp $")
 
 /*
  * Test cursor movement.
@@ -39,16 +39,16 @@ static char crum_text[5][CRUM_SIZE];
 TestList crum_test_list[] =
 {
     MY_EDIT_MENU
-    {MENU_NEXT, 0, "clear", 0, 0, crum_clear, 0},
-    {MENU_NEXT, 0, "home", 0, 0, crum_home, 0},
-    {MENU_NEXT, 0, "ll", 0, 0, crum_ll, 0},
-    {MENU_NEXT, 0, crum_text[0], "home cuu1", 0, crum_move, 0},
-    {MENU_NEXT + 1, 0, crum_text[1], "cub1 cud1 cuf1 cuu1", 0, crum_move, 0},
-    {MENU_NEXT + 2, 0, crum_text[2], "cub cud cuf cuu", 0, crum_move, 0},
-    {MENU_NEXT + 3, 0, crum_text[3], "vpa hpa", 0, crum_move, 0},
-    {MENU_NEXT + 4, 0, crum_text[4], "cup", 0, crum_move, 0},
-    {MENU_NEXT, 0, "cup", "os", 0, crum_os, 0},
-    {MENU_LAST, 0, 0, 0, 0, 0, 0}
+    {MENU_NEXT, 0, "clear", NULL, NULL, crum_clear, NULL},
+    {MENU_NEXT, 0, "home", NULL, NULL, crum_home, NULL},
+    {MENU_NEXT, 0, "ll", NULL, NULL, crum_ll, NULL},
+    {MENU_NEXT, 0, crum_text[0], "home cuu1", NULL, crum_move, NULL},
+    {MENU_NEXT + 1, 0, crum_text[1], "cub1 cud1 cuf1 cuu1", NULL, crum_move, NULL},
+    {MENU_NEXT + 2, 0, crum_text[2], "cub cud cuf cuu", NULL, crum_move, NULL},
+    {MENU_NEXT + 3, 0, crum_text[3], "vpa hpa", NULL, crum_move, NULL},
+    {MENU_NEXT + 4, 0, crum_text[4], "cup", NULL, crum_move, NULL},
+    {MENU_NEXT, 0, "cup", "os", NULL, crum_os, NULL},
+    {MENU_LAST, 0, NULL, NULL, NULL, NULL, NULL}
 };
 
 /*

@@ -1,18 +1,18 @@
 /*
-** Copyright 2017-2020,2024 Thomas E. Dickey
+** Copyright 2017-2024,2025 Thomas E. Dickey
 ** Copyright 1997-2012,2017 Free Software Foundation, Inc.
-** 
+**
 ** This file is part of TACK.
-** 
+**
 ** TACK is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation, version 2.
-** 
+**
 ** TACK is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
 ** along with TACK; see the file COPYING.  If not, write to
 ** the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: ansi.c,v 1.22 2024/04/30 23:49:43 tom Exp $")
+MODULE_ID("$Id: ansi.c,v 1.23 2025/04/26 23:31:35 tom Exp $")
 
 /*
  * Standalone tests for ANSI terminals.  Three entry points:
@@ -89,7 +89,7 @@ static struct ansi_reports report_list[] =
     {64, 0, "(DECRQSS) Local function key control", "\033P$q=}\033\\"},
     {64, 0, "(DECRQSS) Select modifier key reporting", "\033P$q+r\033\\"},
     {64, 0, "(DECRQDE) Window report", "\033[\"v"},
-    {0, 0, 0, 0}
+    {0, 0, NULL, NULL}
 };
 
 struct request_control {
@@ -103,26 +103,26 @@ struct request_control {
 /* Request control function selection or setting */
 static const struct request_control rqss[] =
 {
-    {"Data sent to screen", "0", "$}", "\033[0$}", 0},
-    {"Data sent to disabled status line", "0", "$}", 0, 0},
-    {"\033[0$~\033[1$}", "\033[0$}", 0, 0, 0},
-    {"Data sent to enabled status line", "1", "$}", 0, 0},
-    {"\033[2$~\033[1$}", "\033[0$}", 0, 0, 0},
-    {"Disable status line", "0", "$~", "\033[0$~", 0},
-    {"Top status line", "1", "$~", "\033[1$~", 0},
-    {"Bottom status line", "2", "$~", "\033[2$~", 0},
-    {"Erasable character", "0", "\"q", "\033[0\"q", 0},
+    {"Data sent to screen", "0", "$}", "\033[0$}", NULL},
+    {"Data sent to disabled status line", "0", "$}", NULL, NULL},
+    {"\033[0$~\033[1$}", "\033[0$}", NULL, NULL, NULL},
+    {"Data sent to enabled status line", "1", "$}", NULL, NULL},
+    {"\033[2$~\033[1$}", "\033[0$}", NULL, NULL, NULL},
+    {"Disable status line", "0", "$~", "\033[0$~", NULL},
+    {"Top status line", "1", "$~", "\033[1$~", NULL},
+    {"Bottom status line", "2", "$~", "\033[2$~", NULL},
+    {"Erasable character", "0", "\"q", "\033[0\"q", NULL},
     {"Nonerasable character", "1", "\"q", "\033[1\"q", "\033[0\"q"},
-    {"Top and bottom margins", "3;10", "r", "\0337\033[3;10r", 0},
-    {"\033[r\0338", 0, 0, 0, 0},
+    {"Top and bottom margins", "3;10", "r", "\0337\033[3;10r", NULL},
+    {"\033[r\0338", NULL, NULL, NULL, NULL},
     {"Top and bottom margins", "default", "r", "\0337\033[r", "\0338"},
     {"Character attributes, dim, bold", "1", "m", "\033[2;1m", "\033[m"},
     {"Character attributes, bold, dim", "2", "m", "\033[1;2m", "\033[m"},
     {"Character attributes, under, rev", "4;7", "m", "\033[4;7m", "\033[m"},
     {"Character attributes, color", "35;42", "m", "\033[35;42m", "\033[m"},
-    {"All character attributes", "", "m", "\033[1;2;3;4;5;6;7;8;9m", 0},
-    {"\033[m", 0, 0, 0, 0},
-    {0, 0, 0, 0, 0}
+    {"All character attributes", "", "m", "\033[1;2;3;4;5;6;7;8;9m", NULL},
+    {"\033[m", NULL, NULL, NULL, NULL},
+    {NULL, NULL, NULL, NULL, NULL}
 };
 
 /*
@@ -314,7 +314,7 @@ request_cfss(void)
     put_crlf();
     for (i = 0; rqss[i].text; i++) {
 	ptext(rqss[i].text);
-	if (rqss[i].expect == 0)
+	if (rqss[i].expect == NULL)
 	    continue;
 	j = (int) (strlen(rqss[i].text) + strlen(rqss[i].expect));
 	putchp(' ');
@@ -420,7 +420,7 @@ terminal_state(void)
 
     if (valid_mode(('$' << 8) | 'y')) {
 	static const char *puc[] =
-	{"", "<", "=", ">", "?", 0};
+	{"", "<", "=", ">", "?", NULL};
 
 	int i, j, k, l;
 	char *s;

@@ -1,5 +1,5 @@
 .\"***************************************************************************
-.\" Copyright 2020,2024 Thomas E. Dickey                                     *
+.\" Copyright 2020-2024,2025 Thomas E. Dickey                                *
 .\" Copyright 1997-2011,2017 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
@@ -27,7 +27,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: tack.1,v 1.11 2024/04/30 23:51:37 tom Exp $
+.\" $Id: tack.1,v 1.13 2025/04/27 16:51:28 tom Exp $
 .TH tack 1 2024-04-30 "terminfo action checker" "User commands"
 .ds n 5
 .
@@ -51,6 +51,10 @@
 .el       .ds CW CW
 .\}
 .
+.de bP
+.ie n  .IP \(bu 4
+.el    .IP \(bu 2
+..
 .de Ex
 .RS +7
 .PP
@@ -127,7 +131,7 @@ Display the version information and exit.
 .I "term"
 Terminfo terminal name to be tested.
 If not present, then the $TERM environment variable will be used.
-.SH OVERVIEW
+.SH "OVERVIEW"
 Since \fBtack\fR is designed to test terminfo entries it is not possible
 to rely on the correctness of the terminfo database.
 Because of this, the menuing system used with \fBtack\fR is very primitive.
@@ -144,16 +148,27 @@ actions are designed to run all the standard tests.
 When \fBtack\fR first comes up it will display some basic information
 about the terminal.
 Take some time to verify this information.
-If it is wrong many of the subsequent tests will fail.
-The most important item is the screen size.
-If the screen size is wrong, there is no point in proceeding.
+First, there are the cursor movement and clearing capabilities:
+If any of those are wrong, many of the subsequent tests will fail.
+.bP
 (home) and (clear) are also critical
 to the success of subsequent tests.
+.bP
 The values of (cr) (ind)
-(cub1) and (ht) may effect the tests if they are defined incorrectly.
+(cub1) and (ht) may affect the tests if they are defined incorrectly.
 If they are undefined \fBtack\fR will set them to reasonable defaults.
-The last two entries on the display are the enquire and acknowledge strings.
-These strings are taken from the user strings (u9) and (u8).
+.PP
+After these basic capabilities, \fBtack\fP shows optional features
+which may provide information:
+.bP
+The enquire (ENQ) and acknowledge (ACK) strings
+are taken from the user strings (u9) and (u8).
+.bP
+If the screen has at least 30 lines, there is room to display
+ncurses extensions for secondary device attributes (DA2) and terminal version.
+.PP
+The most important item is the screen size.
+If the screen size is wrong, there is no point in proceeding.
 .PP
 By now you must be wondering why the terminfo names are enclosed
 in parenthesis.
@@ -163,7 +178,7 @@ The \fBtack\fR program uses this convention any time
 it displays a terminfo name.
 Remember that \fBtack\fR is designed to
 rely on as little of the terminfo entry as possible.
-.SH CREATING NEW ENTRIES
+.SH "CREATING NEW ENTRIES"
 \fBTack\fR has a number of tools that are designed to help gather
 information about the terminal.
 Although these functions are not
@@ -237,7 +252,7 @@ This test allows you to view any of the possible
 combinations.
 Private use character sets are defined by the digits.
 Standard character sets are located in the alphabetic range.
-.SH VERIFYING AN EXISTING ENTRY
+.SH "VERIFYING AN EXISTING ENTRY"
 You can verify the correctness of an entry with the \*(``begin testing\*(''
 function.
 This entry is the default action and will be chosen
@@ -269,7 +284,7 @@ to disc before it exits.
 The filename will be the same as the terminal name.
 After the program exits you can run the \fBtic\fR(1M) compiler on the
 new terminfo to install it in the terminfo database.
-.SH CORRECTING PAD TIMINGS
+.SH "CORRECTING PAD TIMINGS"
 .SS "Theory of Overruns and Padding"
 Some terminals require significant amounts of time (that is, more than one
 transmitted-character interval) to do screen updates that change large

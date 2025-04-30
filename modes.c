@@ -1,18 +1,18 @@
 /*
-** Copyright 2017,2020 Thomas E. Dickey
+** Copyright 2017-2020,2025 Thomas E. Dickey
 ** Copyright 1997-2010,2017 Free Software Foundation, Inc.
-** 
+**
 ** This file is part of TACK.
-** 
+**
 ** TACK is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation, version 2.
-** 
+**
 ** TACK is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
 ** along with TACK; see the file COPYING.  If not, write to
 ** the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: modes.c,v 1.14 2020/02/02 14:47:18 tom Exp $")
+MODULE_ID("$Id: modes.c,v 1.15 2025/04/26 23:32:09 tom Exp $")
 
 /*
  * Tests boolean flags and terminal modes.
@@ -874,24 +874,24 @@ subtest_dadb(
 TestList mode_test_list[] =
 {
     MY_EDIT_MENU
-    {MENU_NEXT, 3, "os", 0, 0, subtest_os, 0},
-    {MENU_NEXT, 1, "rmam", 0, 0, subtest_rmam, 0},
-    {MENU_NEXT, 1, "smam", 0, 0, subtest_smam, 0},
-    {MENU_NEXT, 1, "am", 0, 0, subtest_am, 0},
-    {MENU_NEXT, 3, "ul", 0, 0, subtest_ul, 0},
-    {MENU_NEXT, 3, "uc", 0, 0, subtest_uc, 0},
-    {MENU_NEXT, 3, "bw", 0, 0, subtest_bw, 0},
-    {MENU_NEXT, 4, "xenl", 0, 0, subtest_xenl, 0},
-    {MENU_NEXT, 3, "eo", 0, 0, subtest_eo, 0},
-    {MENU_NEXT, 3, "xmc", 0, 0, subtest_xmc, 0},
-    {MENU_NEXT, 3, "xhp", 0, 0, subtest_xhp, 0},
-    {MENU_NEXT, 6, "mir", 0, 0, subtest_mir, 0},
-    {MENU_NEXT, 6, "msgr", 0, 0, subtest_msgr, 0},
-    {MENU_NEXT | MENU_CLEAR, 0, "tbc", "it", 0, subtest_tbc, 0},
-    {MENU_NEXT | MENU_CLEAR, 0, "hts", "it", 0, subtest_hts, 0},
-    {MENU_NEXT, 4, "xt", "it", 0, subtest_xt, 0},
-    {MENU_NEXT, 1, "cbt", "it", 0, subtest_cbt, 0},
-    {MENU_NEXT, 6, "in", 0, 0, subtest_in, 0},
-    {MENU_NEXT, 1, "da) (db", 0, 0, subtest_dadb, 0},
-    {MENU_LAST, 0, 0, 0, 0, 0, 0}
+    {MENU_NEXT, 3, "os", NULL, NULL, subtest_os, NULL},
+    {MENU_NEXT, 1, "rmam", NULL, NULL, subtest_rmam, NULL},
+    {MENU_NEXT, 1, "smam", NULL, NULL, subtest_smam, NULL},
+    {MENU_NEXT, 1, "am", NULL, NULL, subtest_am, NULL},
+    {MENU_NEXT, 3, "ul", NULL, NULL, subtest_ul, NULL},
+    {MENU_NEXT, 3, "uc", NULL, NULL, subtest_uc, NULL},
+    {MENU_NEXT, 3, "bw", NULL, NULL, subtest_bw, NULL},
+    {MENU_NEXT, 4, "xenl", NULL, NULL, subtest_xenl, NULL},
+    {MENU_NEXT, 3, "eo", NULL, NULL, subtest_eo, NULL},
+    {MENU_NEXT, 3, "xmc", NULL, NULL, subtest_xmc, NULL},
+    {MENU_NEXT, 3, "xhp", NULL, NULL, subtest_xhp, NULL},
+    {MENU_NEXT, 6, "mir", NULL, NULL, subtest_mir, NULL},
+    {MENU_NEXT, 6, "msgr", NULL, NULL, subtest_msgr, NULL},
+    {MENU_NEXT | MENU_CLEAR, 0, "tbc", "it", NULL, subtest_tbc, NULL},
+    {MENU_NEXT | MENU_CLEAR, 0, "hts", "it", NULL, subtest_hts, NULL},
+    {MENU_NEXT, 4, "xt", "it", NULL, subtest_xt, NULL},
+    {MENU_NEXT, 1, "cbt", "it", NULL, subtest_cbt, NULL},
+    {MENU_NEXT, 6, "in", NULL, NULL, subtest_in, NULL},
+    {MENU_NEXT, 1, "da) (db", NULL, NULL, subtest_dadb, NULL},
+    {MENU_LAST, 0, NULL, NULL, NULL, NULL, NULL}
 };

@@ -1,5 +1,5 @@
 /*
-** Copyright 2017-2020,2024 Thomas E. Dickey
+** Copyright 2017-2024,2025 Thomas E. Dickey
 ** Copyright 1997-2012,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: color.c,v 1.19 2024/04/30 23:27:09 tom Exp $")
+MODULE_ID("$Id: color.c,v 1.20 2025/04/26 23:31:35 tom Exp $")
 
 /*
  * Color terminal tests.  Has only one entry point: test_color().
@@ -36,13 +36,13 @@ static void color_bce(TestList *, int *, int *);
 /* *INDENT-OFF* */
 TestList color_test_list[] = {
     MY_EDIT_MENU
-    {MENU_NEXT, 2,  "colors) (pairs",    0, 0,                  color_check, 0},
-    {MENU_NEXT, 12, "setf) (setb) (scp", 0, 0,                  color_setf,   0},
-    {MENU_NEXT, 24, "op",                0, 0,                  color_matrix, 0},
-    {MENU_NEXT, 16, "ncv",               0, 0,                  color_ncv,    0},
-    {MENU_NEXT, 0,  "bce",               0, 0,                  color_bce,    0},
-    {MENU_NEXT | MENU_CLEAR, 0, "ccc) (initc) (initp", "hls op oc", 0, color_ccc, 0},
-    {MENU_LAST, 0,  0, 0, 0, 0, 0}
+    {MENU_NEXT, 2,  "colors) (pairs",    NULL, NULL,            color_check, NULL},
+    {MENU_NEXT, 12, "setf) (setb) (scp", NULL, NULL,            color_setf,   NULL},
+    {MENU_NEXT, 24, "op",                NULL, NULL,            color_matrix, NULL},
+    {MENU_NEXT, 16, "ncv",               NULL, NULL,            color_ncv,    NULL},
+    {MENU_NEXT, 0,  "bce",               NULL, NULL,            color_bce,    NULL},
+    {MENU_NEXT | MENU_CLEAR, 0, "ccc) (initc) (initp", "hls op oc", NULL, color_ccc, NULL},
+    {MENU_LAST, 0,  NULL, NULL, NULL, NULL, NULL}
 };
 /* *INDENT-ON* */
 
@@ -398,7 +398,7 @@ rainbow(int n)
 	    "Fg normal", ' '
 	},
 	{
-	    0, 0
+	    NULL, 0
 	}
     };
 

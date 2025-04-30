@@ -1,5 +1,5 @@
 /*
-** Copyright 2017-2020,2021 Thomas E. Dickey
+** Copyright 2017-2021,2025 Thomas E. Dickey
 ** Copyright 1997-2010,2012 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
@@ -28,6 +28,7 @@
 
 #include <term.h>
 #include <errno.h>
+#include <regex.h>
 
 #if defined(__BEOS__)
 #undef false
@@ -44,7 +45,7 @@
 #endif
 #endif
 
-MODULE_ID("$Id: sysdep.c,v 1.34 2021/06/19 22:55:44 tom Exp $")
+MODULE_ID("$Id: sysdep.c,v 1.41 2025/04/30 00:36:45 tom Exp $")
 
 #ifdef TERMIOS
 #define PUT_TTY(fd, buf) tcsetattr(fd, TCSAFLUSH, buf)
@@ -538,4 +539,143 @@ set_alarm_clock(
     signal(SIGALRM, alarm_event);
     no_alarm_event = 1;
     (void) alarm((unsigned) seconds);
+}
+
+typedef enum {
+    ESCAPE = '\033',
+    PERCENT = '%',
+    BAKSLSH = '\\',
+    L_BLOCK = '[',
+    R_BLOCK = ']',
+    ONETIME = '?'
+} CHARS;
+
+/*
+**	Try to match a regular expression, reporting mismatches.
+*/
+int
+compare_regex(const char *name, const char *terminfo, const char *actual)
+{
+    int rc = 0;
+    int code;
+    regex_t regex;
+    char pattern[80];
+    char buffer[2 * sizeof(pattern)];
+
+    /*
+     * Transform the terminfo "pattern" into a regular expression:
+     *
+     * ncurses terminfo has several response patterns.  The point of this code
+     * is to formalize the syntax.
+     *
+     * a) %[xxx] -> [xxx]+
+     * b) meta -> \meta, e.g., "[" or "?" without preceding "%" or "\\"
+     * c) trim %p[1-9] for now, possible use for substrings
+     */
+    if (terminfo == NULL || strlen(terminfo) >= (sizeof(pattern) / 2)) {
+	rc = -1;
+    } else {
+	int escape = 0;
+	int use_plus = 0;
+	const char *s = terminfo;
+	char *d = pattern;
+
+	while (*s != '\0') {
+	    char ch = *s++;
+	    if (escape) {
+		escape = 0;
+		*d++ = BAKSLSH;
+	    } else if (ch == BAKSLSH) {
+		escape = 1;
+		continue;
+	    } else if (ch == ONETIME) {
+		*d++ = BAKSLSH;
+	    } else if (ch == PERCENT) {
+		if (*s == L_BLOCK) {
+		    use_plus = 1;
+		    ch = *s++;
+		} else if (*s == 'p' && isdigit(UChar(s[1]))) {
+		    s += 2;
+		    continue;
+		} else if (*s == ONETIME) {
+		    *d++ = ch;
+		    ch = *s++;
+		}
+	    } else if (ch == L_BLOCK) {
+		if ((s - terminfo) == 2
+		    && *terminfo == ESCAPE
+		    && (strchr(s + 1, L_BLOCK) != NULL
+			|| strchr(s + 1, R_BLOCK) == NULL)) {
+		    *d++ = BAKSLSH;
+		} else {
+		    use_plus = 1;
+		}
+	    } else if (ch == R_BLOCK) {
+		if (use_plus) {
+		    *d++ = ch;
+		    ch = '+';
+		}
+	    }
+	    *d++ = ch;
+	}
+	*d = '\0';
+    }
+
+    if (rc < 0) {
+	sprintf(buffer, "Unexpected pattern (%s): %.30s", name, terminfo);
+	putln(expand(buffer));
+	return rc;
+    }
+
+    /*
+     * Now we can use POSIX regex.
+     */
+    if (debug_fp) {
+	sprintf(buffer, "%s", pattern);
+	fprintf(debug_fp, "Regex(%s): %s\n", name, expand(buffer));
+    }
+    if ((code = regcomp(&regex, pattern, REG_EXTENDED)) == 0) {
+	if (actual != NULL) {
+	    regmatch_t pmatch[10];
+	    if (regexec(&regex, actual, 10, pmatch, 0) == 0) {
+		int want_1st = 0;
+		int want_end = (int) strlen(actual);
+		if (pmatch[0].rm_so == want_1st &&
+		    pmatch[0].rm_eo == want_end) {
+		    int argc;
+		    rc = 1;
+		    for (argc = 1; argc < 10; ++argc) {
+			size_t len;
+			if (pmatch[argc].rm_so < 0)
+			    continue;
+			if (pmatch[argc].rm_eo < pmatch[argc].rm_so)
+			    continue;
+			sprintf(buffer, "  arg%d %d..%d = ",
+				argc,
+				(int) pmatch[argc].rm_so,
+				(int) pmatch[argc].rm_eo);
+			ptext(buffer);
+			len = (size_t) (pmatch[argc].rm_eo - pmatch[argc].rm_so);
+			strncpy(buffer, actual + pmatch[argc].rm_so, len);
+			buffer[len] = '\0';
+			putln(expand(buffer));
+		    }
+		} else {
+		    sprintf(buffer, "Matched %d..%d vs %d..%d\n",
+			    (int) pmatch[0].rm_so,
+			    (int) pmatch[0].rm_eo,
+			    want_1st,
+			    want_end);
+		    putln(buffer);
+		}
+	    }
+	} else {
+	    rc = 1;
+	}
+    } else {
+	regerror(code, &regex, buffer, sizeof(buffer));
+	putln(expand(buffer));
+    }
+    regfree(&regex);
+    return rc;
 }

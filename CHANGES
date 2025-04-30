@@ -1,3 +1,72 @@
+2025-04-29  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* sysdep.c: provide for pre-regex use in u8 with unescaped "["
+
+	* tack.h: bump
+
+	* tack.h: use noreturn, if possible
+
+	* sysdep.c: gcc-warning
+
+	* HISTORY, package/debian/changelog, package/tack.spec, tack.h: bump
+
+	* tack.c: improve description of the 2 & v menu entries
+
+	* tack.c: clarify version-message
+
+	* sysdep.c: bump
+
+	* sysdep.c: if substrings are matched, show those matches
+
+	* sync.c: gcc-warning
+
+	* sync.c: show full response for DA2 and XTVERSION
+
+2025-04-28  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* sysdep.c: tic already enforces a "\" before non-class "["
+
+	* sync.c, tack.h, tack.c: add tools menu entries "2" and "v"
+
+	* sync.c:
+	use compare_regex to match ACK against the terminfo/regex in user8
+
+	* sysdep.c:
+	add compare_regex to convert the terminfo/regex's used for query-responses
+	into POSIX regex and then compare against the query-result
+
+	* tack.h: add compare_regex
+
+2025-04-27  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* sync.c: eliminate symbol which obscured sizeof()
+
+	* edit.c, tackgen.c: split-out tackcfg.h
+
+	* tackcfg.h: RCS_BASE
+
+	* init.c: split-out tackcfg.h
+	also, modify logic for XR/RV to only show those in summary if both the
+	query and response strings are specified.
+
+	* tack.h: split-out tackcfg.h
+
+	* control.c: formatting
+
+	* tack.1: add XR/xr and RV/rv to the initial screen
+
+	* tack.1: bump
+
+	* init.c: add XR/xr and RV/rv optionally to the initial screen
+
+	* tack.c: formatting
+
+2025-04-26  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* tackgen.c, tack.c, pad.c, sync.c, output.c, modes.c, crum.c, edit.c,
+	  fun.c, init.c, menu.c, ansi.c, charset.c, color.c, control.c, tack.h:
+	fixes for gcc15 -Wzero-as-null-pointer-constant
+
 2025-02-07  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* configure: regen
@@ -8,6 +77,10 @@
 	  tack.h:
 	bump
 
+2024-07-28  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.guess: update to 2024-07-27
+
 2024-06-17  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* package/debian/copyright: bump
@@ -15,6 +88,10 @@
 	* package/debian/rules: change name of ncurses test-package
 
 	* package/debian/changelog, package/tack.spec, tack.h: bump
+
+2024-06-03  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.sub: update to 2024-05-27
 
 2024-05-01  Thomas E. Dickey  <dickey@invisible-island.net>
 

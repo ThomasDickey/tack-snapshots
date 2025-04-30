@@ -1,18 +1,18 @@
 /*
-** Copyright 2017,2020 Thomas E. Dickey
+** Copyright 2017-2020,2025 Thomas E. Dickey
 ** Copyright 1997-2012,2017 Free Software Foundation, Inc.
-** 
+**
 ** This file is part of TACK.
-** 
+**
 ** TACK is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation, version 2.
-** 
+**
 ** TACK is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
 ** along with TACK; see the file COPYING.  If not, write to
 ** the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
@@ -22,7 +22,7 @@
 #include <tack.h>
 #include <time.h>
 
-MODULE_ID("$Id: sync.c,v 1.17 2020/02/02 14:47:18 tom Exp $")
+MODULE_ID("$Id: sync.c,v 1.23 2025/04/29 08:14:28 tom Exp $")
 
 /* terminal-synchronization and performance tests */
 
@@ -33,20 +33,20 @@ static void sync_summary(TestList *, int *, int *);
 
 static TestList sync_test_list[] =
 {
-    {MENU_NEXT, 0, 0, 0, "b) baud rate test", sync_home, 0},
-    {MENU_NEXT, 0, 0, 0, "l) scroll performance", sync_lines, 0},
-    {MENU_NEXT, 0, 0, 0, "c) clear screen performance", sync_clear, 0},
-    {MENU_NEXT, 0, 0, 0, "p) summary of results", sync_summary, 0},
-    {0, 0, 0, 0, txt_longer_test_time, longer_test_time, 0},
-    {0, 0, 0, 0, txt_shorter_test_time, shorter_test_time, 0},
-    {MENU_LAST, 0, 0, 0, 0, 0, 0}
+    {MENU_NEXT, 0, NULL, NULL, "b) baud rate test", sync_home, NULL},
+    {MENU_NEXT, 0, NULL, NULL, "l) scroll performance", sync_lines, NULL},
+    {MENU_NEXT, 0, NULL, NULL, "c) clear screen performance", sync_clear, NULL},
+    {MENU_NEXT, 0, NULL, NULL, "p) summary of results", sync_summary, NULL},
+    {0, 0, NULL, NULL, txt_longer_test_time, longer_test_time, NULL},
+    {0, 0, NULL, NULL, txt_shorter_test_time, shorter_test_time, NULL},
+    {MENU_LAST, 0, NULL, NULL, NULL, NULL, NULL}
 };
 
 TestMenu sync_menu =
 {
-    0, 'n', 0,
+    0, 'n', NULL,
     "Performance tests", "perf", "n) run standard tests",
-    sync_test, sync_test_list, 0, 0, 0
+    sync_test, sync_test_list, NULL, 0, 0
 };
 
 int tty_can_sync;		/* TRUE if tty_sync_error() returned FALSE */
@@ -54,12 +54,10 @@ static int tty_newline_rate;	/* The number of newlines per second */
 static int tty_clear_rate;	/* The number of clear-screens per second */
 unsigned long tty_cps;		/* The number of characters per second */
 
-#define TTY_ACK_SIZE 64
-
 static int ACK_terminator;	/* terminating ACK character */
 static int ACK_length;		/* length of ACK string */
 static const char *tty_ENQ;	/* enquire string */
-static char tty_ACK[TTY_ACK_SIZE];	/* ACK response, set by tty_sync_error() */
+static char tty_ACK[128];	/* ACK response, set by tty_sync_error() */
 
 /*****************************************************************************
  *
@@ -91,7 +89,7 @@ tty_sync_error(void)
 	   the user and we need to send the ENQ sequence out again.
 	 */
 	for (ack = 0;;) {
-	    if (ack < TTY_ACK_SIZE - 2) {
+	    if (ack < (int) (sizeof(tty_ACK) - 2)) {
 		tty_ACK[ack] = (char) ch;
 		tty_ACK[ack + 1] = '\0';
 	    }
@@ -154,7 +152,7 @@ probe_enq_ok(void)
 #endif
     tc_putp(tty_ENQ);
     event_start(TIME_SYNC);	/* start the timer */
-    read_key(tty_ACK, (size_t) (TTY_ACK_SIZE - 1));
+    read_key(tty_ACK, (sizeof(tty_ACK) - 1));
 
     if (event_time(TIME_SYNC) > 400000 || tty_ACK[0] == '\0') {
 	/* These characters came from the user.  Sigh. */
@@ -168,12 +166,11 @@ probe_enq_ok(void)
 	ptext("ACK received: ");
 	putln(expand(tty_ACK));
 #ifdef user8
-	len = user8 ? (int) strlen(user8) : 0;
+	len = VALID_STRING(user8) ? (int) strlen(user8) : 0;
 #else
 	len = 0;
 #endif
-	sprintf(temp, "Length of ACK %d.  Expected length of ACK %d.",
-		(int) strlen(tty_ACK), len);
+	sprintf(temp, "Length of ACK %d.", (int) strlen(tty_ACK));
 	ptextln(temp);
 #ifdef user8
 	if (len) {
@@ -211,6 +208,99 @@ probe_enq_ok(void)
 }
 
 /*
+**	probe_response()
+**
+**	query the terminal for its response
+*/
+static int
+probe_response(const char *command, const char *respond)
+{
+    NCURSES_CONST char *command_cap = safe_tgets(command);
+    NCURSES_CONST char *respond_cap = safe_tgets(respond);
+    int len;
+    int code = 0;
+
+    if (command_cap == NULL || respond_cap == NULL) {
+	sprintf(temp, "Both %s and %s capabilities must be given.",
+		command, respond);
+	ptextln(temp);
+    } else {
+	sprintf(temp, "Testing %s/%s, standby...", command, respond);
+	put_str(temp);
+	fflush(stdout);
+	/* TODO: can_test("u8 u9", FLAG_TESTED); */
+
+	tc_putp(command_cap);
+	event_start(TIME_SYNC);	/* start the timer */
+	read_key(tty_ACK, (sizeof(tty_ACK) - 1));
+
+	if (event_time(TIME_SYNC) > 400000 || tty_ACK[0] == '\0') {
+	    tty_can_sync = SYNC_FAILED;
+	    sprintf(temp, "\nResponse sequence from (%s): ", command);
+	    ptext(temp);
+	    putln(expand(command_cap));
+	    ptext("ACK received: ");
+	    putln(expand(tty_ACK));
+	    sprintf(temp, "Length of %s %d.", respond, (int) strlen(tty_ACK));
+	    ptextln(temp);
+	} else {
+	    tty_can_sync = SYNC_TESTED;
+	    if ((len = (int) strlen(tty_ACK)) == 1) {
+		/* single character acknowledge string */
+		ACK_terminator = tty_ACK[0];
+		ACK_length = 4096;
+	    } else {
+		int ulen = (int) strlen(respond_cap);
+		int tc = tty_ACK[len - 1];
+		if (tc == respond_cap[ulen - 1]) {
+		    /* ANSI style acknowledge string */
+		    ACK_terminator = tc;
+		    ACK_length = 4096;
+		} else {
+		    /* fixed length acknowledge string */
+		    ACK_length = len;
+		    ACK_terminator = -2;
+		}
+	    }
+	    code = 1;
+	}
+    }
+    put_crlf();
+    return code;
+}
+
+/*
+**	verify_response()
+*/
+static void
+verify_response(NCURSES_CONST char *command, NCURSES_CONST char *respond)
+{
+    if (tty_can_sync == SYNC_FAILED) {
+	return;
+    }
+    if (probe_response(command, respond)) {
+	put_crlf();
+	if (ACK_terminator >= 0) {
+	    if (!compare_regex(respond, safe_tgets(respond), tty_ACK)) {
+		sprintf(temp, "Mismatched response (%s): ", respond);
+		ptext(temp);
+		strcpy(temp, tty_ACK);
+		putln(expand(temp));
+	    } else {
+		ptext("Valid response: ");
+		strcpy(temp, tty_ACK);
+		ptextln(expand(temp));
+	    }
+	} else {
+	    sprintf(temp, "Fixed length response, %d characters", ACK_length);
+	    ptextln(temp);
+	}
+    } else {
+	put_crlf();
+    }
+}
+
+/*
 **	verify_time()
 **
 **	verify that the time tests are ready to run.
@@ -233,9 +323,15 @@ verify_time(void)
 	    temp[0] = (char) ACK_terminator;
 	    temp[1] = '\0';
 	    ptextln(expand(temp));
+#ifdef user8
+	    if (!compare_regex("u8", user8, tty_ACK)) {
+		strcpy(temp, tty_ACK);
+		ptext("Mismatched response (u8): ");
+		putln(expand(temp));
+	    }
+#endif
 	} else {
-	    sprintf(temp, "Fixed length ACK, %d characters",
-		    ACK_length);
+	    sprintf(temp, "Fixed length ACK, %d characters", ACK_length);
 	    ptextln(temp);
 	}
     }
@@ -424,6 +520,12 @@ sync_test(
     }
 }
 
+/*****************************************************************************
+ *
+ * Terminal status tests
+ *
+ *****************************************************************************/
+
 /*
 **	sync_handshake(test_list, status, ch)
 **
@@ -437,4 +539,32 @@ sync_handshake(
 {
     tty_can_sync = SYNC_NOT_TESTED;
     verify_time();
+}
+
+/*
+**	ask_DA2(test_list, status, ch)
+**
+**	Test the secondary device attributes.
+*/
+void
+ask_DA2(
+	   TestList * t GCC_UNUSED,
+	   int *state GCC_UNUSED,
+	   int *ch GCC_UNUSED)
+{
+    verify_response("RV", "rv");
+}
+
+/*
+**	ask_version(test_list, status, ch)
+**
+**	Test the device version.
+*/
+void
+ask_version(
+	       TestList * t GCC_UNUSED,
+	       int *state GCC_UNUSED,
+	       int *ch GCC_UNUSED)
+{
+    verify_response("XR", "xr");
 }

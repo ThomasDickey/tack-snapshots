@@ -1,5 +1,5 @@
 /*
-** Copyright 2017-2021,2022 Thomas E. Dickey
+** Copyright 2017-2022,2025 Thomas E. Dickey
 ** Copyright 1997-2013,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: fun.c,v 1.32 2022/05/28 13:46:42 tom Exp $")
+MODULE_ID("$Id: fun.c,v 1.33 2025/04/26 23:31:56 tom Exp $")
 
 #define COPY_1(target, source) sprintf(target, "%.*s", (int)sizeof(target) - 1, source)
 
@@ -38,13 +38,13 @@ static void funkey_local(TestList *, int *, int *);
 /* *INDENT-OFF* */
 TestList funkey_test_list[] = {
     MY_EDIT_MENU
-    {MENU_CLEAR + FLAG_FUNCTION_KEY, 0, 0, 0, "f) show a list of function keys", show_report, 0},
-    {MENU_NEXT | MENU_CLEAR, 0, "smkx) (rmkx", 0, "k) test function keys", funkey_keys, 0},
-    {MENU_NEXT, 10, "km", "smm rmm", 0, funkey_meta, 0},
-    {MENU_NEXT, 8, "nlab) (smln) (pln) (rmln", "lw lh", 0, funkey_label, 0},
-    {MENU_NEXT, 2, "pfx", 0, 0, funkey_prog, 0},
-    {MENU_NEXT, 2, "pfloc", 0, 0, funkey_local, 0},
-    {MENU_LAST, 0, 0, 0, 0, 0, 0}
+    {MENU_CLEAR + FLAG_FUNCTION_KEY, 0, NULL, NULL, "f) show a list of function keys", show_report, NULL},
+    {MENU_NEXT | MENU_CLEAR, 0, "smkx) (rmkx", NULL, "k) test function keys", funkey_keys, NULL},
+    {MENU_NEXT, 10, "km", "smm rmm", NULL, funkey_meta, NULL},
+    {MENU_NEXT, 8, "nlab) (smln) (pln) (rmln", "lw lh", NULL, funkey_label, NULL},
+    {MENU_NEXT, 2, "pfx", NULL, NULL, funkey_prog, NULL},
+    {MENU_NEXT, 2, "pfloc", NULL, NULL, funkey_local, NULL},
+    {MENU_LAST, 0, NULL, NULL, NULL, NULL, NULL}
 };
 /* *INDENT-ON* */
 static void printer_on(TestList *, int *, int *);
@@ -53,9 +53,9 @@ static void printer_mc0(TestList *, int *, int *);
 TestList printer_test_list[] =
 {
     MY_EDIT_MENU
-    {MENU_NEXT | MENU_CLEAR, 0, "mc4) (mc5) (mc5i", 0, 0, printer_on, 0},
-    {MENU_NEXT | MENU_CLEAR, 0, "mc0", 0, 0, printer_mc0, 0},
-    {MENU_LAST, 0, 0, 0, 0, 0, 0}
+    {MENU_NEXT | MENU_CLEAR, 0, "mc4) (mc5) (mc5i", NULL, NULL, printer_on, NULL},
+    {MENU_NEXT | MENU_CLEAR, 0, "mc0", NULL, NULL, printer_mc0, NULL},
+    {MENU_LAST, 0, NULL, NULL, NULL, NULL, NULL}
 };
 
 /* local definitions */
@@ -163,7 +163,7 @@ keys_tested(
 	}
     } else {
 	for (i = 0; i < key_count; i++) {
-	    if (!fk_tested[i] && fk_name[i] != 0) {
+	    if (!fk_tested[i] && fk_name[i] != NULL) {
 		if (hex_output) {
 		    COPY_1(outbuf, hex_expand_to(fkval[i], 3));
 		} else {
@@ -210,7 +210,7 @@ enter_key(
 	    fkmax = (fkmax > j) ? fkmax : j;
 	    /* do not permit duplicates */
 	    for (j = 0; j < (size_t) key_count; j++) {
-		if (fk_name[j] == 0) {
+		if (fk_name[j] == NULL) {
 		    break;
 		} else if (!strcmp(fk_name[j], name)) {
 		    found = 1;

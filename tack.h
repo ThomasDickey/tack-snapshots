@@ -19,7 +19,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tack.h,v 1.100 2025/02/08 00:06:10 tom Exp $ */
+/* $Id: tack.h,v 1.107 2025/04/30 00:31:57 tom Exp $ */
 
 #ifndef NCURSES_TACK_H_incl
 #define NCURSES_TACK_H_incl 1
@@ -27,89 +27,10 @@
 /* terminfo action checker include file */
 
 #define MAJOR_VERSION 1
-#define MINOR_VERSION 10
-#define PATCH_VERSION 20250207
+#define MINOR_VERSION 11
+#define PATCH_VERSION 20250429
 
-#ifdef HAVE_CONFIG_H
-#include <ncurses_cfg.h>
-#else
-#define HAVE_GETTIMEOFDAY 1
-#define HAVE_SELECT 1
-#define HAVE_SYS_TIME_H 1
-#endif
-
-#ifndef BROKEN_LINKER
-#define BROKEN_LINKER 0
-#endif
-
-#ifndef GCC_NORETURN
-#define GCC_NORETURN		/*nothing */
-#endif
-
-#ifndef GCC_UNUSED
-#define GCC_UNUSED		/*nothing */
-#endif
-
-#ifndef HAVE_LONG_FILE_NAMES
-#define HAVE_LONG_FILE_NAMES 0
-#endif
-
-#ifndef NCURSES_CONST
-#ifdef NCURSES_VERSION
-#define NCURSES_CONST const
-#else
-#define NCURSES_CONST		/*nothing */
-#endif
-#endif
-
-#ifndef NO_LEAKS
-#define NO_LEAKS 0
-#endif
-
-#ifndef USE_DATABASE
-#define USE_DATABASE 0
-#endif
-
-#ifndef USE_TERMCAP
-#define USE_TERMCAP 0
-#endif
-
-#ifndef USE_RCS_IDS
-#define USE_RCS_IDS 0
-#endif
-
-#include <sys/types.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <ctype.h>
-#include <string.h>
-#include <signal.h>		/* include before curses.h to work around glibc bug */
-
-#include <curses.h>
-
-#if defined(NCURSES_VERSION) && defined(HAVE_TERM_ENTRY_H)
-#include <term_entry.h>
-#define TACK_CAN_EDIT 1
-#else
-#define TACK_CAN_EDIT 0
-#include <term.h>
-#include <termios.h>
-#define TTY struct termios
-#define TERMIOS 1
-#define GET_TTY(fd, buf) tcgetattr(fd, buf)
-#endif
-
-#if USE_RCS_IDS
-#define MODULE_ID(id) static const char Ident[] = id;
-#else
-#define MODULE_ID(id)		/*nothing */
-#endif
-
-#if defined(__GNUC__) && defined(_FORTIFY_SOURCE)
-#define IGNORE_RC(func) ignore_unused = (int) func
-#else
-#define IGNORE_RC(func) (void) func
-#endif /* gcc workarounds */
+#include <tackcfg.h>
 
 #ifndef down_half_line
 #define down_half_line 0	/* NetBSD bug */
@@ -148,7 +69,7 @@ extern GCC_NORETURN void ExitProgram(int);
 #define ChangeTermInfo(name,value)	/* nothing */
 #endif
 
-#define FreeIfNeeded(p) if (p) { free(p); p = 0; }
+#define FreeIfNeeded(p) if (p) { free(p); p = NULL; }
 
 #include <tackgen.h>
 
@@ -446,7 +367,7 @@ typedef struct test_menu {
 /* tack.c */
 #if TACK_CAN_EDIT
 extern TestMenu edit_menu;
-#define MY_EDIT_MENU	{0, 0, 0, 0, "e) edit terminfo", 0, &edit_menu},
+#define MY_EDIT_MENU	{0, 0, NULL, NULL, "e) edit terminfo", NULL, &edit_menu},
 #else
 #define MY_EDIT_MENU		/* nothing */
 #endif
@@ -544,7 +465,7 @@ extern void tools_sgr(TestList *, int *, int *);
 #if TACK_CAN_EDIT
 extern TestMenu change_pad_menu;
 extern TestList edit_test_list[];
-#define MY_PADS_MENU	{0, 0, 0, 0, "p) change padding", 0, &change_pad_menu},
+#define MY_PADS_MENU	{0, 0, NULL, NULL, "p) change padding", NULL, &change_pad_menu},
 #else
 #define MY_PADS_MENU		/* nothing */
 #endif
@@ -571,7 +492,7 @@ extern void reset_init(void);
 extern void display_basic(void);
 extern void charset_can_test(void);
 extern void curses_setup(char *);
-extern void bye_kids(int);
+extern GCC_NORETURN void bye_kids(int);
 
 /* scan.c */
 extern char **scan_up, **scan_down, **scan_name;
@@ -581,6 +502,7 @@ extern size_t *scan_tested, *scan_length;
 extern void scan_init(char *fn);
 
 /* sysdep.c */
+extern int compare_regex(const char *, const char *, const char *);
 extern int initial_stty_query(int);
 extern int stty_query(int);
 extern void ignoresig(void);
@@ -613,6 +535,8 @@ extern TestList pad_test_list[];
 /* sync.c */
 extern TestMenu sync_menu;
 extern int tty_sync_error(void);
+extern void ask_DA2(TestList *, int *, int *);
+extern void ask_version(TestList *, int *, int *);
 extern void flush_input(void);
 extern void sync_handshake(TestList *, int *, int *);
 extern void sync_test(TestMenu *);

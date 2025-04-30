@@ -1,5 +1,5 @@
 /*
-** Copyright 2017,2020 Thomas E. Dickey
+** Copyright 2017-2020,2025 Thomas E. Dickey
 ** Copyright 2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
@@ -19,15 +19,9 @@
 ** Boston, MA 02110-1301, USA
 */
 
-#include <ncurses_cfg.h>
+#include <tackcfg.h>
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <curses.h>
-#include <term.h>
-
-/* $Id: tackgen.c,v 1.13 2020/11/28 13:52:54 tom Exp $ */
+/* $Id: tackgen.c,v 1.15 2025/04/27 20:43:38 tom Exp $ */
 
 #define DATA_FMT "DATA(\t%3d,\t\"%s\",%s%s%s),\t/* %s */\n"
 
@@ -38,7 +32,7 @@ tabbed(const char *value, int extra)
     return (len < 8) ? "\t\t" : "\t";
 }
 
-#if defined(HAVE_CURSES_DATA_BOOLNAMES) || defined(DECL_CURSES_DATA_BOOLNAMES)
+#if USE_CURSES_ARRAYS
 
 #ifdef DECL_CURSES_DATA_BOOLNAMES
 #undef boolnames
@@ -95,13 +89,13 @@ main(void)
     size_t num_n = 0;
     size_t num_s = 0;
     size_t num_values;
-    DATA *values = 0;
+    DATA *values = NULL;
 
-    while (boolnames[num_b] != 0)
+    while (boolnames[num_b] != NULL)
 	++num_b;
-    while (numnames[num_n] != 0)
+    while (numnames[num_n] != NULL)
 	++num_n;
-    while (strnames[num_s] != 0)
+    while (strnames[num_s] != NULL)
 	++num_s;
 
     show_count(num_b, "BOOL");
@@ -115,21 +109,21 @@ main(void)
     values = calloc(num_values + 1, sizeof(DATA));
 
     d = 0;
-    for (s = 0; boolnames[s] != 0; ++s) {
+    for (s = 0; boolnames[s] != NULL; ++s) {
 	values[d].name_index = (int) s;
 	values[d].short_name = boolnames[s];
 	values[d].long_name = boolfnames[s];
 	values[d].type_name = "BOOLEAN";
 	++d;
     }
-    for (s = 0; numnames[s] != 0; ++s) {
+    for (s = 0; numnames[s] != NULL; ++s) {
 	values[d].name_index = (int) s;
 	values[d].short_name = numnames[s];
 	values[d].long_name = numfnames[s];
 	values[d].type_name = "NUMBER";
 	++d;
     }
-    for (s = 0; strnames[s] != 0; ++s) {
+    for (s = 0; strnames[s] != NULL; ++s) {
 	values[d].name_index = (int) s;
 	values[d].short_name = strnames[s];
 	values[d].long_name = strfnames[s];

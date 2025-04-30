@@ -1,5 +1,5 @@
 /*
-** Copyright 2017,2020,2024 Thomas E. Dickey
+** Copyright 2020,2024,2025 Thomas E. Dickey
 ** Copyright 1997-2010,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
@@ -22,7 +22,7 @@
 #include <tack.h>
 #include <time.h>
 
-MODULE_ID("$Id: pad.c,v 1.19 2024/04/30 19:56:36 tom Exp $")
+MODULE_ID("$Id: pad.c,v 1.20 2025/04/26 23:32:28 tom Exp $")
 
 /* test the pad counts on the terminal */
 
@@ -269,7 +269,7 @@ pad_clear(
 	     int *state,
 	     int *ch)
 {
-    const char *end_message = 0;
+    const char *end_message = NULL;
     const char *txt;
     int j, k, is_clear;
     int clear_select;		/* select the test number */
@@ -1882,13 +1882,13 @@ pad_crash(
 TestList pad_test_list[] = {
     MY_EDIT_MENU
     MY_PADS_MENU
-    {0, 0, 0, 0, "@) display statistics about the last test", dump_test_stats, 0},
-    {0, 0, 0, 0, "c) clear screen", menu_clear_screen, 0},
-    {0, 0, 0, 0, "i) send reset and init", menu_reset_init, 0},
-    {0, 0, 0, 0, txt_longer_test_time, longer_test_time, 0},
-    {0, 0, 0, 0, txt_shorter_test_time, shorter_test_time, 0},
-    {0, 0, 0, 0, txt_longer_augment, longer_augment, 0},
-    {0, 0, 0, 0, txt_shorter_augment, shorter_augment, 0},
+    {0, 0, NULL, NULL, "@) display statistics about the last test", dump_test_stats, NULL},
+    {0, 0, NULL, NULL, "c) clear screen", menu_clear_screen, NULL},
+    {0, 0, NULL, NULL, "i) send reset and init", menu_reset_init, NULL},
+    {0, 0, NULL, NULL, txt_longer_test_time, longer_test_time, NULL},
+    {0, 0, NULL, NULL, txt_shorter_test_time, shorter_test_time, NULL},
+    {0, 0, NULL, NULL, txt_longer_augment, longer_augment, NULL},
+    {0, 0, NULL, NULL, txt_shorter_augment, shorter_augment, NULL},
     /***
        Phase 1: Test initialization and reset strings.
 
@@ -1901,80 +1901,80 @@ TestList pad_test_list[] = {
        We have no control over this.  The only thing we can do for
        certain is to test the pad times by checking for overruns.
     ***/
-    {MENU_NEXT, 3, "rs1", 0, 0, pad_standard, 0},
-    {MENU_NEXT, 3, "rs2", 0, 0, pad_standard, 0},
-    {MENU_NEXT, 3, "rs3", 0, 0, pad_standard, 0},
-    {MENU_NEXT | MENU_INIT, 0, 0, 0, 0, init_xon_xoff, 0},
-    {MENU_NEXT, 3, "is1", 0, 0, pad_standard, 0},
-    {MENU_NEXT, 3, "is2", 0, 0, pad_standard, 0},
-    {MENU_NEXT, 3, "is3", 0, 0, pad_standard, 0},
-    {MENU_NEXT, 3, "rmxon", "smxon", 0, pad_rmxon, 0},
-    {MENU_NEXT | MENU_INIT, 0, 0, 0, 0, init_cup, 0},
+    {MENU_NEXT, 3, "rs1", NULL, NULL, pad_standard, NULL},
+    {MENU_NEXT, 3, "rs2", NULL, NULL, pad_standard, NULL},
+    {MENU_NEXT, 3, "rs3", NULL, NULL, pad_standard, NULL},
+    {MENU_NEXT | MENU_INIT, 0, NULL, NULL, NULL, init_xon_xoff, NULL},
+    {MENU_NEXT, 3, "is1", NULL, NULL, pad_standard, NULL},
+    {MENU_NEXT, 3, "is2", NULL, NULL, pad_standard, NULL},
+    {MENU_NEXT, 3, "is3", NULL, NULL, pad_standard, NULL},
+    {MENU_NEXT, 3, "rmxon", "smxon", NULL, pad_rmxon, NULL},
+    {MENU_NEXT | MENU_INIT, 0, NULL, NULL, NULL, init_cup, NULL},
     /*
        Phase 2: Test home, screen clears and erases.
     */
-    {MENU_NEXT, 0, "home", 0, 0, pad_home1, 0},
-    {MENU_NEXT, 0, "home) (nel", 0, 0, pad_home2, 0},
-    {MENU_NEXT | 1, 0, "clear", 0, 0, pad_clear, 0},
-    {MENU_NEXT | MENU_LM1, 0, "ed", 0, 0, pad_clear, 0},
-    {MENU_NEXT | MENU_80c, 0, "ech", 0, 0, pad_ech, 0},
-    {MENU_NEXT | MENU_80c, 0, "el1", "cub1 nel", 0, pad_el1, 0},
-    {MENU_NEXT | MENU_10c, 0, "el", "nel", 0, pad_el, 0},
+    {MENU_NEXT, 0, "home", NULL, NULL, pad_home1, NULL},
+    {MENU_NEXT, 0, "home) (nel", NULL, NULL, pad_home2, NULL},
+    {MENU_NEXT | 1, 0, "clear", NULL, NULL, pad_clear, NULL},
+    {MENU_NEXT | MENU_LM1, 0, "ed", NULL, NULL, pad_clear, NULL},
+    {MENU_NEXT | MENU_80c, 0, "ech", NULL, NULL, pad_ech, NULL},
+    {MENU_NEXT | MENU_80c, 0, "el1", "cub1 nel", NULL, pad_el1, NULL},
+    {MENU_NEXT | MENU_10c, 0, "el", "nel", NULL, pad_el, NULL},
     /*
        Phase 3: Character deletions and insertions
     */
-    {MENU_NEXT, 0, "smdc) (rmdc", 0, 0, pad_smdc, 0},
-    {MENU_NEXT | MENU_80c, 0, "dch", "smdc rmdc", 0, pad_dch, 0},
-    {MENU_NEXT | MENU_80c, 0, "dch1", "smdc rmdc", 0, pad_dch1, 0},
-    {MENU_NEXT, 0, "smir) (rmir", 0, 0, pad_smir, 0},
-    {MENU_NEXT | MENU_90c, 0, "ich) (ip", "smir rmir", 0, pad_ich, 0},
-    {MENU_NEXT | MENU_90c, 0, "ich1) (ip", "smir rmir", 0, pad_ich1, 0},
-    {MENU_NEXT, 4, "ich1) (dch1", "smir rmir", 0, pad_xch1, 0},
-    {MENU_NEXT | MENU_90c, 0, "rep", 0, 0, pad_rep, 0},
+    {MENU_NEXT, 0, "smdc) (rmdc", NULL, NULL, pad_smdc, NULL},
+    {MENU_NEXT | MENU_80c, 0, "dch", "smdc rmdc", NULL, pad_dch, NULL},
+    {MENU_NEXT | MENU_80c, 0, "dch1", "smdc rmdc", NULL, pad_dch1, NULL},
+    {MENU_NEXT, 0, "smir) (rmir", NULL, NULL, pad_smir, NULL},
+    {MENU_NEXT | MENU_90c, 0, "ich) (ip", "smir rmir", NULL, pad_ich, NULL},
+    {MENU_NEXT | MENU_90c, 0, "ich1) (ip", "smir rmir", NULL, pad_ich1, NULL},
+    {MENU_NEXT, 4, "ich1) (dch1", "smir rmir", NULL, pad_xch1, NULL},
+    {MENU_NEXT | MENU_90c, 0, "rep", NULL, NULL, pad_rep, NULL},
     /*
        Phase 4: Test cursor addressing pads.
     */
-    {MENU_NEXT, 0, "cup", 0, 0, pad_cup, 0},
+    {MENU_NEXT, 0, "cup", NULL, NULL, pad_cup, NULL},
     /*
        Phase 5: Test scrolling and cursor save/restore.
     */
-    {MENU_NEXT, 0, "hd", 0, 0, pad_hd, 0},
-    {MENU_NEXT, 0, "hu", 0, 0, pad_hu, 0},
-    {MENU_NEXT | MENU_LM1 | 1, 0, "rin", 0, 0, pad_rin, 0},
-    {MENU_NEXT, 0, "ri", 0, 0, pad_rin, 0},
-    {MENU_NEXT | MENU_LM1 | 1, 0, "il", 0, 0, pad_il, 0},
-    {MENU_NEXT, 0, "il1", 0, 0, pad_il, 0},
-    {MENU_NEXT | MENU_LM1 | 1, 0, "indn", 0, 0, pad_indn, 0},
-    {MENU_NEXT, 0, "ind", 0, 0, pad_indn, 0},
-    {MENU_NEXT | MENU_LM1 | 1, 0, "dl", 0, 0, pad_dl, 0},
-    {MENU_NEXT, 0, "dl1", 0, 0, pad_dl, 0},
-    {MENU_NEXT, 0, "il1) (dl1", 0, 0, pad_xl, 0},
-    {MENU_NEXT, 0, "sc) (rc", 0, 0, pad_scrc, 0},
-    {MENU_NEXT | MENU_50l, 0, "csr) (ind", 0, 0, pad_csrind, 0},
-    {MENU_NEXT, 0, "sc) (csr) (rc", 0, 0, pad_sccsrrc, 0},
-    {MENU_NEXT, 0, "csr) (nel", "sc rc", 0, pad_csr_nel, 0},
-    {MENU_NEXT, 0, "csr) (cup", 0, 0, pad_csr_cup, 0},
+    {MENU_NEXT, 0, "hd", NULL, NULL, pad_hd, NULL},
+    {MENU_NEXT, 0, "hu", NULL, NULL, pad_hu, NULL},
+    {MENU_NEXT | MENU_LM1 | 1, 0, "rin", NULL, NULL, pad_rin, NULL},
+    {MENU_NEXT, 0, "ri", NULL, NULL, pad_rin, NULL},
+    {MENU_NEXT | MENU_LM1 | 1, 0, "il", NULL, NULL, pad_il, NULL},
+    {MENU_NEXT, 0, "il1", NULL, NULL, pad_il, NULL},
+    {MENU_NEXT | MENU_LM1 | 1, 0, "indn", NULL, NULL, pad_indn, NULL},
+    {MENU_NEXT, 0, "ind", NULL, NULL, pad_indn, NULL},
+    {MENU_NEXT | MENU_LM1 | 1, 0, "dl", NULL, NULL, pad_dl, NULL},
+    {MENU_NEXT, 0, "dl1", NULL, NULL, pad_dl, NULL},
+    {MENU_NEXT, 0, "il1) (dl1", NULL, NULL, pad_xl, NULL},
+    {MENU_NEXT, 0, "sc) (rc", NULL, NULL, pad_scrc, NULL},
+    {MENU_NEXT | MENU_50l, 0, "csr) (ind", NULL, NULL, pad_csrind, NULL},
+    {MENU_NEXT, 0, "sc) (csr) (rc", NULL, NULL, pad_sccsrrc, NULL},
+    {MENU_NEXT, 0, "csr) (nel", "sc rc", NULL, pad_csr_nel, NULL},
+    {MENU_NEXT, 0, "csr) (cup", NULL, NULL, pad_csr_cup, NULL},
     /*
        Phase 6: Test tabs.
     */
-    {MENU_NEXT, 0, "ht", 0, 0, pad_ht, 0},
+    {MENU_NEXT, 0, "ht", NULL, NULL, pad_ht, NULL},
     /*
        Phase 7: Test character-set-switch pads.
     */
-    {MENU_NEXT, 0, "smso) (rmso", 0, 0, pad_smso, 0},
-    {MENU_NEXT, 0, "smacs) (rmacs", 0, 0, pad_smacs, 0},
+    {MENU_NEXT, 0, "smso) (rmso", NULL, NULL, pad_smso, NULL},
+    {MENU_NEXT, 0, "smacs) (rmacs", NULL, NULL, pad_smacs, NULL},
     /*
        Phase 8: Tests for miscellaneous mode-switch pads.
     */
-    {MENU_NEXT, 3, "flash", 0, 0, pad_standard, 0},
-    {MENU_NEXT, 3, "smkx", 0, 0, pad_standard, 0},
-    {MENU_NEXT, 3, "rmkx", 0, 0, pad_standard, 0},
-    {MENU_NEXT, 3, "smm", 0, 0, pad_standard, 0},
-    {MENU_NEXT, 3, "rmm", 0, 0, pad_standard, 0},
+    {MENU_NEXT, 3, "flash", NULL, NULL, pad_standard, NULL},
+    {MENU_NEXT, 3, "smkx", NULL, NULL, pad_standard, NULL},
+    {MENU_NEXT, 3, "rmkx", NULL, NULL, pad_standard, NULL},
+    {MENU_NEXT, 3, "smm", NULL, NULL, pad_standard, NULL},
+    {MENU_NEXT, 3, "rmm", NULL, NULL, pad_standard, NULL},
     /*
        Phase 9: Test crash-and-burn properties of unpadded (clear).
     */
-    {0, 0, "clear", "xon", "k) run clear test with no padding", pad_crash, 0},
-    {MENU_LAST, 0, 0, 0, 0, 0, 0}
+    {0, 0, "clear", "xon", "k) run clear test with no padding", pad_crash, NULL},
+    {MENU_LAST, 0, NULL, NULL, NULL, NULL, NULL}
 };
 /* *INDENT-ON* */

@@ -1,18 +1,18 @@
 /*
-** Copyright 2017,2020 Thomas E. Dickey
+** Copyright 2017-2020,2025 Thomas E. Dickey
 ** Copyright 1997-2015,2017 Free Software Foundation, Inc.
-** 
+**
 ** This file is part of TACK.
-** 
+**
 ** TACK is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation, version 2.
-** 
+**
 ** TACK is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
 ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ** GNU General Public License for more details.
-** 
+**
 ** You should have received a copy of the GNU General Public License
 ** along with TACK; see the file COPYING.  If not, write to
 ** the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
@@ -25,7 +25,7 @@
 #include <sys/time.h>
 #endif
 
-MODULE_ID("$Id: control.c,v 1.20 2020/02/02 14:47:18 tom Exp $")
+MODULE_ID("$Id: control.c,v 1.22 2025/04/27 17:15:43 tom Exp $")
 
 /* terminfo test program control subroutines */
 
@@ -77,10 +77,9 @@ static TestResults **pads;	/* save pad results here */
 static void
 alloc_arrays(void)
 {
-    if (pads == 0) {
+    if (pads == NULL) {
 	pads = (TestResults **) calloc((size_t) MAX_STRINGS,
-				       sizeof(TestResults
-					      *));
+				       sizeof(TestResults *));
     }
 }
 

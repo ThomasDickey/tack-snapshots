@@ -1,5 +1,5 @@
 /*
-** Copyright 2017-2020,2024 Thomas E. Dickey
+** Copyright 2017-2024,2025 Thomas E. Dickey
 ** Copyright 1997-2012,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
@@ -23,7 +23,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 
-MODULE_ID("$Id: tack.c,v 1.40 2024/05/01 19:16:08 tom Exp $")
+MODULE_ID("$Id: tack.c,v 1.45 2025/04/29 20:03:37 tom Exp $")
 
 /*
    This program is designed to test terminfo, not curses.  Therefore
@@ -77,23 +77,27 @@ static char hex_echo_menu_entry[80];
 
 static TestList tools_test_list[] =
 {
-    {0, 0, 0, 0, "s) ANSI status reports", tools_status, 0},
-    {0, 0, 0, 0, "g) ANSI SGR modes (bold, underline, reverse)", tools_sgr, 0},
-    {0, 0, 0, 0, "c) ANSI character sets", tools_charset, 0},
-    {0, 0, 0, 0, hex_echo_menu_entry, tools_hex_echo, 0},
-    {0, 0, 0, 0, "e) echo tool", tools_report, 0},
-    {1, 0, 0, 0, "r) reply tool", tools_report, 0},
-    {0, 0, 0, 0, "p) performance testing", 0, &sync_menu},
-    {0, 0, 0, 0, "i) send reset and init", menu_reset_init, 0},
-    {0, 0, "u8) (u9", 0, "u) test ENQ/ACK handshake", sync_handshake, 0},
-    {0, 0, 0, 0, "d) change debug level", tools_debug, 0},
-    {MENU_LAST, 0, 0, 0, 0, 0, 0}
+    /* *INDENT-OFF* */
+    {0, 0, NULL, NULL, "s) ANSI status reports", tools_status, NULL},
+    {0, 0, NULL, NULL, "g) ANSI SGR modes (bold, underline, reverse)", tools_sgr, NULL},
+    {0, 0, NULL, NULL, "c) ANSI character sets", tools_charset, NULL},
+    {0, 0, NULL, NULL, hex_echo_menu_entry, tools_hex_echo, NULL},
+    {0, 0, NULL, NULL, "e) echo tool", tools_report, NULL},
+    {1, 0, NULL, NULL, "r) reply tool", tools_report, NULL},
+    {0, 0, NULL, NULL, "p) performance testing", NULL, &sync_menu},
+    {0, 0, NULL, NULL, "i) send reset and init", menu_reset_init, NULL},
+    {0, 0, "u8) (u9", NULL, "u) test ENQ/ACK (DA1) handshake", sync_handshake, NULL},
+    {0, 0, NULL, NULL, "2) test RV/rv secondary attributes (DA2)", ask_DA2, NULL},
+    {0, 0, NULL, NULL, "v) test XR/xr version (XTVERSION)", ask_version, NULL},
+    {0, 0, NULL, NULL, "d) change debug level", tools_debug, NULL},
+    {MENU_LAST, 0, NULL, NULL, NULL, NULL, NULL}
+    /* *INDENT-ON* */
 };
 
 static TestMenu tools_menu =
 {
-    0, 'q', 0, "Tools Menu", "tools",
-    0, 0, tools_test_list, 0, 0, 0
+    0, 'q', NULL, "Tools Menu", "tools",
+    NULL, NULL, tools_test_list, NULL, 0, 0
 };
 
 static void tty_width(TestList *, int *, int *);
@@ -113,108 +117,108 @@ static char disable_xon_xoff[] =
 
 static TestList tty_test_list[] =
 {
-    {0, 0, 0, 0, tty_width_menu, tty_width, 0},
-    {0, 0, 0, 0, tty_delay_menu, tty_delay, 0},
-    {0, 0, 0, 0, tty_xon_menu, tty_xon, 0},
-    {0, 0, 0, 0, tty_trans_menu, tty_trans, 0},
-    {MENU_LAST, 0, 0, 0, 0, 0, 0}
+    {0, 0, NULL, NULL, tty_width_menu, tty_width, NULL},
+    {0, 0, NULL, NULL, tty_delay_menu, tty_delay, NULL},
+    {0, 0, NULL, NULL, tty_xon_menu, tty_xon, NULL},
+    {0, 0, NULL, NULL, tty_trans_menu, tty_trans, NULL},
+    {MENU_LAST, 0, NULL, NULL, NULL, NULL, NULL}
 };
 
 static TestMenu tty_menu =
 {
-    0, 'q', 0, "Terminal and driver configuration",
-    "tty", 0,
-    tty_show_state, tty_test_list, 0, 0, 0
+    0, 'q', NULL, "Terminal and driver configuration",
+    "tty", NULL,
+    tty_show_state, tty_test_list, NULL, 0, 0
 };
 
 #if TACK_CAN_EDIT
 TestMenu edit_menu =
 {
-    0, 'q', 0, "Edit terminfo menu",
-    "edit", 0,
-    0, edit_test_list, 0, 0, 0
+    0, 'q', NULL, "Edit terminfo menu",
+    "edit", NULL,
+    NULL, edit_test_list, NULL, 0, 0
 };
 #endif
 
 static TestMenu mode_menu =
 {
-    0, 'n', 0, "Test modes and glitches:",
+    0, 'n', NULL, "Test modes and glitches:",
     "mode", "n) run standard tests",
-    0, mode_test_list, 0, 0, 0
+    NULL, mode_test_list, NULL, 0, 0
 };
 
 static TestMenu acs_menu =
 {
-    0, 'n', 0,
+    0, 'n', NULL,
     "Test alternate character set and graphics rendition:",
     "acs", "n) run standard tests",
-    0, acs_test_list, 0, 0, 0
+    NULL, acs_test_list, NULL, 0, 0
 };
 
 static TestMenu color_menu =
 {
-    0, 'n', 0,
+    0, 'n', NULL,
     "Test color:",
     "color", "n) run standard tests",
-    0, color_test_list, 0, 0, 0
+    NULL, color_test_list, NULL, 0, 0
 };
 
 static TestMenu crum_menu =
 {
-    0, 'n', 0,
+    0, 'n', NULL,
     "Test cursor movement:",
     "move", "n) run standard tests",
-    0, crum_test_list, 0, 0, 0
+    NULL, crum_test_list, NULL, 0, 0
 };
 
 static TestMenu funkey_menu =
 {
-    0, 'n', 0,
+    0, 'n', NULL,
     "Test function keys:",
     "fkey", "n) run standard tests",
-    sync_test, funkey_test_list, 0, 0, 0
+    sync_test, funkey_test_list, NULL, 0, 0
 };
 
 static TestMenu printer_menu =
 {
-    0, 'n', 0,
+    0, 'n', NULL,
     "Test printer:",
     "printer", "n) run standard tests",
-    0, printer_test_list, 0, 0, 0
+    NULL, printer_test_list, NULL, 0, 0
 };
 
 static void pad_gen(TestList *, int *, int *);
 
 static TestMenu pad_menu =
 {
-    0, 'n', 0,
+    0, 'n', NULL,
     "Test padding and string capabilities:",
     "pad", "n) run standard tests",
-    sync_test, pad_test_list, 0, 0, 0
+    sync_test, pad_test_list, NULL, 0, 0
 };
 /* *INDENT-OFF* */
 static TestList normal_test_list[] = {
     MY_EDIT_MENU
-    {0, 0, 0, 0, "i) send reset and init", menu_reset_init, 0},
-    {MENU_NEXT, 0, 0, 0, "x) test modes and glitches", 0, &mode_menu},
-    {MENU_NEXT, 0, 0, 0, "a) test alternate character set and graphic rendition", 0, &acs_menu},
-    {MENU_NEXT, 0, 0, 0, "c) test color", 0, &color_menu},
-    {MENU_NEXT, 0, 0, 0, "m) test cursor movement", 0, &crum_menu},
-    {MENU_NEXT, 0, 0, 0, "f) test function keys", 0, &funkey_menu},
-    {MENU_NEXT, 0, 0, 0, "p) test padding and string capabilities", 0, &pad_menu},
-    {0, 0, 0, 0, "P) test printer", 0, &printer_menu},
-    {MENU_MENU, 0, 0, 0, "/) test a specific capability", 0, 0},
-    {0, 0, 0, 0, "t) auto generate pad delays", pad_gen, &pad_menu},
-    {0, 0, "u8) (u9", 0, 0, sync_handshake, 0},
-    {MENU_LAST, 0, 0, 0, 0, 0, 0}
+    {0, 0, NULL, NULL, "i) send reset and init", menu_reset_init, NULL},
+    {MENU_NEXT, 0, NULL, NULL, "x) test modes and glitches", NULL, &mode_menu},
+    {MENU_NEXT, 0, NULL, NULL, "a) test alternate character set and graphic rendition", NULL, &acs_menu},
+    {MENU_NEXT, 0, NULL, NULL, "c) test color", NULL, &color_menu},
+    {MENU_NEXT, 0, NULL, NULL, "m) test cursor movement", NULL, &crum_menu},
+    {MENU_NEXT, 0, NULL, NULL, "f) test function keys", NULL, &funkey_menu},
+    {MENU_NEXT, 0, NULL, NULL, "p) test padding and string capabilities", NULL, &pad_menu},
+    {0, 0, NULL, NULL, "P) test printer", NULL, &printer_menu},
+    {MENU_MENU, 0, NULL, NULL, "/) test a specific capability", NULL, NULL},
+    {0, 0, NULL, NULL, "t) auto generate pad delays", pad_gen, &pad_menu},
+    {0, 0, "u8) (u9", NULL, NULL, sync_handshake, NULL},
+    {MENU_LAST, 0, NULL, NULL, NULL, NULL, NULL}
 };
 /* *INDENT-ON* */
 
 static TestMenu normal_menu =
 {
-    0, 'n', 0, "Main test menu",
+    0, 'n', NULL, "Main test menu",
     "test", "n) run standard tests",
-    0, normal_test_list, 0, 0, 0
+    NULL, normal_test_list, NULL, 0, 0
 };
 
 static void start_tools(TestList *, int *, int *);
@@ -228,25 +232,25 @@ static char logging_menu_entry[80] = MENU_START_LOGGING;
 
 static TestList start_test_list[] =
 {
-    {0, 0, 0, 0, "b) display basic information", start_basic, 0},
-    {0, 0, 0, 0, "m) change modes", start_modes, 0},
-    {0, 0, 0, 0, "t) tools", start_tools, 0},
-    {MENU_COMPLETE, 0, 0, 0, "n) begin testing", 0, &normal_menu},
-    {0, 0, 0, 0, logging_menu_entry, start_log, 0},
-    {MENU_LAST, 0, 0, 0, 0, 0, 0}
+    {0, 0, NULL, NULL, "b) display basic information", start_basic, NULL},
+    {0, 0, NULL, NULL, "m) change modes", start_modes, NULL},
+    {0, 0, NULL, NULL, "t) tools", start_tools, NULL},
+    {MENU_COMPLETE, 0, NULL, NULL, "n) begin testing", NULL, &normal_menu},
+    {0, 0, NULL, NULL, logging_menu_entry, start_log, NULL},
+    {MENU_LAST, 0, NULL, NULL, NULL, NULL, NULL}
 };
 
 static TestMenu start_menu =
 {
-    0, 'n', 0, "Main Menu", "tack", 0,
-    0, start_test_list, 0, 0, 0
+    0, 'n', NULL, "Main Menu", "tack", NULL,
+    NULL, start_test_list, NULL, 0, 0
 };
 
 #if TACK_CAN_EDIT
 static TestList write_terminfo_list[] =
 {
-    {0, 0, 0, 0, "w) write the current terminfo to a file", save_info, 0},
-    {MENU_LAST, 0, 0, 0, 0, 0, 0}
+    {0, 0, NULL, NULL, "w) write the current terminfo to a file", save_info, NULL},
+    {MENU_LAST, 0, NULL, NULL, NULL, NULL, NULL}
 };
 #endif
 
@@ -315,7 +319,7 @@ start_tools(
     } else {
 	strcpy(hex_echo_menu_entry, MENU_ENABLE_HEX_OUTPUT);
     }
-    menu_display(&tools_menu, 0);
+    menu_display(&tools_menu, NULL);
 }
 
 /*
@@ -494,7 +498,7 @@ start_modes(
 	strcpy(tty_trans_menu,
 	       "t) use terminfo values for \\b\\f\\n\\r\\t");
     }
-    menu_display(&tty_menu, 0);
+    menu_display(&tty_menu, NULL);
     tty_set();
 }
 
@@ -535,7 +539,7 @@ start_log(
     } else {
 	if (log_fp) {
 	    fclose(log_fp);
-	    log_fp = 0;
+	    log_fp = NULL;
 	}
 	ptextln("Terminal output logging stopped.");
 	strcpy(logging_menu_entry, MENU_START_LOGGING);
@@ -566,12 +570,12 @@ print_version(void)
 	   MAJOR_VERSION,
 	   MINOR_VERSION,
 	   PATCH_VERSION);
-    printf("Copyright 2017-2024 Thomas E. Dickey\n");
+    printf("Copyright 2017-2025 Thomas E. Dickey\n");
     printf("Copyright 1997-2017 Free Software Foundation, Inc.\n");
     printf("Tack comes with NO WARRANTY, to the extent permitted by law.\n");
-    printf("You may redistribute copies of Tack under the terms of the\n");
-    printf("GNU General Public License.  For more information about\n");
-    printf("these matters, see the file named COPYING.\n");
+    printf("You may redistribute copies of Tack under the terms of the GNU General Public\n");
+    printf("License version 2.  For more information about these matters, see the file\n");
+    printf("named COPYING.\n");
 }
 
 #ifdef DEBUG
@@ -642,7 +646,7 @@ main(int argc, char *argv[])
 	    ExitProgram(EXIT_FAILURE);
 	    /* NOTREACHED */
 	case 'd':
-	    if ((debug_fp = fopen(DBG_FILENAME, "w")) == 0) {
+	    if ((debug_fp = fopen(DBG_FILENAME, "w")) == NULL) {
 		perror(DBG_FILENAME);
 		ExitProgram(EXIT_FAILURE);
 	    }
@@ -680,7 +684,7 @@ main(int argc, char *argv[])
     curses_setup(argv[0]);
 
     menu_can_scan(&normal_menu);	/* extract which caps can be tested */
-    menu_display(&start_menu, 0);
+    menu_display(&start_menu, NULL);
 
 #if TACK_CAN_EDIT
     if (user_modified()) {

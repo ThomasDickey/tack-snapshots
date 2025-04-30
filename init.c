@@ -1,5 +1,5 @@
 /*
-** Copyright 2017-2020,2024 Thomas E. Dickey
+** Copyright 2017-2024,2025 Thomas E. Dickey
 ** Copyright 1997-2013,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
@@ -26,13 +26,13 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: init.c,v 1.43 2024/05/01 21:42:01 tom Exp $")
+MODULE_ID("$Id: init.c,v 1.46 2025/04/27 20:42:27 tom Exp $")
 
 FILE *debug_fp;
 char temp[TEMP_SIZE];
 char *tty_basename = NULL;
 
-#if !(defined(HAVE_CURSES_DATA_BOOLNAMES) || defined(DECL_CURSES_DATA_BOOLNAMES))
+#if !USE_CURSES_ARRAYS
 char **boolnames;
 char **numnames;
 char **strnames;
@@ -154,7 +154,7 @@ display_basic(void)
     char *s;
     put_str("Name: ");
     put_str(termname());
-    if ((s = longname()) != 0) {
+    if ((s = longname()) != NULL) {
 	put_str("|");
 	putln(s);
     }
@@ -180,6 +180,25 @@ display_basic(void)
 #ifdef user8
     report_cap("ACK   (u8)", user8);
 #endif
+#ifdef NCURSES_VERSION
+    if (lines >= 30) {
+	const char *XR = safe_tgets("XR");
+	const char *xr = safe_tgets("xr");
+	const char *RV = safe_tgets("RV");
+	const char *rv = safe_tgets("rv");
+
+	if (XR != NULL && xr != NULL) {
+	    /* TODO: can_test("XR xr", FLAG_CAN_TEST); */
+	    report_cap("DA2      (XR)", XR);
+	    report_cap("-> reply (xr)", xr);
+	}
+	if (RV != NULL && rv != NULL) {
+	    /* TODO: can_test("RV rv", FLAG_CAN_TEST); */
+	    report_cap("Version  (RV)", XR);
+	    report_cap("-> reply (rv)", rv);
+	}
+    }
+#endif
 
     sprintf(temp,
 	    "\nTerminal size: %d x %d.  Baud rate: %u.  Frame size: %d.%d",
@@ -198,30 +217,30 @@ display_basic(void)
 static char *
 ask_infocmp(void)
 {
-    char *result = 0;
+    char *result = NULL;
     size_t need = strlen(tty_basename) + 20;
     char *command = malloc(need);
 
-    if (command != 0) {
+    if (command != NULL) {
 	FILE *pp;
 
 	sprintf(command, "infocmp -1 \"%s\"", tty_basename);
-	if ((pp = popen(command, "r")) != 0) {
+	if ((pp = popen(command, "r")) != NULL) {
 	    char buffer[BUFSIZ];
 	    char *s, *t;
 
-	    if (fgets(buffer, (int) (sizeof(buffer) - 1), pp) != 0
+	    if (fgets(buffer, (int) (sizeof(buffer) - 1), pp) != NULL
 		&& *buffer == '#'
 		&& ((t = strstr(buffer, " file: "))
 		    || (t = strstr(buffer, " file "))
 		    || ((t = strstr(buffer, " Reconstructed "))
 			&& (t = strstr(t, " from "))))
-		&& (s = strchr(buffer, '\n')) != 0) {
+		&& (s = strchr(buffer, '\n')) != NULL) {
 		*s = '\0';
 		s = strchr(t + 1, ' ');
 		result = strdup(s + 1);
 	    }
-#if !(defined(HAVE_CURSES_DATA_BOOLNAMES) || defined(DECL_CURSES_DATA_BOOLNAMES))
+#if !USE_CURSES_ARRAYS
 	    if (result) {
 		int max_b = 200;
 		int max_n = 200;
@@ -296,7 +315,7 @@ init_acs(void)
 	acs_map = calloc((size_t) 256, sizeof(acs_map[0]));
     }
 #endif
-    if (value != 0) {
+    if (value != NULL) {
 	while (*value != '\0') {
 	    int s, d;
 
@@ -449,7 +468,7 @@ curses_setup(
      * "everyone" has infocmp, and its first line of output should be a
      * comment telling which database is used.
      */
-    if (tty_name != 0) {
+    if (tty_name != NULL) {
 	ptext("Using terminfo from: ");
 	ptextln(tty_name);
 	put_crlf();
@@ -506,6 +525,6 @@ safe_tgets(NCURSES_CONST char *name)
 {
     char *value = (char *) tigetstr(name);
     if (!VALID_STRING(value))
-	value = 0;
+	value = NULL;
     return value;
 }

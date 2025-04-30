@@ -1,5 +1,5 @@
 /*
-** Copyright 2017,2020 Thomas E. Dickey
+** Copyright 2017-2020,2025 Thomas E. Dickey
 ** Copyright 1997-2012,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
@@ -23,7 +23,7 @@
 #include <tack.h>
 #include <time.h>
 
-MODULE_ID("$Id: output.c,v 1.31 2020/02/18 01:55:30 tom Exp $")
+MODULE_ID("$Id: output.c,v 1.32 2025/04/26 23:32:16 tom Exp $")
 
 /* globals */
 long char_sent;			/* number of characters sent */
@@ -152,7 +152,7 @@ log_chr(FILE *fp, int ch, int col)
 void
 log_str(FILE *fp, const char *value)
 {
-    if (value == 0) {
+    if (value == NULL) {
 	fputs("<null>", fp);
     } else if (value == (const char *) -1) {
 	fputs("<cancel>", fp);

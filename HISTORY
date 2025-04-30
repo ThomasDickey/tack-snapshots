@@ -1,6 +1,7 @@
 
 Current history:
 
+2025/04/29	1.11	Add checks for RV/rv and XR/xr
 2024/05/01	1.10	Many portability fixes.
 2020/02/02	1.09	Update copyright and license.  Also, portability fixes.
 2017/07/26	1.08	Reduce reliance on ncurses internals.

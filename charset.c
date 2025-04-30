@@ -1,5 +1,5 @@
 /*
-** Copyright 2017-2020,2024 Thomas E. Dickey
+** Copyright 2017-2024,2025 Thomas E. Dickey
 ** Copyright 1997-2012,2017 Free Software Foundation, Inc.
 **
 ** This file is part of TACK.
@@ -21,7 +21,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: charset.c,v 1.29 2024/04/30 19:58:07 tom Exp $")
+MODULE_ID("$Id: charset.c,v 1.30 2025/04/26 23:31:35 tom Exp $")
 
 /*
 	Menu definitions for alternate character set and SGR tests.
@@ -797,22 +797,22 @@ charset_can_test(void)
 TestList acs_test_list[] =
 {
     MY_EDIT_MENU
-    {MENU_NEXT, 3, "bel",   0, "b) bel/flash", charset_bel, 0},
-    {MENU_NEXT, 3, "flash", 0, 0, charset_flash, 0},
-    {MENU_NEXT, 3, "civis", 0, "c) cursor appearance", charset_civis, 0},
-    {MENU_NEXT, 3, "cvvis", 0, 0, charset_cvvis, 0},
-    {MENU_NEXT, 3, "cnorm", 0, 0, charset_cnorm, 0},
-    {MENU_NEXT, 3, "hs",    0, "t) title/statusline", charset_hs, 0},
-    {MENU_NEXT, 3, "tsl) (fsl) (wsl", "hs", 0, charset_status, 0},
-    {MENU_NEXT, 3, "eslok", "hs", 0, charset_eslok, 0},
-    {MENU_NEXT, 3, "dsl", "hs", 0, charset_dsl, 0},
-    {MENU_NEXT, 0, "acsc) (enacs) (smacs) (rmacs", 0, "a) alternate character set", charset_enacs, 0},
-    {MENU_NEXT, 12, "smacs) (rmacs", 0, 0, charset_smacs, 0},
-    {MENU_NEXT, 12, "sgr) (sgr0", 0, 0, charset_attributes, 0},
-    {MENU_NEXT, 12, "sgr) (sgr0", "ma", 0, charset_sgr, 0},
-    {MENU_NEXT, 12, "sgr) (sgr0", "ma", 0, charset_sgr2, 0},
-    {MENU_NEXT, 3, "sitm) (ritm", 0, 0, charset_italics, 0},
-    {MENU_NEXT, 3, 0, 0, 0, charset_crossed, 0},
-    {MENU_LAST, 0, 0, 0, 0, 0, 0}
+    {MENU_NEXT, 3, "bel",   NULL, "b) bel/flash", charset_bel, NULL},
+    {MENU_NEXT, 3, "flash", NULL, NULL, charset_flash, NULL},
+    {MENU_NEXT, 3, "civis", NULL, "c) cursor appearance", charset_civis, NULL},
+    {MENU_NEXT, 3, "cvvis", NULL, NULL, charset_cvvis, NULL},
+    {MENU_NEXT, 3, "cnorm", NULL, NULL, charset_cnorm, NULL},
+    {MENU_NEXT, 3, "hs",    NULL, "t) title/statusline", charset_hs, NULL},
+    {MENU_NEXT, 3, "tsl) (fsl) (wsl", "hs", NULL, charset_status, NULL},
+    {MENU_NEXT, 3, "eslok", "hs", NULL, charset_eslok, NULL},
+    {MENU_NEXT, 3, "dsl", "hs", NULL, charset_dsl, NULL},
+    {MENU_NEXT, 0, "acsc) (enacs) (smacs) (rmacs", NULL, "a) alternate character set", charset_enacs, NULL},
+    {MENU_NEXT, 12, "smacs) (rmacs", NULL, NULL, charset_smacs, NULL},
+    {MENU_NEXT, 12, "sgr) (sgr0", NULL, NULL, charset_attributes, NULL},
+    {MENU_NEXT, 12, "sgr) (sgr0", "ma", NULL, charset_sgr, NULL},
+    {MENU_NEXT, 12, "sgr) (sgr0", "ma", NULL, charset_sgr2, NULL},
+    {MENU_NEXT, 3, "sitm) (ritm", NULL, NULL, charset_italics, NULL},
+    {MENU_NEXT, 3, NULL, NULL, NULL, charset_crossed, NULL},
+    {MENU_LAST, 0, NULL, NULL, NULL, NULL, NULL}
 };
 /* *INDENT-ON* */
