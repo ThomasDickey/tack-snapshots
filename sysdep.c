@@ -45,7 +45,7 @@
 #endif
 #endif
 
-MODULE_ID("$Id: sysdep.c,v 1.41 2025/04/30 00:36:45 tom Exp $")
+MODULE_ID("$Id: sysdep.c,v 1.42 2025/05/03 17:34:24 tom Exp $")
 
 #ifdef TERMIOS
 #define PUT_TTY(fd, buf) tcsetattr(fd, TCSAFLUSH, buf)
@@ -559,7 +559,7 @@ compare_regex(const char *name, const char *terminfo, const char *actual)
     int rc = 0;
     int code;
     regex_t regex;
-    char pattern[80];
+    char pattern[1024];
     char buffer[2 * sizeof(pattern)];
 
     /*
@@ -574,9 +574,12 @@ compare_regex(const char *name, const char *terminfo, const char *actual)
      */
     if (terminfo == NULL || strlen(terminfo) >= (sizeof(pattern) / 2)) {
 	rc = -1;
+	if (debug_fp)
+	    fprintf(debug_fp, "ABSENT %s\n", terminfo);
     } else {
 	int escape = 0;
 	int use_plus = 0;
+	int nest_block = 0;
 	const char *s = terminfo;
 	char *d = pattern;
 
@@ -592,8 +595,10 @@ compare_regex(const char *name, const char *terminfo, const char *actual)
 		*d++ = BAKSLSH;
 	    } else if (ch == PERCENT) {
 		if (*s == L_BLOCK) {
-		    use_plus = 1;
-		    ch = *s++;
+		    if (!nest_block++) {
+			use_plus = 1;
+			ch = *s++;
+		    }
 		} else if (*s == 'p' && isdigit(UChar(s[1]))) {
 		    s += 2;
 		    continue;
@@ -607,11 +612,11 @@ compare_regex(const char *name, const char *terminfo, const char *actual)
 		    && (strchr(s + 1, L_BLOCK) != NULL
 			|| strchr(s + 1, R_BLOCK) == NULL)) {
 		    *d++ = BAKSLSH;
-		} else {
+		} else if (!nest_block++) {
 		    use_plus = 1;
 		}
 	    } else if (ch == R_BLOCK) {
-		if (use_plus) {
+		if (use_plus && --nest_block == 0) {
 		    *d++ = ch;
 		    ch = '+';
 		}
@@ -624,6 +629,9 @@ compare_regex(const char *name, const char *terminfo, const char *actual)
     if (rc < 0) {
 	sprintf(buffer, "Unexpected pattern (%s): %.30s", name, terminfo);
 	putln(expand(buffer));
+	if (debug_fp) {
+	    fprintf(debug_fp, "Bad regex(%s): %s\n", name, expand(buffer));
+	}
 	return rc;
     }
 
@@ -634,17 +642,19 @@ compare_regex(const char *name, const char *terminfo, const char *actual)
 	sprintf(buffer, "%s", pattern);
 	fprintf(debug_fp, "Regex(%s): %s\n", name, expand(buffer));
     }
+#define NPARAM 10
     if ((code = regcomp(&regex, pattern, REG_EXTENDED)) == 0) {
 	if (actual != NULL) {
-	    regmatch_t pmatch[10];
-	    if (regexec(&regex, actual, 10, pmatch, 0) == 0) {
+	    regmatch_t pmatch[NPARAM];
+	    memset(pmatch, 0, sizeof(pmatch));
+	    if (regexec(&regex, actual, NPARAM, pmatch, 0) == 0) {
 		int want_1st = 0;
 		int want_end = (int) strlen(actual);
 		if (pmatch[0].rm_so == want_1st &&
 		    pmatch[0].rm_eo == want_end) {
 		    int argc;
 		    rc = 1;
-		    for (argc = 1; argc < 10; ++argc) {
+		    for (argc = 1; argc < NPARAM; ++argc) {
 			size_t len;
 			if (pmatch[argc].rm_so < 0)
 			    continue;

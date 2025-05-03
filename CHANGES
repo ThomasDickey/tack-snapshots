@@ -1,3 +1,12 @@
+2025-05-03  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* sysdep.c: increase regex buffer-size
+	allow regex to have character-classes, e.g., [[:xdigit:]]
+
+	* init.c: fix copy/paste in "Version" status line
+
+	* package/debian/changelog, package/tack.spec, tack.h: bump
+
 2025-04-29  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* sysdep.c: provide for pre-regex use in u8 with unescaped "["

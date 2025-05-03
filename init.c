@@ -26,7 +26,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: init.c,v 1.46 2025/04/27 20:42:27 tom Exp $")
+MODULE_ID("$Id: init.c,v 1.47 2025/05/03 13:09:05 tom Exp $")
 
 FILE *debug_fp;
 char temp[TEMP_SIZE];
@@ -194,7 +194,7 @@ display_basic(void)
 	}
 	if (RV != NULL && rv != NULL) {
 	    /* TODO: can_test("RV rv", FLAG_CAN_TEST); */
-	    report_cap("Version  (RV)", XR);
+	    report_cap("Version  (RV)", RV);
 	    report_cap("-> reply (rv)", rv);
 	}
     }
