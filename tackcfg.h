@@ -18,7 +18,7 @@
 ** Boston, MA 02110-1301, USA
 */
 
-/* $Id: tackcfg.h,v 1.1 2025/04/27 20:43:21 tom Exp $ */
+/* $Id: tackcfg.h,v 1.2 2025/12/11 00:15:40 tom Exp $ */
 
 #ifndef TACK_CFG_H_incl
 #define TACK_CFG_H_incl 1
@@ -80,15 +80,18 @@
 #include <string.h>
 #include <signal.h>		/* include before curses.h to work around glibc bug */
 
-#include <curses.h>
-
 #if defined(NCURSES_VERSION) && defined(HAVE_TERM_ENTRY_H)
-#include <term_entry.h>
+#include <term_entry.h>		/* this includes curses.h and term.h */
 #define TACK_CAN_EDIT 1
 #else
 #define TACK_CAN_EDIT 0
+#include <curses.h>
 #include <term.h>
+#endif
+
 #include <termios.h>
+
+#ifndef GET_TTY
 #define TTY struct termios
 #define TERMIOS 1
 #define GET_TTY(fd, buf) tcgetattr(fd, buf)

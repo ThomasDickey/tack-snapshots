@@ -1,3 +1,26 @@
+2025-12-10  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* package/debian/changelog, package/tack.spec, tack.h: bump
+
+	* edit.c: gcc warning 0 vs NULL
+
+	* tackcfg.h:
+	build-fix: term.h no longer exports termios.h definitions (Debian #1122485)
+
+2025-11-11  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* configure: regen
+
+	* aclocal.m4: resync with my-autoconf
+
+2025-07-09  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.guess, config.sub: update to 2025-07-10
+
+2025-06-08  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* install-sh: fix license
+
 2025-05-03  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* sysdep.c: increase regex buffer-size
@@ -65,6 +88,8 @@
 	* tack.1: add XR/xr and RV/rv to the initial screen
 
 	* tack.1: bump
+
+	* tack.1: update header
 
 	* init.c: add XR/xr and RV/rv optionally to the initial screen
 

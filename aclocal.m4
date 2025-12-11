@@ -27,7 +27,7 @@ dnl sale, use or other dealings in this Software without prior written       *
 dnl authorization.                                                           *
 dnl***************************************************************************
 dnl
-dnl $Id: aclocal.m4,v 1.50 2025/02/08 00:06:30 tom Exp $
+dnl $Id: aclocal.m4,v 1.51 2025/11/12 01:11:39 tom Exp $
 dnl
 dnl Author: Thomas E. Dickey
 dnl
@@ -422,7 +422,7 @@ dnl Allow user to enable a normally-off option.
 AC_DEFUN([CF_ARG_ENABLE],
 [CF_ARG_OPTION($1,[$2],[$3],[$4],no)])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_ARG_OPTION version: 5 updated: 2015/05/10 19:52:14
+dnl CF_ARG_OPTION version: 6 updated: 2025/08/05 04:09:09
 dnl -------------
 dnl Restricted form of AC_ARG_ENABLE that ensures user doesn't give bogus
 dnl values.
@@ -431,7 +431,7 @@ dnl Parameters:
 dnl $1 = option name
 dnl $2 = help-string
 dnl $3 = action to perform if option is not default
-dnl $4 = action if perform if option is default
+dnl $4 = action to perform if option is default
 dnl $5 = default option value (either 'yes' or 'no')
 AC_DEFUN([CF_ARG_OPTION],
 [AC_ARG_ENABLE([$1],[$2],[test "$enableval" != ifelse([$5],no,yes,no) && enableval=ifelse([$5],no,no,yes)
@@ -1230,7 +1230,7 @@ ifelse($2,yes,[CF_GCC_ATTRIBUTES])
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_FIND_LIBRARY version: 11 updated: 2021/01/02 09:31:20
+dnl CF_FIND_LIBRARY version: 12 updated: 2025/11/11 20:11:39
 dnl ---------------
 dnl Look for a non-standard library, given parameters for AC_TRY_LINK.  We
 dnl prefer a standard location, and use -L options only if we do not find the
@@ -1242,7 +1242,7 @@ dnl	$4 = code fragment to compile/link
 dnl	$5 = corresponding function-name
 dnl	$6 = flag, nonnull if failure should not cause an error-exit
 dnl
-dnl Sets the variable "$cf_libdir" as a side-effect, so we can see if we had
+dnl Sets the variable "$cf_libdir" as a side effect, so we can see if we had
 dnl to use a -L option.
 AC_DEFUN([CF_FIND_LIBRARY],
 [
@@ -2028,7 +2028,7 @@ ifelse($1,,,[$1=$LIB_PREFIX])
 	AC_SUBST(LIB_PREFIX)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_LINK_DATAONLY version: 15 updated: 2023/12/03 10:03:10
+dnl CF_LINK_DATAONLY version: 16 updated: 2025/06/21 06:49:01
 dnl ----------------
 dnl Some systems have a non-ANSI linker that doesn't pull in modules that have
 dnl only data (i.e., no functions), for example NeXT.  On those systems we'll
@@ -2044,10 +2044,10 @@ AC_CACHE_VAL(cf_cv_link_dataonly,[
 int	testdata[[3]] = { 123, 456, 789 };
 EOF
 	if AC_TRY_EVAL(ac_compile) ; then
-		mv conftest.o data.o && \
-		( $AR $ARFLAGS conftest.a data.o ) 2>&AC_FD_CC 1>/dev/null
+		mv conftest.$OBJEXT data.$OBJEXT && \
+		( $AR $ARFLAGS conftest.a data.$OBJEXT ) 2>&AC_FD_CC 1>/dev/null
 	fi
-	rm -f conftest.$ac_ext data.o
+	rm -f conftest.$ac_ext data.$OBJEXT
 	cat >conftest.$ac_ext <<EOF
 #line __oline__ "configure"
 extern int testfunc(void);
@@ -2067,10 +2067,10 @@ int	testfunc(void)
 #endif
 EOF
 	if AC_TRY_EVAL(ac_compile); then
-		mv conftest.o func.o && \
-		( $AR $ARFLAGS conftest.a func.o ) 2>&AC_FD_CC 1>/dev/null
+		mv conftest.$OBJEXT func.$OBJEXT && \
+		( $AR $ARFLAGS conftest.a func.$OBJEXT ) 2>&AC_FD_CC 1>/dev/null
 	fi
-	rm -f conftest.$ac_ext func.o
+	rm -f conftest.$ac_ext func.$OBJEXT
 	( eval $RANLIB conftest.a ) 2>&AC_FD_CC >/dev/null
 	cf_saveLIBS="$LIBS"
 	LIBS="conftest.a $LIBS"
@@ -2096,16 +2096,18 @@ AC_SUBST(BROKEN_LINKER)
 
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_MAKEFLAGS version: 21 updated: 2021/09/04 06:47:34
+dnl CF_MAKEFLAGS version: 22 updated: 2025/07/05 16:17:37
 dnl ------------
 dnl Some 'make' programs support ${MAKEFLAGS}, some ${MFLAGS}, to pass 'make'
 dnl options to lower-levels.  It is very useful for "make -n" -- if we have it.
-dnl (GNU 'make' does both, something POSIX 'make', which happens to make the
-dnl ${MAKEFLAGS} variable incompatible because it adds the assignments :-)
+dnl POSIX accommodates both by pretending they are the same variable, adding
+dnl the behavior of the latter to the former.
 AC_DEFUN([CF_MAKEFLAGS],
 [AC_REQUIRE([AC_PROG_FGREP])dnl
 
 AC_CACHE_CHECK(for makeflags variable, cf_cv_makeflags,[
+	cf_save_makeflags="$MAKEFLAGS"; unset MAKEFLAGS
+	cf_save_mflags="$MFLAGS";       unset MFLAGS
 	cf_cv_makeflags=''
 	for cf_option in '-${MAKEFLAGS}' '${MFLAGS}'
 	do
@@ -2133,6 +2135,8 @@ CF_EOF
 			;;
 		esac
 	done
+	test -n "$cf_save_makeflags" && MAKEFLAGS="$cf_save_makeflags"
+	test -n "$cf_save_mflags"    && MFLAGS="$cf_save_mflags"
 	rm -f cf_makeflags.tmp
 ])
 
@@ -2953,7 +2957,7 @@ AC_SUBST(GROFF_NOTE)
 AC_SUBST(NROFF_NOTE)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_PROG_INSTALL version: 11 updated: 2024/08/03 13:08:58
+dnl CF_PROG_INSTALL version: 13 updated: 2025/10/21 16:28:49
 dnl ---------------
 dnl Force $INSTALL to be an absolute-path.  Otherwise, edit_man.sh and the
 dnl misc/tabset install won't work properly.  Usually this happens only when
@@ -2961,6 +2965,15 @@ dnl using the fallback mkinstalldirs script
 AC_DEFUN([CF_PROG_INSTALL],
 [AC_PROG_INSTALL
 AC_REQUIRE([CF_GLOB_FULLPATH])dnl
+if test "x$INSTALL" = "x./install-sh -c"; then
+	if test -f /usr/sbin/install ; then
+		case "$host_os" in
+		(linux*gnu*|uclinux*|gnu*|mint*|k*bsd*-gnu|cygwin|msys|mingw*|linux*uclibc)
+			INSTALL=/usr/sbin/install 
+			;;
+		esac
+	fi
+fi
 case x$INSTALL in
 (x$GLOB_FULLPATH_POSIX|x$GLOB_FULLPATH_OTHER)
 	;;
@@ -3783,7 +3796,7 @@ CF_NO_LEAKS_OPTION(valgrind,
 	[USE_VALGRIND])
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_XOPEN_SOURCE version: 68 updated: 2024/11/09 18:07:29
+dnl CF_XOPEN_SOURCE version: 70 updated: 2025/10/21 16:27:38
 dnl ---------------
 dnl Try to get _XOPEN_SOURCE defined properly that we can use POSIX functions,
 dnl or adapt to the vendor's definitions to get equivalent functionality,
@@ -3843,7 +3856,7 @@ case "$host_os" in
 	cf_xopen_source="-D_SGI_SOURCE"
 	cf_XOPEN_SOURCE=
 	;;
-(linux*gnu|linux*gnuabi64|linux*gnuabin32|linux*gnueabi|linux*gnueabihf|linux*gnux32|uclinux*|gnu*|mint*|k*bsd*-gnu|cygwin|msys|mingw*|linux*uclibc)
+(linux*gnu*|uclinux*|gnu*|mint*|k*bsd*-gnu|cygwin|msys|mingw*|linux*uclibc)
 	CF_GNU_SOURCE($cf_XOPEN_SOURCE)
 	;;
 linux*musl)

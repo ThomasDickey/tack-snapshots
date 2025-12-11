@@ -24,7 +24,7 @@
 
 #include <tack.h>
 
-MODULE_ID("$Id: edit.c,v 1.53 2025/04/27 20:45:33 tom Exp $")
+MODULE_ID("$Id: edit.c,v 1.54 2025/12/11 00:21:20 tom Exp $")
 
 /*
  * These are adapted from tic.h
@@ -170,7 +170,7 @@ find_capability(const char *name)
 static NAME_TABLE const *
 find_cap_by_index(int capIndex, NAME_TYPE capType)
 {
-    static NAME_TABLE const *result = 0;
+    static NAME_TABLE const *result = NULL;
     size_t n;
 
     alloc_name_table();
@@ -247,9 +247,9 @@ get_newer_number(int num)
 static char *
 get_newer_string(int num)
 {
-    char *result = 0;
+    char *result = NULL;
     const NAME_TABLE *p = find_cap_by_index(num, STRING);
-    if (p != 0)
+    if (p != NULL)
 	result = tigetstr((NCURSES_CONST char *) p->nt_name);
     return result;
 }

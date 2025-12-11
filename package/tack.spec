@@ -1,9 +1,9 @@
 Summary:  terminfo action checker
 %global AppProgram tack
 %global AppVersion 1.11
-%global AppPatched 20250503
+%global AppPatched 20251210
 %global MySite https://invisible-island.net
-# $XTermId: tack.spec,v 1.38 2025/05/03 13:08:44 tom Exp $
+# $XTermId: tack.spec,v 1.39 2025/12/11 00:32:22 tom Exp $
 Name: %{AppProgram}
 Version: %{AppVersion}
 Release: %{AppPatched}
@@ -55,8 +55,11 @@ strip $RPM_BUILD_ROOT%{_bindir}/%{AppProgram}
 %changelog
 # each patch should add its ChangeLog entries here
 
+* Wed Dec 10 2025 Thomas E. Dickey
+- testing tack 1.11-20251210
+
 * Wed Jul 26 2017 Thomas Dickey
-  use system-defined build-flags
+- use system-defined build-flags
 
 * Sat Sep 04 2010 Thomas Dickey
 - initial version
